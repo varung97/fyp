@@ -22,6 +22,8 @@
     \begin{itemize}
         \item $T[u]$ for some tree $T$ and some node $u$ to be the subtree of $T$ rooted at $u$
         \item $\Lambda(T)$ for some tree $T$ to be the leaf set of $T$
+        \item $T|C$ to be the tree $T$ restricted to the leaf set $C$, i.e. keep all common ancestors of $C$ while keeping the relative structure of these nodes the same as in the original tree
+        \item $T||C$ to be a modified version of $T|C$. This version includes ``special nodes''. Given a parent-child pair in $T|C$ a special node is added between them if these nodes are not a parent-child pair in $T$; this special node represents all the nodes on the path between the pair in $T$
         \item Trees $T_A$ and $T_B$ on which the procedure \texttt{Filter\_Clusters} will be run
         \item Centroid path of $T_A$ to be $\pi$
         \item Set of side trees created when $\pi$ is removed from $T_A$ to be $\sigma(\pi)$
@@ -31,7 +33,7 @@
 
     Note that there are two bottlenecks in \texttt{Filter\_Clusters}:
     \begin{itemize}
-        \item Step 3 preprocesses $T_B$ in $O(n\;log\;n)$ time and then uses $\sum_{\tau\in\sigma(\pi)}O(|\Lambda(\tau)|log(|\Lambda(\tau)|))$ time to construct the subtrees.
+        \item Step 3 preprocesses $T_B$ in $O(n\;log\;n)$ time and then uses $\sum_{\tau\in\sigma(\pi)}O(|\Lambda(\tau)|log(|\Lambda(\tau)|))$ time to construct each $T_B||\Lambda(\tau)$.
 
         \item Step 6 involves making $O(n)$ add/remove operations on a BT of size $O(n)$, costing $O(n\;log\;n)$
     \end{itemize}
@@ -40,9 +42,9 @@
 
     First, to avoid preprocessing $T_B$ for RMQ queries within each recursive call, simply do it once at the beginning. We will now discuss how this original tree can be used to answer RMQ queries in recursive calls.\\
 
-    Note that the RMQ structure can give us a handle to the node which has the max weight between two nodes. When constructing $T_B||\Lambda(\tau)$ we add some special nodes $z$ to $T_B|\Lambda(\tau)$ which represent a node with max weight between some two nodes. These nodes should keep handles to the node in the original tree that they identify with. In recursive calls, if asked to construct a special node where one or both of the endpoints is/are special node(s), use the handle to the node in the original tree to make this query. That is, all RMQ queries are made against the original preprocessed tree.\\
+    Note that the RMQ structure can give us a handle to the node which has the max weight between two nodes. For some side tree $\tau$, when constructing $T_B||\Lambda(\tau)$ we add some special nodes $z$ to $T_B|\Lambda(\tau)$ which represent a node with max weight between some two nodes. These nodes should keep handles to the node in the original tree that they identify with. In recursive calls, if asked to construct a special node where one or both of the endpoints is/are special node(s), use the handle to the node in the original tree to make this query. That is, all RMQ queries are made against the original preprocessed tree.\\
 
-    Constructing each $T_B|\Lambda(\tau)$ costs total $O(n)$ time, as mentioned in the paper. From each of these, contructing $T_B||\Lambda(\tau)$ will then cost $O(|\Lambda(\tau)|)$ time each since each tree contains $O(|\Lambda(\tau)|)$ edges. Also, marking spoiled nodes can be done in $O(|\Lambda(\tau)|)$ time per tree, by doing a bottom up traversal of the tree and counting the size of the leaf set.\\
+    Constructing each $T_B|\Lambda(\tau)$ costs total $O(n)$ time [Original paper]. From each of these, contructing $T_B||\Lambda(\tau)$ will then cost $O(|\Lambda(\tau)|)$ time each since each tree contains $O(|\Lambda(\tau)|)$ edges and each RMQ query costs $O(1)$. Also, marking spoiled nodes can be done in $O(|\Lambda(\tau)|)$ time per $\tau$, by doing a bottom up traversal of the tree and counting the size of the leaf set.\\
 
     Thus step 3 can be completed in $O(n)$ time where $n$ is the size of the subproblem, along with a single preprocessing step at the start of the \texttt{Filter\_Clusters} subroutine, costing $O(n\;log\;n)$ time, where $n$ is the size of the leaf set.
 
