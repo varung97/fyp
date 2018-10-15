@@ -1,0 +1,57 @@
+\documentclass[a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumerate}
+\usepackage{relsize}
+\usepackage[
+  top    = 2.75cm,
+  bottom = 3.00cm,
+  left   = 2.50cm,
+  right  = 2.50cm
+]{geometry}
+\setlength{\parindent}{0in}
+
+\title{\texttt{Filter\_Clusters} runtime}
+
+\begin{document}
+    \maketitle
+
+    Note that:
+    \begin{itemize}
+        \item $\Lambda(T)$ = leaf set of $T$
+        \item $|\Lambda(A)| = |\Lambda(B)| = n$
+        \item $\sigma(\pi) = $ set of side trees of A (after centroid decomposition)
+        \item $T|C$ is the tree constructed by restricting $T$ to the leaf set $C$
+        \item $T||C$ is the tree constructed from $T|C$ by adding ``special nodes''
+    \end{itemize}
+
+    \vspace*{\bigskipamount}
+
+    From the FDCT paper, runtime of \texttt{Filter\_Clusters}(A, B) can be written as:
+
+    \begin{equation}
+        T(\texttt{Filter\_Clusters}(A, B)) = O(n\;logn)\;+\;\sum_{\tau\in\sigma(\pi)} T(\texttt{Filter\_Clusters}(\tau, B||\Lambda(\tau)))
+    \end{equation}
+
+    \textbf{Original analysis:}\\
+
+    Each $\tau$ is such that $|\Lambda(\tau)| \leq n/2$, thus there are $log(n)$ recursion levels, and so total runtime $= O(n\;log^2n)$\\
+
+    \textbf{Altered analysis:}\\
+
+    \[\sum\limits_{\tau\in\sigma(\pi)}|\Lambda(\tau)| = n - 1\]\\
+    Also, $|B||\Lambda(\tau)| = O(|\Lambda(\tau)|)$ [since $B||\Lambda(\tau)$ is constructed by adding at most one special node per node in $B|\Lambda(\tau)$]\\
+
+    Then, size of subproblem $\texttt{Filter\_Clusters}(\tau, B||\Lambda(\tau)) = O(\Lambda(\tau))$\\
+
+    Thus
+    \begin{equation}
+        T(\texttt{Filter\_Clusters}(A, B)) = T(n) = O(n\;logn)\;+\;\sum_{\tau\in\sigma(\pi)}T(|\Lambda(\tau)|)
+    \end{equation}
+
+    Given the result that if $\sum{m} = n$ then $\sum{m\;logm} = O(n\;logn)$ and inductively assuming that $T(i) = O(i\;logi)$
+    \begin{equation}
+        T(n) = O(n\;logn)
+    \end{equation}
+\end{document}

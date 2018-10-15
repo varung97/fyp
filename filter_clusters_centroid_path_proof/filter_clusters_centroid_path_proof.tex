@@ -1,0 +1,81 @@
+\documentclass[a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumerate}
+\usepackage{relsize}
+\usepackage[
+  top    = 2.75cm,
+  bottom = 3.00cm,
+  left   = 2.50cm,
+  right  = 2.50cm
+]{geometry}
+\setlength{\parindent}{0in}
+\usepackage[linesnumbered]{algorithm2e}
+\usepackage{framed}
+
+\title{Centroid Path Handling Proof}
+
+\begin{document}
+    \maketitle
+
+    \textbf{Preliminaries}\\
+
+    Define:
+    \begin{itemize}
+        \item $T[u]$ for some tree $T$ and some node $u$ to be the subtree of $T$ rooted at $u$
+        \item $\Lambda(T)$ for some tree $T$ to be the leaf set of $T$
+        \item Trees $T_A$ and $T_B$ on which the procedure \texttt{Filter\_Clusters} will be run
+        \item Centroid path of $T_A$ composed of nodes $p_1 ... p_{\alpha}$, where $p_1$ is a leaf and $p_{\alpha}$ is the root
+    \end{itemize}
+
+    The portion of the \texttt{Filter\_Clusters} algorithm that handles the centroid path is reproduced on the next page for ease.\\
+
+    \RestyleAlgo{boxed}
+    \begin{algorithm}[ht]
+        Let $BT$ be an empty binary tree\\
+        Let $r_1 :=$ the leaf in $T_B$ labelled by $p_1$
+        \newline
+        Set $counter(r_1) := 1$, and if $\alpha \geq 2$ then $counter(parent^{T_B}(r_1)) := 1$\\
+
+        \For{$i := 2$ \KwTo $\alpha$}{
+            Let $D := \Lambda(T_A[p_i]) \;\backslash\; \Lambda(T_A[p_{i-1}])$\\
+            Compute $r_i := lca^{T_B}(\{r_{i-1}\} \cup D)$\\
+            Insert every node belonging to the path between $r_{i-1}$ and $r_i$ except $r_{i-1}$ into $BT$\\
+            \If{$counter(r_{i-1}) < |\Lambda(T_B[r_{i-1}])|$ or $r_{i-1}$ is spoiled}{insert $r_{i-1}$ into $BT$}
+            \For{each $x \in D$}{
+                \While{$x$ is not in $BT$}{
+                    Insert $x$ into $BT$\newline
+                    $x := parent^{T_B}(x)$
+                }
+            }
+            \For{each $x \in D$}{
+                $counter(x) := counter(x) + 1$\\
+                \While{$counter(x) = |\Lambda(T_B[x])|$ and $x$ is not spoiled and $x \neq root(T_B)$}{
+                    $counter(parent^{T_B}) := counter(parent^{T_B}) + |\Lambda(T_B[x])|$\newline
+                    Remove $x$ from $BT$\newline
+                    $x := parent^{T_B}(x)$
+                }
+            }
+            \If{$r_i \in BT$}{remove $r_i$ from $BT$}
+            \lIf{$BT$ is empty}{$M := 0$}
+            \lElse{$M := \text{maximum weight of a node in }BT$}
+            \If{$w(\Lambda(T_A[p_i])) > M$}{add $\Lambda(T_A[p_i]))$ to result tree with an $O(1)$ operation}
+        }
+    \end{algorithm}
+
+    We define a unit of work to be $O(\text{time taken to do a } BT \text{ operation}) = O(log\;n)$. Below, we show that we can assign every node a constant amount of work, thus resulting in a total time of $O(n\;log\;n)$.\\
+
+    We say a node is encountered if the algorithm reaches it, but does not change its membership of $BT$. We say a node is visited if the algorithm reaches it and changes its membership of $BT$.\\
+
+    \textbf{Lemma 1}: Any node is visited at most twice.\\
+    \textit{Proof}: A node $u$ is only removed from the $BT$ when $counter(u) = |\Lambda(T_B[u]) \cap \Lambda(T_A[p_i])| = |\Lambda(T_B[u])|$ for some $i$. Thus, $\Lambda(T_B[u]) \subseteq \Lambda(T_A[p_i])$. Then $u$ will never be added to $BT$ again since Step $6$ would never reach it ($u$ is a descendant of $r_i$) and the loop in Step $10$ would also never reach it (all leaves $x \in \Lambda(T_B[u])$ have already been handled). Note that this holds for steps $21-23$ also since $\Lambda(T_B[r_i])$ must be compatible with $\Lambda(T_A[p_i])$.\\
+
+    \textbf{Lemma 2}: For any leaf $x$, a maximum of $2$ nodes are encountered during its treatment by this algorithm.\\
+    \textit{Proof}: In each of the loops seen in Steps $11$ and $17$, nodes are added/removed from $BT$ until a node causes the loop to terminate. All the nodes treated during the loops are \textit{visited} since their status in $BT$ changed. Thus only the last node treated, which caused the loop to terminate, is \textit{encountered}.\\
+
+    \textbf{Lemma 3}: The remaining steps in the algorithm ($4, 5, 7-9, 24-28$) take $O(n)$ time in total, so can be ignored.\\
+    \textit{Proof}: Step $4$ can be completed in $O(1)$ time. Step $5$ can be completed in $O(|D|)$ time. Steps $24-28$ can be completed in $O(1)$ time. Total time over these steps = $\sum_{i=1}^{\alpha}O(1) + O(|D|) = O(n)$ since $\sum_{i=1}^{\alpha}|D| = n$\\
+
+   To conclude the analysis, note that during the execution of the algorithm, any node is only either encountered or visited. The total number of visitations $\leq 2\;\times$ number of nodes $= O(n)$ [Lemma 1]. Also, total number of encounters $\leq 2\;\times$ number of leaves $= O(n)$ [Lemma 2]. Thus total work assigned to any node is amortized $O(1)$. Since each unit of work done by a node is $O(log\;n)$, total time taken by the algorithm is $O(n\;log\;n)$.\\
+\end{document}
