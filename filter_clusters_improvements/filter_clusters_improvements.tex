@@ -27,6 +27,9 @@
         \item Trees $T_A$ and $T_B$ on which the procedure \texttt{Filter\_Clusters} will be run
         \item Centroid path of $T_A$ to be $\pi$
         \item Set of side trees created when $\pi$ is removed from $T_A$ to be $\sigma(\pi)$
+        \item $k$ to be the total number of trees over which the frequency difference tree is being computed
+        \item $n$ to be the size of the leaf set of each of these trees (each of which is the same)
+        \item weight of a node $u$ in one of the trees under consideration to be the number of trees that its associated cluster appears in
     \end{itemize}
 
     \section{Bottlenecks}
@@ -50,22 +53,32 @@
 
     \section{Step 6}
 
-    The key idea here is noticing that the weights being stored in the BT are all bounded by $k$. Thus we can utilise a more efficient data structure (specifically a vEB tree) to store these weights.\\
+    The key idea here is noticing that the weights being stored in the BT are all integers, bounded by $k$. Thus we can utilise a more efficient data structure (in particular a vEB tree) to store these weights.\\
 
-    Recall that a vEB tree can carry out findMax operations in $O(1)$ time and insert and delete operations in $O(log\;log\;m)$ time where $m$ is the largest possible integer being stored in the tree. In our case, $m$ is $O(k)$.\\
+    Recall that a vEB tree can carry out findMax operations in $O(1)$ time and insert and delete operations in $O(log\;log\;m)$ time where $m$ is the largest possible integer being stored in the tree.\\
 
-    Note that while a BT can store duplicate keys, a vEB tree is not capable of this. To fix this, maintain an array of size $k$ where each element represents the number of nodes in the vEB tree that have the given weight. When inserting into our DS, increment the relevant counter by one, and only insert into the vEB tree if the counter was $0$. Similarly, when deleting, decrement the counter, and only delete from vEB tree if counter goes to $0$. Then each operation is maintained at $O(log\;log\;k)$. (Will have to initialize a new array of size $k$ each time?? Can a vEB tree store duplicates if we store an integer at each point instead of a 0/1? Will that cost extra time? Alternatively, just sort the weights initially using counting sort, then map them to numbers in $[1, n]$)\\
+    Finally, we can also make use of the fact that the number of unique weights in a tree is bounded by $n$ since the number of internal nodes in a tree is bounded by $n - 1$ and all leaves have the same weight $= k$. This means that the number of unique weights in any tree is $min(n, k)$, so we can remap the weights to integers in the range $[1, min(n, k)]$.\\
 
-    Then Step 6 takes $O(n\;log\;log\;k)$ time. However, we can do a little better.\\
+    To carry out this remapping, construct a triplet for each internal node $u$ in the trees, of the form $(weight(u), \text{ pointer to u}, \text{ index of tree to which }u\text{ belongs})$. Counting sort all the triplets obtained by weight, taking $O(nk)$ time, since the number of triplets is bounded by $O(nk)$ and the number of unique weights is bounded by $k$. For each tree (with say index $i$), initialise an empty array of size $n$, $A_i$, along with an index $p_i = 0$. Iterate over the sorted array of triplets and for each entry $(w, u, i)$, if $A_i[p_i] \neq w$, then set $p_i = p_i + 1$, then $A_i[p_i] = w$. Also set $remapped\_weight(u) = p_i$. Note that the original $weight(u)$ can be recovered as $A_i[remapped\_weight(u)]$. Now for each tree, the weights are bounded by $O(min(n, k))$.\\
 
-    The idea here is that there are at most $n$ nodes in a tree and at most $k$ weight values, so we could remap the weight values into numbers in $[1, min(n, k)]$. This can be done by counting sorting all the weights in all the trees initially, while keeping track of which tree they came from. Construct one array per tree, each of size $min(n, k)$, which will then store all the weights of that tree. Then do a left to right pass over the sorted array, moving each weight to a new slot in the respective array. Then in each array, we can remap each weight to its index, and use these remapped values as keys for the BT. Note that these remapped values retain the ordering, and the original weights can be recovered easily by indexing into this array. (Note that this now also avoids the issue of duplicate keys in the vEB)\\
+    Recall that the standard vEB tree only stores 0/1 to indicate membership and so cannot handle duplicate keys. To get around this issue, we use a modified version of the vEB tree that stores integers representing the duplicity of a key at its leaves. Then an insert operation causes the integer at that position to be incremented while delete decrements the integer (unless it was already $0$). Notice that the time complexity of operations remains unchanged. However, the space complexity changes. Since we're storing numbers in $[1, min(n, k)]$, the standard vEB tree would have space complexity $O(min(n, k))$. Now instead of storing a single bit per element at the leaves, we're storing an integer. The amount of space needed to store this is $log(\text{Max duplicity})$. Since a tree contains $O(n)$ nodes, the max duplicity is $O(n)$, thus the space complexity of our new vEB tree is $O(min(n, k)\;log\;n)$.\\
 
-    Since the largest value we're inserting into the vEB is now $min(n, k)$, Step 6 takes $O(n\;log\;log\;min(n, k))$ time.
+    Now as a preprocessing step, we create such a vEB tree. Since the vEB tree only stores duplicity of keys, we update a property $inTree(u)$ when a node $u$ is added or removed from the tree. This property is set to $False$ when an instance of \texttt{Filter\_Clusters} begins for all nodes in $T_B$ and to $False$ again before \texttt{Filter\_Clusters} returns. When running \texttt{Filter\_Clusters}, the same vEB tree is passed to each instance of the problem. To avoid some nodes already having been inserted into the tree, before the algorithm returns an answer, we use predecessor queries and delete operations on the vEB tree to clear it of all entries.\\
+
+    To analyse the time complexity of this approach, note that we're still making $O(n)$ updates to the vEB tree (as claimed in the original paper), so time taken to do this is $O(n\;log\;log\;min(n, k))$. It costs $O(n)$ time to set $inTree$ to $False$ for every node at the beginning and end. In addition, clearing the vEB tree costs $O(n\;log\;log\;min(n, k))$ since a maximum of $O(n)$ values would be in the tree. Thus the time taken to carry out all of this is $O(n\;log\;log\;min(n, k))$.
 
     \section{Overall analysis}
 
-    \[T(n) = O(n\;log\;log\;min(n, k)) + \sum_{\tau\in\sigma(\pi)}T(|\Lambda(\tau)|)\]
+    For \texttt{Filter\_Clusters},
+
+    \[T(x) = O(x\;log\;log\;min(n, k)) + \sum_{\tau\in\sigma(\pi)}T(|\Lambda(\tau)|)\]
 
     Since there are $O(log\;n)$ recursion levels,
     \[T(n) = O(n\;(log\;n)\;(log\;log\;min(n, k)))\]
+
+    Note that the preprocessing step for remapping is only run once during the entire \texttt{Frequency\_Difference} algorithm. Recall that time complexity of \texttt{Frequency\_Difference} $= O(kn\;log\;n) + O(k \cdot f(n, k)) + \text{Preprocessing}$, where $f(n, k)$ is the is the runtime of \texttt{Filter\_Clusters}. Thus for \texttt{Frequency\_Difference},
+    \begin{align*}
+        T(n) &= O(kn\;log\;n) + O(k \cdot n\;(log\;n)\;(log\;log\;min(n, k))) + O(kn)\\
+        &= O(kn\;(log\;n)\;(log\;log\;min(n, k)))
+    \end{align*}
 \end{document}
