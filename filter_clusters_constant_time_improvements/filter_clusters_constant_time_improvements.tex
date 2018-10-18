@@ -1,0 +1,58 @@
+\documentclass[a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumerate}
+\usepackage{relsize}
+\usepackage[
+  top    = 2.75cm,
+  bottom = 3.00cm,
+  left   = 2.50cm,
+  right  = 2.50cm
+]{geometry}
+\setlength{\parindent}{0in}
+
+\title{\texttt{Filter\_Clusters} constant time improvements}
+
+\begin{document}
+    \maketitle
+
+        \section{Preliminaries}
+    Define:
+    \begin{itemize}
+        \item $T[u]$ for some tree $T$ and some node $u$ to be the subtree of $T$ rooted at $u$
+        \item $\Lambda(T)$ for some tree $T$ to be the leaf set of $T$
+        \item $T|C$ to be the tree $T$ restricted to the leaf set $C$, i.e. keep all common ancestors of $C$ while keeping the relative structure of these nodes the same as in the original tree
+        \item $T||C$ to be a modified version of $T|C$. This version includes ``special nodes''. Given a parent-child pair in $T|C$ a special node is added between them if these nodes are not a parent-child pair in $T$; this special node represents all the nodes on the path between the pair in $T$
+        \item Trees $T_A$ and $T_B$ on which the procedure \texttt{Filter\_Clusters} will be run
+        \item Centroid path of $T_A$ to be $\pi$
+        \item Set of side trees created when $\pi$ is removed from $T_A$ to be $\sigma(\pi)$
+        \item $k$ to be the total number of trees over which the frequency difference tree is being computed
+        \item $n$ to be the size of the leaf set of each of these trees (each of which is the same)
+        \item weight of a node $u$ in one of the trees under consideration to be the number of trees that its associated cluster appears in
+    \end{itemize}
+
+    \section{Improvement 1: Reusing information from subtrees}
+
+    \subsection{Idea}
+
+    Let $p_i \in \pi$, $p_i$ is not a leaf. Then $p_i$ has at least one side tree associated with it. Take any one of these side trees, $\tau$. Notice that before $p_i$ is processed by \texttt{Filter\_Clusters}, $\tau$ has been processed, by a call to \texttt{Filter\_Clusters}$(\tau, T_B||\Lambda(\tau))$.\\
+
+    During this previous call to \texttt{Filter\_Clusters}, the tree storing all the incompatible nodes would be updated with insertions and deletions. We're only interested in the nodes that were inserted into and then deleted from this. Let the centroid path of $\tau$ be $\pi(\tau)$. Notice that when a node $u$ is removed from this tree, that means that for some node $q \in \pi(\tau)$, $T_B[u] \subseteq \Lambda(\tau[q])$. Since $\Lambda(\tau[q]) \subseteq \Lambda(\tau) \subseteq \Lambda(p_i)$, $T_B[u] \subseteq \Lambda(p_i)$. Thus, $u$ is compatible with $p_i$. In fact, all the nodes in the subtree rooted at $u$ are compatible with $p_i$. This leads to the observation that the nodes that are inserted and then removed from the incompatibility tree form subtrees within $T_B$, where each of these subtrees is compatible with $p_i$. Note that when we handle $p_i$ in the \texttt{Filter\_Clusters} algorithm, we construct a set $D = \Lambda(T_A[p_i]) \;\backslash\; \Lambda(T_A[p_{i-1}])$ and then say that any node on the path from some $x \in D$ to $r_i$ could be incompatible with $p_i$. But in fact, we could instead start from the roots of the subtrees found while solving the subproblem for the side trees of $p_i$ since descendants of these roots are guaranteed to be compatible.\\
+
+    \subsection{Analysis}
+
+    It is possible that it turns out $p_i$ is not compatible with any of the non-trivial clusters in $T_B$, in which case this trick doesn't help at all.
+
+    \section{Improvement 2: Using RMQ queries to short-circuit some nodes}
+
+    \subsection{Idea}
+
+    The key idea here is noticing that when considering some cluster $C$, if a node $u$ is incompatible with $C$ then every node on the path from $u$ to $r_C = lca(C)$ (not including $r_C$) is incompatible with $C$. This is true because if $u$ is incompatible with $C$ then there is some $x$ such that $x \in \Lambda(u)$ and $x \not\in C$ and some $y$ such that $y \in \Lambda(u)$ and $x \in C$. Further, for any node $v$ on the path from $u$ to $r_C$ (not including $r_C$), there is some $z$ such that $z \in C$ and $z \not\in \Lambda(v)$, otherwise $v$ would be an ancestor of $r_C$. It is also true that $x, y \in \Lambda(v)$ since $\Lambda(u) \subseteq \Lambda(v)$. Thus $v$ is incompatible with $C$. Since we only need to know what the maximum weight of any of these nodes is, we could use an RMQ query from $u$ to the child of $r_C$ that is an ancestor of $u$ rather than actually traversing all these nodes.\\
+
+    Thus, when handling $p_i \in \pi$, the problem is reduced to finding, for any $x \in D$, the deepest node $u$ such that $u$ is an ancestor of $x$ and $u$ is incompatible with $\Lambda(T_A[p_i])$. This means that we can skip the loop (step $6.5$) that adds $x$ and all of its ancestors to the incompatibility tree and go straight to the loop (step $6.6$) that determines which ancestors of $x$ are compatible with $\Lambda(T_A[p_i])$. We proceed with this loop as normal, except we don't actually remove the nodes from the incompatibility tree since we never inserted them, instead we wait until the loop terminates. Then the last node handled would have been incompatible. We then use an RMQ query to find the maximum weight of nodes on the path from this node to $r_i = lca^{T_B}(\Lambda(T_A[p_i]))$ and insert this weight into the incompatibility tree. (I recognise that weights will also have to be deleted, but I believe this can be handled without too much effort by keeping a membership table and when a node is encountered for which an RMQ entry was inserted but has now become compatible, we just delete this entry from the incompatibility tree)
+
+    \subsection{Analysis}
+
+    This trick still requires at least one update to the incompatibility tree per leaf $x$, so the time taken is still $O(n \cdot \text{Update time})$, which is not asymptotically better.
+\end{document}
