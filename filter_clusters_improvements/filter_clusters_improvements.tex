@@ -1,9 +1,12 @@
-\documentclass[a4paper]{article}
+\documentclass{article}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{enumerate}
 \usepackage{relsize}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
 \usepackage[
   top    = 2.75cm,
   bottom = 3.00cm,
@@ -28,7 +31,7 @@
         \item Centroid path of $T_A$ to be $\pi$. Number the nodes from leaf to root from $1$ to $\alpha$
         \item Set of side trees created when $\pi$ is removed from $T_A$ to be $\sigma(\pi)$
         \item $k$ to be the total number of trees over which the frequency difference tree is being computed
-        \item $n$ to be the size of the leaf set of each of these trees (each of which is the same)
+        \item $n$ to be the size of the leaf set of each of these trees (each of which is the ,,,same)
         \item weight of a node $u$ in one of the trees under consideration to be the number of trees that its associated cluster appears in
     \end{itemize}
 
@@ -53,50 +56,129 @@
 
     \section{Step 6}
 
+    \begin{algorithm}
+        \caption{Filter\_Clusters}
+        \begin{algorithmic}[1]
+            \State \textbf{Input:} Two trees $T_A$, $T_B$ with $\Lambda(T_A) = \Lambda(T_B) = L$ where every cluster has a known $weight$.
+
+            \State \textbf{Output:} A tree $T$ with $\Lambda(T) = L$ and $C(T) = \{\Lambda(T_A[u]): u \in V(T_A) \text{ and } w(u) > w(x) \text{ for every } x \in V(T_B) \text{ with } \Lambda(T_A[u]) \text{ incompatible with } \Lambda(T_B[x])\}$
+
+            \State Compute a centroid path $\pi = \;<p_{\alpha}, p_{\alpha - 1},...,p_1>$ of $T_A$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf.
+
+            \State For each side tree $\tau \in \sigma(\pi)$ construct $T_B||\tau$.
+
+            \State Let $R_s$ be a tree consisting only of a root node and a single leaf labelled by $p_1$.
+
+            \State Let $R_c$ be a tree with $\Lambda(R_c) = L$ where every leaf is attached to the root.
+
+            \State Do a bottom up traversal of $T_B$ to precompute $|\Lambda(T_B[x])|$ for every $x \in V(T_B)$. Preprocess $T_B$ for $lca$ queries. Let $IDS$ be an initially empty Brodal queue for storing nodes from $T_B$. For every $x \in V(T_B)$, initialise $counter(x) := 0$.
+
+            \State Let $r_i :=$ the leaf in $T_B$ labelled by $p_1$.\newline
+            Set $counter(r_1) := 1$, and if $\alpha \geq 2$ then $counter(parent^{T_B}(r_1)) := 1$.
+
+            \Comment{Continued on next page}
+
+            \algstore{FC}
+        \end{algorithmic}
+    \end{algorithm}
+
+    \begin{algorithm}
+        \begin{algorithmic}[1]
+            \algrestore{FC}
+            \For{$i := 2$ \textbf{to} $\alpha$}
+                \State Let $V$, $parentsOfSubtrees :=$ empty linked list.
+
+                \ForAll{side trees $\tau$ associated with $p_i$}
+                    \State $\tau'$, $V' := $ \texttt{Filter\_Clusters}($\tau$, $T_B||\tau$)
+
+                    \State Attach $root(\tau')$ as a child of $root(R_s)$
+
+                    \If{$V'$ is empty}
+                        \State Add $parent^{T_B}(root(T_B||\tau))$ to $V$
+                    \Else
+                        \State $V :=$ \texttt{Concatenate}($V$, $V'$)
+                    \EndIf
+                \EndFor
+
+                \State Compute $r_i := lca^{T_B}(r_{i-1} \cup V)$
+
+                \State Insert every node belonging to the path between $r_{i-1}$ and $r_i$, except $r_{i-1}$ and $r_i$, into $IDS$
+
+                \If{$counter(r_{i-1}) < |\Lambda(T_B[r_{i-1}])|$ or $r_{i-1}$ is spoiled}
+                    \State Insert $r_{i-1}$ into $IDS$
+                \EndIf
+
+                \ForAll{$x \in V$}
+                    \While{$x$ is not in $IDS$ and $x \neq r_i$}
+                        \State Insert $x$ into $D$
+                        \State $x := parent^{T_B}(x)$
+                    \EndWhile
+                \EndFor
+
+                \ForAll{$x \in V$}
+                    \State $counter(x) := counter(x) + 1$
+
+                    \While{$counter(x) = |\Lambda(T_B[x])|$ and $x$ is not spoiled and $x \neq r_i$}
+                        \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\Lambda(T_B[x])|$
+                        \State Remove $x$ from $IDS$
+                        \If{$x$ is in $parentsOfSubtrees$}
+                            \State Remove $x$ from $parentsOfSubtrees$
+                        \EndIf
+                        \State $x := parent^{T_B}(x)$
+                    \EndWhile
+
+                    \If{$x$ is not in $parentsOfSubtrees$ and $x \neq root(T_B)$}
+                        \State Add $x$ to $parentsOfSubtrees$
+                    \EndIf
+                \EndFor
+
+                \If{$IDS$ is empty}
+                    \State $M := 0$
+                \Else
+                    \State $M :=$ maximum weight of a node in $IDS$
+                \EndIf
+
+                \If{$w(\Lambda(T_A[p_i])) > M$}
+                    \State Put $\Lambda(T_A[p_i])$ in $R_c$ by an $insert$ operation
+                \EndIf
+            \EndFor
+
+            \State $T := $ \texttt{Merge\_Trees}($R_s$, $R_c$)
+
+            \State \Return $T$, $parentsOfSubtrees$
+        \end{algorithmic}
+    \end{algorithm}
+
     Let the data structure being used to store the incompatible nodes be $IDS$.\\
 
-    Say \texttt{Filter\_Clusters}$(T_a, T_b)$ is being computed. Note that $T_b$ may have spoiled nodes. For any tree $T$, let $\pi(T)$ be the centroid path of $T$ and $|\pi(T)| = \alpha_T$.
+    \textbf{Lemma 1:} Let $\tau \in \sigma(\pi)$ be some side tree in $T_A$. For any node $u$ that was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, $\Lambda(T_B[u]) \subseteq \Lambda(\tau)$.\\
+    \textit{Proof:} Let the centroid path of $\tau$ be $\pi(\tau)$. Notice that when a node $u$ is removed from $IDS$, that means that for some node $q \in \pi(\tau)$, $counter(u) = |\Lambda(T_B||\tau[u]) \cap \Lambda(\tau[q])| = |\Lambda(T_B||\tau[u])|$ and $u$ is not spoiled. Since $u$ is not spoiled, $\Lambda(T_B||\tau[u]) = \Lambda(T_B[u])$. Thus $T_B[u] \subseteq \Lambda(\tau[q])$. Since $\Lambda(\tau[q]) \subseteq \Lambda(\tau)$, $T_B[u] \subseteq \Lambda(\tau)$.\\
 
-    \textbf{Lemma 1:} Let $\tau \in \sigma(\pi(T_a))$ be some side tree in $T_a$. For any node $u$ that was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_b||\tau)$, $\Lambda(T_b[u]) \subseteq \Lambda(\tau)$.\\
-    \textit{Proof:} Let the centroid path of $\tau$ be $\pi(\tau)$. Notice that when a node $u$ is removed from $IDS$, that means that for some node $q \in \pi(\tau)$, $counter(u) = |\Lambda(T_b||\tau[u]) \cap \Lambda(\tau[q])| = |\Lambda(T_b||\tau[u])|$ and $u$ is not spoiled. Since $u$ is not spoiled, $\Lambda(T_b||\tau[u]) = \Lambda(T_b[u])$. Thus $T_b[u] \subseteq \Lambda(\tau[q])$. Since $\Lambda(\tau[q]) \subseteq \Lambda(\tau)$, $T_b[u] \subseteq \Lambda(\tau)$.\\
+    \textbf{Lemma 2:} If for some cluster $C$ and some side tree $\tau \in \sigma(\pi)$, $C \subseteq \Lambda(\tau)$ then $C$ is compatible with $T_A$.\\
+    \textit{Proof:} Since the leaf sets of all sidetrees are mutually disjoint, and $C \subseteq \tau$, $C$ is disjoint with leaf sets of all other sidetrees, and so is compatible with all nodes in these. The only remaining nodes are those on the centroid path. Let $p_i \in \pi$ be the node on the centroid path that is a direct parent of $\tau$. Then for any $j$ such that $1 \leq j < i$, $\Lambda(T_A[p_j])$ is mutually disjoint with $C$ and so these are compatible. For any $j$ such that $i \leq j \leq \alpha$, $\Lambda(T_A[p_i]) \subseteq \Lambda(T_A[p_j])$. Also, $\Lambda(\tau) \subseteq \Lambda(T_A[p_i])$. Thus $C$ is compatible with $p_j$.\\
 
-    \textbf{Lemma 2:} If for some cluster $C$ and some side tree $\tau \in \sigma(\pi)$, $C \subseteq \Lambda(\tau)$ then $C$ is compatible with $T_a$.\\
-    \textit{Proof:} Since the leaf sets of all sidetrees are mutually disjoint, and $C \subseteq \tau$, $C$ is disjoint with leaf sets of all other sidetrees, and so is compatible with all nodes in these. The only remaining nodes are those on the centroid path. Let $p_i \in \pi(T_a)$ be the node on the centroid path that is a direct parent of $\tau$. Then for any $j$ such that $1 \leq j < i$, $\Lambda(T_a[p_j])$ is mutually disjoint with $C$ and so these are compatible. For any $j$ such that $i \leq j \leq \alpha_{T_a}$, $\Lambda(T_a[p_i]) \subseteq \Lambda(T_a[p_j])$. Also, $\Lambda(\tau) \subseteq \Lambda(T_a[p_i])$. Thus $C$ is compatible with $p_j$.\\
+    From Lemma 1 and 2, for any node $u$ and side tree $\tau \in \sigma(\pi)$, if $u$ was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, $\Lambda(T_B[u])$ is compatible with $T_A$. Then, we should never need to add $u$ to $IDS$ again. We detail below how this is ensured.\\
 
-    From Lemma 1 and 2, for any node $u$ and side tree $\tau \in \sigma(\pi(T_a))$, if $u$ was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_b||\tau)$, $\Lambda(T_b[u])$ is compatible with $T_a$. Then, we should never need to add $u$ to $IDS$ again. We detail below how this is ensured.\\
+    Firstly, note that the nodes $u$ that are removed from $IDS$ during the recursive calls to \texttt{Filter\_Clusters} form disjoint subtrees of $T_B$ since their leaf sets are subsets of disjoint side trees. For each of these subtrees, we do not wish to iterate over the nodes in them again. Thus, we would like start from the parents of the roots of these trees (rather than the leaves as in the original algorithm). To do so, each call to \texttt{Filter\_Clusters} returns the parents of the roots of the subtrees discovered during its execution as a linked list.\\
 
-    Firstly, note that the nodes $u$ that are removed from $IDS$ during the recursive calls to \texttt{Filter\_Clusters} form disjoint subtrees of $T_b$ since their leaf sets are subsets of disjoint side trees. For each of these subtrees, we do not wish to iterate over the nodes in them again. Thus, we would like start from the parents of the roots of these trees (rather than the leaves as in the original algorithm). To do so, each call to \texttt{Filter\_Clusters} returns the parents of the roots of the subtrees discovered during its execution as a linked list.\\
+    To achieve this, for some side tree $\tau \in \sigma(\pi)$, during the recursive call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, we augment each node in $T_B||\tau$ with a property $parentOfSubtree$, initialised to $False$. This property is used to check membership in an initially empty linked list $parentsOfSubtrees$, and is updated every time a node is inserted/deleted from this list. When traversing $T_B||\tau$ upwards while removing nodes from $IDS$, for every removed node $x$, if $x$ is in $parentsOfSubtrees$ then $x$ is removed from $parentsOfSubtrees$. When the loop terminates, if $x$ is not $root(T_B||\tau)$ and is not in $parentsOfSubtrees$, then $x$ is added to $parentsOfSubtrees$. Notice that at the end of this process $parentsOfSubtrees$ contains exactly the parent of every desired subtree. The linked list may also be empty, indicating that $\Lambda(lca^{T_B}(\Lambda(\tau))) = \Lambda(\tau)$.\\
 
-    To achieve this, augment each node in $T_B$ with a property $parentOfSubtree$, initialised to $False$. When traversing $T_B$ upwards while removing nodes from $IDS$, for every removed node $x$, also check $parentOfSubtree(x)$. If this is $True$, then remove $x$ from the linked list and set it to $False$. When the loop terminates, if $x$ is not $root(T_B)$ and $parentOfSubtree(x)$ is $False$, then add $x$ to a linked list (keeping a pointer to this element in $x$) and set $parentOfSubtree(x) = True$. Notice that at the end of this process our linked list contains exactly the parent of every desired subtree.
+    This linked list is returned to the caller of \texttt{Filter\_Clusters}. Here, for any $p_i \in \pi$, the linked lists returned by the call to \texttt{Filter\_Clusters} on side trees associated with it are merged by linking them together, and this merged list is used instead of the set $D = \Lambda(T_A[p_i]) \;\backslash\; \Lambda(T_A[p_{i-1}])$. Note that if the linked list for some $\tau \in \sigma(\pi)$ is empty, then we can replace it with a single node $= parent^{T_B}(root(T_B||\tau))$.\\
 
-    In fact, all the nodes in the subtree rooted at $u$ are compatible with $p_i$ since their clusters are all subsets of $\Lambda(T_B[u])$. This leads to the observation that the nodes that are inserted and then removed from the incompatibility tree form subtrees within $T_B$, where each of these subtrees is compatible with $p_i$. Note that when we handle $p_i$ in the \texttt{Filter\_Clusters} algorithm, we construct a set $D = \Lambda(T_A[p_i]) \;\backslash\; \Lambda(T_A[p_{i-1}])$ and then say that any node on the path from some $x \in D$ to $r_i$ could be incompatible with $p_i$. But in fact, we could instead start from the roots of the subtrees found while solving the subproblem for the side trees of $p_i$ since descendants of these roots are guaranteed to be compatible.\\
+    Thus a node that is removed from some $IDS$ is never added to an $IDS$ again. Notice that in a call to \texttt{Filter\_Clusters} for a leaf set of size $m$, we might still insert $O(m)$ nodes into the $IDS$. We maintain another property in each node $u$ called $inIDS(u)$, which is set to $True$ when a node is added to the $IDS$ and to $False$ when it is removed. This allows us to make membership checks in $O(1)$ time.\\
 
-    The key idea here is noticing that the weights being stored in the BT are all integers, bounded by $k$. Thus we can utilise a more efficient data structure (in particular a vEB tree) to store these weights.\\
-
-    Recall that a vEB tree can carry out findMax operations in $O(1)$ time and insert and delete operations in $O(log\;log\;m)$ time where $m$ is the largest possible integer being stored in the tree.\\
-
-    Finally, we can also make use of the fact that the number of unique weights in a tree is bounded by $n$ since the number of internal nodes in a tree is bounded by $n - 1$ and all leaves have the same weight $= k$. This means that the number of unique weights in any tree is $min(n, k)$, so we can remap the weights to integers in the range $[1, min(n, k)]$.\\
-
-    To carry out this remapping, construct a triplet for each internal node $u$ in the trees, of the form $(weight(u), \text{ pointer to u}, \text{ index of tree to which }u\text{ belongs})$. Counting sort all the triplets obtained by weight, taking $O(nk)$ time, since the number of triplets is bounded by $O(nk)$ and the number of unique weights is bounded by $k$. For each tree (with say index $i$), initialise an empty array of size $n$, $A_i$, along with an index $p_i = 0$. Iterate over the sorted array of triplets and for each entry $(w, u, i)$, if $A_i[p_i] \neq w$, then set $p_i = p_i + 1$, then $A_i[p_i] = w$. Also set $remapped\_weight(u) = p_i$. Note that the original $weight(u)$ can be recovered as $A_i[remapped\_weight(u)]$. Now for each tree, the weights are bounded by $O(min(n, k))$.\\
-
-    Recall that the standard vEB tree only stores 0/1 to indicate membership and so cannot handle duplicate keys. To get around this issue, we use a modified version of the vEB tree that stores integers representing the duplicity of a key at its leaves. Then an insert operation causes the integer at that position to be incremented while delete decrements the integer (unless it was already $0$). Notice that the time complexity of operations remains unchanged. However, the space complexity changes. Since we're storing numbers in $[1, min(n, k)]$, the standard vEB tree would have space complexity $O(min(n, k))$. Now instead of storing a single bit per element at the leaves, we're storing an integer. The amount of space needed to store this is $log(\text{Max duplicity})$. Since a tree contains $O(n)$ nodes, the max duplicity is $O(n)$, thus the space complexity of our new vEB tree is $O(min(n, k)\;log\;n)$.\\
-
-    Now as a preprocessing step, we create such a vEB tree. Since the vEB tree only stores duplicity of keys, we update a property $inTree(u)$ when a node $u$ is added or removed from the tree. This property is set to $False$ when an instance of \texttt{Filter\_Clusters} begins for all nodes in $T_B$ and to $False$ again before \texttt{Filter\_Clusters} returns. When running \texttt{Filter\_Clusters}, the same vEB tree is passed to each instance of the problem. To avoid some nodes already having been inserted into the tree, before the algorithm returns an answer, we use predecessor queries and delete operations on the vEB tree to clear it of all entries.\\
-
-    To analyse the time complexity of this approach, note that we're still making $O(n)$ updates to the vEB tree (as claimed in the original paper), so time taken to do this is $O(n\;log\;log\;min(n, k))$. It costs $O(n)$ time to set $inTree$ to $False$ for every node at the beginning and end. In addition, clearing the vEB tree costs $O(n\;log\;log\;min(n, k))$ since a maximum of $O(n)$ values would be in the tree. Thus the time taken to carry out all of this is $O(n\;log\;log\;min(n, k))$.
+    Since we are making fewer deletions than insertions, we use a Brodal queue for $IDS$. This supports insertion and findMax in $O(1)$ time and delete in $O(log\;n)$ time where $n$ is the number of elements in the queue. Then for each call to \texttt{Filter\_Clusters}, total insertion cost is $O(m)$, while total deletion cost over all calls to \texttt{Filter\_Clusters} is $O(n\;log\;n)$
 
     \section{Overall analysis}
 
-    For \texttt{Filter\_Clusters},
+    For \texttt{Filter\_Clusters}, if we don't take the deletion times into account, then we get the recurrence,
 
-    \[T(x) = O(x\;log\;log\;min(n, k)) + \sum_{\tau\in\sigma(\pi)}T(|\Lambda(\tau)|)\]
+    \[T(m) = O(m) + \sum_{\tau\in\sigma(\pi)}T(|\Lambda(\tau)|)\]
 
     Since there are $O(log\;n)$ recursion levels,
-    \[T(n) = O(n\;(log\;n)\;(log\;log\;min(n, k)))\]
+    \[T(n) = O(n\;log\;n)\]
 
-    Note that the preprocessing step for remapping is only run once during the entire \texttt{Frequency\_Difference} algorithm. Recall that time complexity of \texttt{Frequency\_Difference} $= O(kn\;log\;n) + O(k \cdot f(n, k)) + \text{Preprocessing}$, where $f(n, k)$ is the is the runtime of \texttt{Filter\_Clusters}. Thus for \texttt{Frequency\_Difference},
-    \begin{align*}
-        T(n) &= O(kn\;log\;n) + O(k \cdot n\;(log\;n)\;(log\;log\;min(n, k))) + O(kn)\\
-        &= O(kn\;(log\;n)\;(log\;log\;min(n, k)))
-    \end{align*}
+    The total deletion costs is $O(n\;log\;n)$, so in total,
+
+    \[T(n) = O(n\;log\;n)\]
 \end{document}
