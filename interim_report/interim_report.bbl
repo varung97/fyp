@@ -1,0 +1,38 @@
+\begin{thebibliography}{1}
+
+\bibitem{cole2000n}
+Richard Cole, Martin Farach-Colton, Ramesh Hariharan, Teresa Przytycka, and
+  Mikkel Thorup.
+\newblock An o (n log n) algorithm for the maximum agreement subtree problem
+  for binary trees.
+\newblock {\em SIAM Journal on Computing}, 30(5):1385--1404, 2000.
+
+\bibitem{farach1995fast}
+Martin Farach and Mikkel Thorup.
+\newblock Fast comparison of evolutionary trees.
+\newblock {\em Information and Computation}, 123(1):29--37, 1995.
+
+\bibitem{gawrychowski2017faster}
+Pawe{\l} Gawrychowski, Gad~M Landau, Wing-Kin Sung, and Oren Weimann.
+\newblock A faster construction of greedy consensus trees.
+\newblock {\em arXiv preprint arXiv:1705.10548}, 2017.
+
+\bibitem{jansson2018algorithms}
+Jesper Jansson, Ramesh Rajaby, Chuanqi Shen, and Wing-Kin Sung.
+\newblock Algorithms for the majority rule+ consensus tree and the frequency
+  difference consensus tree.
+\newblock {\em IEEE/ACM Transactions on Computational Biology and
+  Bioinformatics (TCBB)}, 15(1):15--26, 2018.
+
+\bibitem{jansson2016improved}
+Jesper Jansson, Chuanqi Shen, and Wing-Kin Sung.
+\newblock Improved algorithms for constructing consensus trees.
+\newblock {\em Journal of the ACM (JACM)}, 63(3):28, 2016.
+
+\bibitem{steel2014axiomatic}
+Mike Steel and Joel~D Velasco.
+\newblock Axiomatic opportunities and obstacles for inferring a species tree
+  from gene trees.
+\newblock {\em Systematic biology}, 63(5):772--778, 2014.
+
+\end{thebibliography}

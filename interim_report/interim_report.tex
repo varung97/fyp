@@ -1,0 +1,313 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{enumerate}
+\usepackage{relsize}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage[
+  top    = 2.75cm,
+  bottom = 3.00cm,
+  left   = 2.50cm,
+  right  = 2.50cm
+]{geometry}
+\setlength{\parindent}{0in}
+
+\algnewcommand\algorithmicinput{\textbf{Input:}}
+\algnewcommand\algorithmicoutput{\textbf{Output:}}
+\algnewcommand\Input{\item[\algorithmicinput]}
+\algnewcommand\Output{\item[\algorithmicoutput]}
+\algnewcommand{\IIf}[1]{\State\algorithmicif\ #1\ \algorithmicthen}
+\algnewcommand{\IIEf}[2]{\State\algorithmicif\ #1\ \algorithmicthen\ #2\ \algorithmicelse}
+\newcommand{\compatible}{\smile}
+\newcommand{\leafset}{\Lambda}
+
+\title{CG4001 Interim Report}
+\author{Varun Gupta\\A0147924X}
+
+\newtheorem{incompatibility}{Lemma}
+\newtheorem{mergetrees}[incompatibility]{Lemma}
+\newtheorem{freqdiffruntime}[incompatibility]{Corollary}
+\newtheorem{assocnode}[incompatibility]{Lemma}
+\newtheorem{labelclusterscorrectness}[incompatibility]{Lemma}
+\newtheorem{labelclustersruntime}[incompatibility]{Lemma}
+\newtheorem{filterclustersremovednodesubset}[incompatibility]{Lemma}
+\newtheorem{filterclusterssidetreecompatibility}[incompatibility]{Lemma}
+\newtheorem{filterclustersremovednodesubtree}[incompatibility]{Lemma}
+\newtheorem{filterclustersremovednodemaximalsubtree}[incompatibility]{Lemma}
+
+\begin{document}
+    \maketitle
+    % \newpage
+
+    \begin{abstract}
+        This report presents a new deterministic algorithm for constructing a frequency difference consensus tree. Given $k$ phylogenetic trees with identical leaf label sets of size $n$, this algorithm constructs the frequency difference tree in $O(kn\,log\,n)$ time, bettering the previously best known time of $O(kn\,log^2n)$.
+    \end{abstract}
+    % \newpage
+
+    % \tableofcontents
+    % \newpage
+
+    \section{Introduction}
+    A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. A \textit{rooted phylogenetic tree} is one that presents the evolutionary relationships between various taxa. Here, the root represents their common ancestor, and children of nodes split each group into smaller ones. A \textit{consensus tree} reconciles multiple phylogenetic trees, summarising the branching information contained in each into a single tree. This report studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} and arrives at a fast algorithm for constructing this.
+
+    \subsection{Definitions and Notation}
+    We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label. Henceforth, we will simply refer to these as trees. For any tree $T$, let $V(T)$ be the vertex set of $T$ and $\leafset(T)$ be the leaf set of $T$. Non-empty subsets of $\leafset(T)$ are called \textit{clusters}. Clusters with cardinality $1$ or $|\leafset(T)|$ are \textit{trivial clusters}. For any $u \in V(T)$, $T[u]$ is the subtree of $T$ rooted at $u$. Then $\leafset(T[u])$ is the cluster associated with $u$. The \textit{cluster collection} of $T$, $\mathcal{C}(T)$ is the set $\bigcup_{u \in V(T)} {\leafset(T[u])}$, i.e. a set containing all the clusters in $T$. Any cluster $C \subseteq \leafset(T)$ \textit{occurs} in $T$ iff $C \in \mathcal{C(T)}$. Also define, for any tree $T$, for any cluster $C \subseteq \leafset(T)$, $lca^T(C)$ to be the least common ancestor of $C$ in $T$.\\
+
+    Any two clusters $C_1, C_2 \in \mathcal{C}(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible}, denoted as $C_1 \not\compatible C_2$. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ iff for every $u \in V(T)$, $C \compatible \leafset(T[u])$. Further, two trees $T_1$ and $T_2$ satisfying $\leafset(T_1) = \leafset(T_2)$ are \textit{compatible} iff for every $u \in V(T_1)$, $\leafset(T_1[u]) \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$.\\
+
+    A \textit{frequency difference consensus tree} can then be defined as thus. Let $\mathcal{S}$ be a set of $k$ trees with identical leafs labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let $K_C = \{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}$ be the set of trees in $\mathcal{S}$ which $C$ occurs in. Let $T_{FD}$ be the frequency difference consensus tree of $\mathcal{S}$, with $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } |K_C| > max(\{|K_{C_1}| : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$. [Need example]\\
+
+    Henceforth, $\mathcal{S}$ is taken to be the input set of trees with identical leaf labels. This set of leaf labels is denoted by $L$. Let $|\mathcal{S}| = k$ and $|L| = n$.
+
+    \subsection{Previous Work}
+    Jansson et al. \cite{jansson2018algorithms} gave a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the frequency difference tree. Gawrychowski et al. \cite{gawrychowski2017faster} improved this to a deterministic $O(kn\,log^2n)$ algorithm.
+
+    \subsection{Organisation of the Article and New Results}
+    Section 2 contains some results from previous works that are utilised later. Section 3 presents a new deterministic algorithm for constructing the frequency difference tree that runs in $O(kn\,log\,n)$ time. Section 4 lays out plans for future work.
+
+    \section{Preliminaries}
+
+    % TODO: Need delete not insert
+    \subsection{The \textit{insert} operation}
+    The \textit{insert} operation inserts a cluster into a tree. To do so, we specify some internal node $u$ in a tree $T$ and a proper subset of its children $X$, where $|X| \geq 2$. Then the \textit{insert} operation creates a new child $v$ of $u$, detaches all nodes in $X$ from $u$ and makes them children of $v$. This creates a new cluster in $T$, of the form $\bigcup_{x \in X}\leafset(T[x])$ while not changing any of the existing clusters. Observe that this process takes $O(|X|)$ time.
+
+    \subsection{Characterising incompatibility}
+    We restate Lemma 6 of \cite{jansson2018algorithms} here since it is crucial in the development of an algorithm discussed below:
+
+    \begin{incompatibility}
+        \label{lem:incompatibility}
+
+        Given a tree $T$ and a cluster $C \subseteq \leafset(T)$, let $r_C = lca^T(X)$. Then for any $u \in V(T)$, $C \not\compatible \leafset(T[u])$ iff $u$ lies on the path between $r_C$ and some $x \in C$ and $\leafset(T[u]) \not\subseteq C$.
+    \end{incompatibility}
+
+    \subsection{Subroutines}
+    This article uses the procedure \texttt{Merge\_Trees} from \cite{jansson2016improved}. \texttt{Merge\_Trees} takes two compatible trees $T_A$ and $T_B$ with identical leaf labels and outputs a tree with the same leaf labels which contains all the clusters in $T_A$ and $T_B$. This is formalized below:
+
+    \begin{mergetrees}
+        \label{lem:mergetrees}
+
+        Let $T_A$ and $T_B$ be two compatible trees with $\leafset(T_A) = \leafset(T_B) = L$ and $|L| = n$. Procedure \texttt{Merge\_Trees} takes $T_A$ and $T_B$ and outputs tree $T$ with $\leafset(T) = L$ and $\mathcal{C}(T) = \mathcal{C}(T_A) \cup \mathcal{C}(T_B)$ in $O(n)$ time.
+    \end{mergetrees}
+
+    \subsection{\texttt{Frequency\_Difference} algorithm}
+    The algorithm \texttt{Frequency\_Difference} is laid out in \cite{jansson2018algorithms}. Before describing this, we first define the weight of a node to be the number of trees in $\mathcal{S}$ that the the cluster associated with $u$ occurs in. Formally, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, let $C = \leafset(T[u])$, then $weight(u) = w(u) = |K_C|$ and also let $w(C) = w(u)$. Further, define a procedure \texttt{Filter\_Clusters} which takes in trees $T_A$ and $T_B$, with $\leafset(T_A) = \leafset(T_B) = L$ and $w(u)$ computed for any $u \in V(T_A) \cup V(T_B)$. It returns a tree $T$ which contains all clusters $C$ in $T_A$ for which $w(C) > $ weight of all clusters in $T_B$ that it is incompatible with. Formally, \texttt{Filter\_Clusters}$(T_A, T_B) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(T_A) \text{ and } w(C) > max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$.\\
+
+    Then the algorithm \texttt{Frequency\_Difference} runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $w(u)$. We call this the \textit{labelling} step. In the second part, it utilises \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} to compute the frequency difference consensus tree. Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
+
+    \begin{freqdiffruntime}
+        \label{cor:freqdiffruntime}
+
+        The total runtime of \texttt{Frequency\_Difference} is given by $O(g(n, k) + k \cdot f(n))$ where $g(n, k)$ is the time taken by the labelling step and $f(n)$ is the runtime of \texttt{Filter\_Clusters}.
+    \end{freqdiffruntime}
+
+    Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the labelling step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the labelling step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.\\
+
+    \section{Constructing the Frequency Difference Consensus Tree}
+    We present an $O(kn\,log\,n)$ solution for the labelling step in section 3.1 and an $O(n\,log\,n)$ solution for \texttt{Filter\_Clusters} in section 3.2. Taken together with Corollary 2, this allows us to solve \texttt{Frequency\_Difference} in $O(kn\,log\,n)$ time.
+
+    \subsection{Labelling}
+    As in \cite{gawrychowski2017faster}, we divide the labelling step into two parts. First, we give a label to every node $u$, where $u \in V(T)$ for some $T \in \mathcal{S}$, denoted by $id(u)$. The labels obey the restrictions that $id(u) \in [1, kn]$ and for some $u' \in T'$, $T' \in \mathcal{S}$, $id(u) = id(u')$ iff $\leafset(T[u]) = \leafset(T'[u'])$. That is, two nodes will have the same label iff they are associated with the same cluster. Second, we counting sort these labels, allowing us to count how many nodes exist with a certain label, giving us the frequency of those nodes in $\mathcal{S}$.\\
+
+    First, for some tree $T$ and some cluster $C \subseteq \leafset(T)$ define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all nonempty $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leafs in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Further, for any node $u$ in $T$, define the node that $u$ is associated with when $T$ is restricted to $C$ to be the descendant of $u$ with least depth that is in $T|C$, denoted as $assoc^{C}(u)$.\\
+
+    The algorithm \texttt{Label\_Clusters} is laid out below.
+
+    \begin{algorithm}
+        \caption{Label\_Clusters}
+        \begin{algorithmic}[1]
+            \Input A set $\mathcal{S}$ of trees $\{T_1, T_2, ..., T_k\}$ where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$
+            \Output Every node in the trees in $\mathcal{S}$ is labelled such that nodes associated with the same cluster have the same labels and for any $u$, $id(u) \in [1, k |L|]$
+
+            \State Partition $L$ into $L'$ and $L''$ such that $|L'| = |L''|$.
+            \State For all $i \in [1,k]$, let $T'_i = T_i|L'$ and $T''_i = T_i|L''$.
+            \State \texttt{Label\_Clusters}$(T'_1, T'_2, ..., T'_k)$.
+            \State \texttt{Label\_Clusters}$(T''_1, T''_2, ..., T''_k)$.
+            \State For every tree $T \in \mathcal{S}$, for every node $u \in T$, represent $u$ by the pair $(id(assoc^{L'}(u)), id(assoc^{L''}(u)))$.
+            \State Radix sort all pairs obtained. Assign each set of duplicates found thus a rank.
+            \State For every tree $T \in \mathcal{S}$, for every node $u \in T$, set $id(u) = $ rank of the pair $(id(assoc^{L'}(u)), id(assoc^{L''}(u)))$.
+        \end{algorithmic}
+    \end{algorithm}
+
+    \begin{assocnode}
+        \label{lem:assocnode}
+
+        For any tree $T$, for any node $u \in V(T)$ and any cluster $C \subseteq \leafset(T)$, $\leafset(T|C[assoc^C(u)]) = \leafset(T[u])\, \cap\, C$.
+
+        \begin{proof}
+            First note that for any node $v \in V(T|C)$, $\leafset(T|C[v]) = \leafset(T[v])\, \cap\, C$ due to the way $T|C$ is constructed. Also, $\leafset(T[assoc^C(u)]) \subseteq \leafset(T[u])$ since $assoc^C(u)$ is a descendant of $u$. Thus $\leafset(T[assoc^C(u)])\, \cap\, C \subseteq \leafset(T[u])\, \cap\, C$ and so $\leafset(T|C[assoc^C(u)]) \subseteq \leafset(T[u])\, \cap\, C$.\\
+
+            This implies that if $\leafset(T|C[assoc^C(u)]) \neq \leafset(T[u])\, \cap\, C$ then there is some leaf $x$ such that $x \in \leafset(T[u])\, \cap\, C$ and $x \not\in \leafset(T|C[assoc^C(u)])$. Then let $v = lca^T(C \cup x)$. Observe that $v$ is proper ancestor of $u$, since $\leafset(T[u]) = C \subseteq C \cup x = \leafset(T[v])$ and $\leafset(T[u]) \neq \leafset(T[v])$. Also, since $v = lca^T(C \cup x)$ and $C \cup x \subseteq \leafset(T[u])$, $v$ is a descendant of $u$. Finally, $v \in V(T|C)$. But then an ancestor of $v$ would be $assoc^C(u)$, and not the node that was initially obtained.
+        \end{proof}
+    \end{assocnode}
+
+    \begin{labelclusterscorrectness}
+        \label{lem:labelclusterscorrectness}
+
+        After running \texttt{Label\_Clusters}$(\mathcal{S})$, for any trees $T_i, T_j \in \mathcal{S}$, for any nodes $u \in V(T_i), v \in V(T_j)$, $id(u) = id(v)$ iff $\leafset(T_i[u]) = \leafset(T_j[v])$.
+
+        \begin{proof}
+            $id(u) = id(v)$ iff $id(assoc^{L'}(u)) = id(assoc^{L'}(v))$ and $id(assoc^{L''}(u)) = id(assoc^{L''}(v))$. Inductively, the first part is true iff $\leafset(T_i|L'[assoc^{L'}(u)]) = \leafset(T_j|L'[assoc^{L'}(v)])$. By Lemma~\ref{lem:assocnode}, $\leafset(T_i[u])\, \cap\, L' = \leafset(T_j[v])\, \cap\, L'$. Symmetrically, the second part is true iff $\leafset(T_i[u])\, \cap\, L'' = \leafset(T_j[v])\, \cap\, L''$. Since $L'$ and $L''$ partition $L$, both parts are true iff $\leafset(T_i[u]) = \leafset(T_j[v])$.
+        \end{proof}
+    \end{labelclusterscorrectness}
+
+    \begin{labelclustersruntime}
+        \label{lem:labelclustersruntime}
+
+        The algorithm \texttt{Label\_Clusters}$(\mathcal{S})$ runs in $O(kn\,log\,n)$ time.
+
+        \begin{proof}
+            Let $T(m)$ be the runtime of \texttt{Label\_Clusters}$(\mathcal{T})$, where $m =$ size of leaf set of each tree in $\mathcal{T}$. By Lemma 5.2 of \cite{farach1995fast}, construction of $T'_i$ and $T''_i$ takes $O(m)$ time for each $T_i \in \mathcal{T}$, taking total $O(km)$ time over all the trees. For each $T_i \in \mathcal{T}$, $|V(T_i)| = O(m)$. Computing $assoc^{L'}(u)$ and $assoc^{L''}(u)$ for each node $u$ in some tree $T_i \in \mathcal{T}$ can be done by a bottom up traversal of $T_i$ along with $T'_i$ and $T''_i$, taking $O(km)$ time total. Also observe that the number of pairs obtained is $O(km)$. Further, each of the values in the pair are in the range [1, km/2]. Thus radix sorting these pairs and assigning labels back to the nodes takes $O(km)$ time. So $T(m) = 2T(m/2) + O(km)$, giving $T(n) = kn\,log\,n$.
+        \end{proof}
+    \end{labelclustersruntime}
+
+    \subsection{\texttt{Filter\_Clusters}}
+    Recall that \texttt{Filter\_Clusters} as presented in \cite{jansson2018algorithms} takes as input trees $T_A$ and $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$ and returns tree $T$ with $\leafset(T) = L$ and containing all clusters in $T_A$ which have higher weight than all the clusters they are incompatible with in $T_B$.\\
+
+    This version of \texttt{Filter\_Clusters} works by using the \textit{centroid path decomposition technique} of \cite{cole2000n} to decompose $T_A$ into a \textit{centroid path} and a set of \textit{side trees}. A \textit{centroid path} in $T_A$ is the path formed by starting at the root and at each point following the child with the largest leaf set. The centroid path is denoted by $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf. Removing all nodes in $\pi$ along with all associated edges from $T_A$ results in a set of disjoint subtrees of $T_A$, where the root of each such subtree is a child of some node in $\pi$. These trees are called the \textit{side trees} of $\pi$, denoted by $\sigma(\pi)$. Also let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Observe that for any side tree $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq n/2$ and that $\{\leafset(\tau) : \tau \in \sigma(\pi)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that the cluster collection of the subtree rooted at some $p_i \in \pi$, $i \in [2, \alpha]$, can be written recursively as the union of the the cluster collection of the subtree rooted at $p_{i-1}$, the cluster collections of all side trees associated with $p_i$ and the cluster associated with $p_i$. Formally, $\mathcal{C}(T_A[p_i]) = \mathcal{C}(T_A[p_{i-1}]) \cup \bigcup_{\tau \in \sigma(p_i)} \mathcal{C}(\tau) \cup \{\{\leafset(T_A[p_i])\}\}$. This formulation leads to the intuition behind \texttt{Filter\_Clusters} - recursively compute \texttt{Filter\_Clusters} for side trees, then use Lemma~\ref{lem:incompatibility} to characterise incompatibility for the clusters rooted at nodes in the centroid path.\\
+
+    The improved version of \texttt{Filter\_Clusters} relies heavily on the previous formulation, with the added trick of reutilising information gathered from the side trees when figuring out which clusters in $T_B$ are incompatible with some node in the centroid path. In addition, rather than returning a tree $T$ satisfying the properties detailed above, it marks nodes in $T_A$ that do not satisfy these properties to be deleted. The algorithm (see Algorithm~\ref{alg:filterclusters}) is described in further detail below.\\
+
+    \textit{High level description}. First, we do some preprocessing. The initial step is to compute the centroid path $\pi$ of $T_A$. Following this, we take each side tree $\tau \in \sigma(\pi)$ and construct the tree $T_B||\tau$ (this construction is described below). Intuitively, this new tree allows us to figure out which clusters in $T_B$ are incompatible with the respective side tree. We then augment $T_B$ for various queries. Finally, we iterate over each node in the centroid path, from bottom to top. For each of these, we use information gathered from the previous node in the centroid path and from the side trees to compute which clusters in $T_B$ are incompatible with this node. This allows us to work out whether this node needs to be deleted or not.
+
+    \textit{Construction of $T_B||\tau$}. This tree is constructed in the same manner as in Section 4.2, \textit{Steps 2-3 (Handling the side trees)} of \cite{jansson2018algorithms}. The idea here is that we construct $T_B|\tau$, and then for every edge in this tree, we add another node in the middle if the respective nodes in $T_B$ did not have a direct edge between them. These extra nodes are given weight equal to the largest weight on the path between the two nodes under consideration in $T_B$. Intuitively, this is because nodes on such paths are isomorphic with respect to $\leafset(\tau)$, so we can compress them into a single node. Then, certain nodes are marked as \textit{spoiled}. These are nodes $u$ for which $\leafset(T_B||\tau[u]) \neq \leafset(T_B[u])$, i.e. nodes for which some descendants have been removed during the construction of $T_B||\tau$. Intuitively, this allows us to make compatibility checks against the original $T_B$ rather than only against $T_B||\tau$.\\
+
+    \textit{Looping over the centroid path}. The algorithm considers the centroid path top to bottom. Notice that the clusters associated with these nodes are nested since nodes on the centroid path have ancestor-descendant relationships. We maintain a data structure $IDS$ that at the end of the iteration handling $p_i \in \pi$ contains the nodes in $T_B$ that are incompatible with $\leafset(T_A[p_i])$. This allows us to find the maximum weight of such nodes, and if this is $\geq w(p_i)$, then mark $p_i$ to be deleted. We now describe how $IDS$ is maintained from one iteration to the next.\\
+
+    \textit{Maintaining $IDS$}. We follow the same principle as in \cite{jansson2018algorithms}. For any $p_i \in \pi$, $i \geq 2$, let $r_i = lca^{T_B}(\leafset(T_A[p_i]))$ and let $D = \leafset(T_A[p_i])\, \backslash\, \leafset(T_A[p_{i-1}])$. They argue that, nodes $v$ in $T_B$ for which $\leafset(T_B[v]) \not\compatible \leafset(T_A[p_i])$ must be on the path from some leaf $x \in \leafset(T_A[p_i])$ to $r_i$ and $\leafset(T_B[v]) \not\subseteq \leafset(T_A[p_i])$ [By Lemma~\ref{lem:incompatibility}]. In their version, they take care of the first part by inserting nodes between $r_{i-1}$ and $r_i$ into $IDS$ and, for any leaf $x \in D$, inserting all ancestors of $x$ until $r_i$. Then the second part is taken care of by maintaining $counter(u)$ for every node $u \in V(T_B)$. Here $counter(u) = |\leafset(T_B[u]) \cap \leafset(T_A[p_i])|$. These counters are updated by doing bottom up traversals from each $x \in D$. During these bottom up traversals, nodes $u$ for which the updated $counter(u) = |\leafset(T_A[p_i])|$ are then compatible with $\leafset(T_A[p_i])$ and are removed from $IDS$. This traversal continues until we reach a node that is not compatible, i.e. either the node is spoiled, or its counter $\neq |\leafset(T_A[p_i])|$.\\
+
+    Before describing how the altered version of \texttt{Filter\_Clusters} maintains $IDS$, we prove some important lemmas.
+
+    \begin{filterclustersremovednodesubset}
+        \label{lem:filterclustersremovednodesubset}
+
+        Let $\tau \in \sigma(\pi)$ be some side tree in $T_A$. For any node $u \in V(T_B)$ that was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, $\leafset(T_B[u]) \subseteq \leafset(\tau)$.
+
+        \begin{proof}
+            Let the centroid path of $\tau$ be $\pi(\tau)$. Notice that when a node $u$ is removed from $IDS$, that means that for some node $q \in \pi(\tau)$, $counter(u) = |\leafset(T_B||\tau[u]) \cap \leafset(\tau[q])| = |\leafset(T_B||\tau[u])|$ and $u$ is not spoiled. The first condition implies that $\leafset(T_B||\tau[u]) \subseteq \leafset(\tau[q])$ and the second condition implies that $\leafset(T_B||\tau[u]) = \leafset(T_B[u])$. Thus $T_B[u] \subseteq \leafset(\tau[q])$. Since $\leafset(\tau[q]) \subseteq \leafset(\tau)$, $T_B[u] \subseteq \leafset(\tau)$.
+        \end{proof}
+    \end{filterclustersremovednodesubset}
+
+    \begin{filterclustersremovednodesubtree}
+        \label{lem:filterclustersremovednodesubtree}
+
+        Let $\tau \in \sigma(\pi)$ be some side tree in $T_A$. For any node $u \in V(T_B)$ that was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, for any node $v \in V(T_B[u])$, $\leafset(T_B[v]) \subseteq \leafset(\tau)$.
+
+        \begin{proof}
+            Since $v \in V(T_B[u])$, $\leafset(T_B[v]) \subseteq \leafset(T_B[v])$. By Lemma~\ref{lem:filterclustersremovednodesubset}, $\leafset(T_B[u]) \subseteq \leafset(\tau)$. Thus $\leafset(T_B[v]) \subseteq \leafset(\tau)$.
+        \end{proof}
+    \end{filterclustersremovednodesubtree}
+
+    \begin{filterclusterssidetreecompatibility}
+        \label{lem:filterclusterssidetreecompatibility}
+
+        If for some cluster $C$ and some side tree $\tau \in \sigma(\pi)$, $C \subseteq \Lambda(\tau)$ then for all nodes $u \in V(T_A)\, \backslash\, V(\tau)$, $C \compatible \leafset(T_A[u])$.
+
+        \begin{proof}
+            Since the leaf sets of all sidetrees are mutually disjoint, and $C \subseteq \tau$, $C$ is disjoint with leaf sets of all other sidetrees, and so is compatible with all nodes in these. The only remaining nodes are those on the centroid path. Let $p_i \in \pi$ be the node on the centroid path that is a direct parent of $\tau$. Then for any $j$ such that $1 \leq j < i$, $\Lambda(T_A[p_j])$ is mutually disjoint with $C$ and so these are compatible. For any $j$ such that $i \leq j \leq \alpha$, $\Lambda(T_A[p_i]) \subseteq \Lambda(T_A[p_j])$. Also, $\Lambda(\tau) \subseteq \Lambda(T_A[p_i])$. Thus $C$ is compatible with $p_j$.
+        \end{proof}
+    \end{filterclusterssidetreecompatibility}
+
+    Let the tree obtained by deleting $\tau$ from $T_A$ be $T_{A \backslash \tau}$. From Lemmas~\ref{lem:filterclustersremovednodesubset},~\ref{lem:filterclustersremovednodesubtree} and~\ref{lem:filterclusterssidetreecompatibility}, for any node $u \in V(T_B)$ and side tree $\tau \in \sigma(\pi)$, if $u$ was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, $T_B[u]$ is compatible with $T_{A \backslash \tau}$. That is, $u$ is the root of a subtree that is compatible with $T_{A \backslash \tau}$. Since $\tau$ has already been handled in the aforementioned recursive call, $T_B[u]$ is compatible with any cluster that will be considered hence. Thus, we should never need to add any node in $T_B[u]$ to $IDS$ again. We detail below how this is ensured.\\
+
+    The altered \texttt{Filter\_Clusters} keeps track of the subtrees described above. More specifically, it keeps track of the parents of the roots of such subtrees. To achieve this, for any side tree $\tau \in \sigma(\pi)$, during the recursive call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, we augment each node in $T_B||\tau$ with the properties $parentOfSubtree$ and $inIDS$, initialised to $False$. The first property is used to check membership in an initially empty linked list $parentsOfSubtrees$, and is updated every time a node is inserted/deleted from this list. Similarly, the second property is used to check membership in the initially empty $IDS$, and is updated every time a node is inserted/deleted from this structure. When traversing $T_B||\tau$ upwards while removing nodes from $IDS$, for every removed node $x$ we know that $x$ is the root of a compatible subtree. Thus, if $x$ is in $parentsOfSubtrees$ then $x$ is removed from $parentsOfSubtrees$. When the loop terminates, if $x$ is not $root(T_B||\tau)$ and is not in $parentsOfSubtrees$, then $x$ is added to $parentsOfSubtrees$. Notice that at the end of this process $parentsOfSubtrees$ contains exactly the parent of every desired subtree. The linked list may also be empty, indicating that $\Lambda(lca^{T_B}(\Lambda(\tau))) = \Lambda(\tau)$.\\
+
+    \begin{filterclustersremovednodemaximalsubtree}
+        \label{lem:filterclustersremovednodemaximalsubtree}
+
+        For any $x \in parentsOfSubtrees$ when \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$ terminates, there is some child $y$ $T_B[x]$ is a maximal proper subtree of $T_B[root(T_B|\tau)]$ that is compatible with $T_{A \backslash \tau}$. In other words there is no node $u \in V(T_B[root(T_B|\tau)])\, \backslash\, root(T_B|\tau)$ such that $T_B[u]$ is compatible with $T_{A \backslash \tau}$ and $u$ is a proper ancestor of $x$.
+
+        \begin{proof}
+
+        \end{proof}
+    \end{filterclustersremovednodemaximalsubtree}
+
+    The altered \texttt{Filter\_Clusters} uses the same idea, with one change. Instead of starting our bottom up traversals from $x \in D$, we start them from $x \in V$, where $V$ is composed of nodes in $T_B$ that are the roots of subtrees that are compatible with $\leafset(T_A[p_i])$
+
+    \begin{algorithm}
+        \caption{Filter\_Clusters}
+        \label{alg:filterclusters}
+
+        \begin{algorithmic}[1]
+            \State \textbf{Input:} Two trees $T_A$, $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$ where every cluster has a known $weight$.
+
+            \State \textbf{Side effects:} Marks any node $u \in V(T_A)$ for deletion iff $w(u) \leq w(x)$ for any $x \in V(T_B)$ with $\leafset(T_A[u]) \not\compatible \leafset(T_B[x])$.
+
+            % TODO: Fix
+            \State \textbf{Output:} A linked list $parentsOfSubtrees$ that contains any node $u \in V(T_B)$ iff $u$ is the parent of the root of a maximal proper subtree in $T_B$ that is compatible with any $p_i \in \pi$. There are no duplicates in $parentsOfSubtrees$.
+
+            \State Compute a centroid path $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$ of $T_A$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf.
+
+            \State For each side tree $\tau \in \sigma(\pi)$ construct $T_B||\tau$.
+
+            \State Do a bottom up traversal of $T_B$ to precompute $|\leafset(T_B[x])|$ for every $x \in V(T_B)$. Preprocess $T_B$ for $lca$ queries. Let $IDS$ be an initially empty Brodal queue for storing nodes from $T_B$. For every $x \in V(T_B)$, initialise $counter(x) := 0$.
+
+            \State Let $r_i :=$ the leaf in $T_B$ labelled by $p_1$.\newline
+            Set $counter(r_1) := 1$, and if $\alpha \geq 2$ then $counter(parent^{T_B}(r_1)) := 1$.
+
+            \State $parentsOfSubtrees :=$ empty dictionary
+
+            \For{$i := 2$ \textbf{to} $\alpha$}
+                \State $lowerBoundary :=$ empty dictionary
+
+                \ForAll{side trees $\tau$ associated with $p_i$}
+                    \State $lowerBoundary' :=$ \texttt{Filter\_Clusters}($\tau$, $T_B||\tau$)
+
+                    \ForAll{$x \in lowerBoundary'$}
+                        \If{$x \not\in lowerBoundary$}
+                            \State $lowerBoundary(x) = lowerBoundary'(x)$
+                        \Else
+                            \State $lowerBoundary(x) := lowerBoundary(x) + lowerBoundary'(x)$
+                        \EndIf
+                    \EndFor
+                \EndFor
+
+                \State Compute $r_i := lca^{T_B}(r_{i-1} \cup lowerBoundary)$
+
+                \State Insert every node belonging to the path between $r_{i-1}$ and $r_i$, except $r_{i-1}$ and $r_i$, into $IDS$
+
+                \IIf{$r_{i-1} \neq root(T_B)$ and ($counter(r_{i-1}) < |\leafset(T_B[r_{i-1}])|$ or $r_{i-1}$ is spoiled)}
+                    insert $r_{i-1}$ into $IDS$
+
+                \ForAll{$x \in lowerBoundary$}
+                    \While{$x \not\in IDS$ and $x \neq r_i$}
+                        \State Insert $x$ into $D$
+                        \State $x := parent^{T_B}(x)$
+                    \EndWhile
+                \EndFor
+
+                \ForAll{$x \in lowerBoundary$}
+                    \State $counter(x) := |\leafset(T_B[x])|$
+
+                    \While{$counter(x) = |\leafset(T_B[x])|$ and $x$ is not spoiled and $x \neq r_i$}
+                        \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
+                        \State Remove $x$ from $IDS$
+                        \IIf{$x \in parentsOfSubtrees$}
+                            remove $x$ from $parentsOfSubtrees$
+                        \State $x := parent^{T_B}(x)$
+                    \EndWhile
+
+                    \State $parentsOfSubtrees(x) := counter(x)$
+                \EndFor
+
+                \IIEf{$IDS$ is empty}
+                    {$M := 0$}
+                    $M :=$ maximum weight of a node in $IDS$
+
+                \IIf{$w(\leafset(T_A[p_i])) \leq M$}
+                    mark $p_i$ for deletion
+            \EndFor
+
+            \IIEf{$parentsOfSubtrees$ is empty}
+                {\Return $\{root(T_B): |\leafset(\tau)|\}$}
+                \Return $parentsOfSubtrees$
+        \end{algorithmic}
+    \end{algorithm}
+
+    \newpage
+    \bibliographystyle{plain}
+    \bibliography{interim_report}
+\end{document}
