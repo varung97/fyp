@@ -34,10 +34,10 @@
 \newtheorem{assocnode}[incompatibility]{Lemma}
 \newtheorem{labelclusterscorrectness}[incompatibility]{Lemma}
 \newtheorem{labelclustersruntime}[incompatibility]{Lemma}
-\newtheorem{filterclustersremovednodesubset}[incompatibility]{Lemma}
-\newtheorem{filterclusterssidetreecompatibility}[incompatibility]{Lemma}
-\newtheorem{filterclustersremovednodesubtree}[incompatibility]{Lemma}
-\newtheorem{filterclustersremovednodemaximalsubtree}[incompatibility]{Lemma}
+\newtheorem{filterclusterssubsetcompatible}[incompatibility]{Lemma}
+\newtheorem{filterclustersfindingincompatible}[incompatibility]{Lemma}
+\newtheorem{filterclustersfindingcompatible}[incompatibility]{Lemma}
+\newtheorem{filterclustersfindingcompatibletermination}[incompatibility]{Lemma}
 
 \begin{document}
     \maketitle
@@ -165,67 +165,58 @@
     \end{labelclustersruntime}
 
     \subsection{\texttt{Filter\_Clusters}}
-    Recall that \texttt{Filter\_Clusters} as presented in \cite{jansson2018algorithms} takes as input trees $T_A$ and $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$ and returns tree $T$ with $\leafset(T) = L$ and containing all clusters in $T_A$ which have higher weight than all the clusters they are incompatible with in $T_B$.\\
 
-    This version of \texttt{Filter\_Clusters} works by using the \textit{centroid path decomposition technique} of \cite{cole2000n} to decompose $T_A$ into a \textit{centroid path} and a set of \textit{side trees}. A \textit{centroid path} in $T_A$ is the path formed by starting at the root and at each point following the child with the largest leaf set. The centroid path is denoted by $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf. Removing all nodes in $\pi$ along with all associated edges from $T_A$ results in a set of disjoint subtrees of $T_A$, where the root of each such subtree is a child of some node in $\pi$. These trees are called the \textit{side trees} of $\pi$, denoted by $\sigma(\pi)$. Also let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Observe that for any side tree $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq n/2$ and that $\{\leafset(\tau) : \tau \in \sigma(\pi)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that the cluster collection of the subtree rooted at some $p_i \in \pi$, $i \in [2, \alpha]$, can be written recursively as the union of the the cluster collection of the subtree rooted at $p_{i-1}$, the cluster collections of all side trees associated with $p_i$ and the cluster associated with $p_i$. Formally, $\mathcal{C}(T_A[p_i]) = \mathcal{C}(T_A[p_{i-1}]) \cup \bigcup_{\tau \in \sigma(p_i)} \mathcal{C}(\tau) \cup \{\{\leafset(T_A[p_i])\}\}$. This formulation leads to the intuition behind \texttt{Filter\_Clusters} - recursively compute \texttt{Filter\_Clusters} for side trees, then use Lemma~\ref{lem:incompatibility} to characterise incompatibility for the clusters rooted at nodes in the centroid path.\\
+    We first prove two important lemmas.
 
-    The improved version of \texttt{Filter\_Clusters} relies heavily on the previous formulation, with the added trick of reutilising information gathered from the side trees when figuring out which clusters in $T_B$ are incompatible with some node in the centroid path. In addition, rather than returning a tree $T$ satisfying the properties detailed above, it marks nodes in $T_A$ that do not satisfy these properties to be deleted. The algorithm (see Algorithm~\ref{alg:filterclusters}) is described in further detail below.\\
+    \begin{filterclusterssubsetcompatible}
+        \label{lem:filterclusterssubsetcompatible}
 
-    \textit{High level description}. First, we do some preprocessing. The initial step is to compute the centroid path $\pi$ of $T_A$. Following this, we take each side tree $\tau \in \sigma(\pi)$ and construct the tree $T_B||\tau$ (this construction is described below). Intuitively, this new tree allows us to figure out which clusters in $T_B$ are incompatible with the respective side tree. We then augment $T_B$ for various queries. Finally, we iterate over each node in the centroid path, from bottom to top. For each of these, we use information gathered from the previous node in the centroid path and from the side trees to compute which clusters in $T_B$ are incompatible with this node. This allows us to work out whether this node needs to be deleted or not.
-
-    \textit{Construction of $T_B||\tau$}. This tree is constructed in the same manner as in Section 4.2, \textit{Steps 2-3 (Handling the side trees)} of \cite{jansson2018algorithms}. The idea here is that we construct $T_B|\tau$, and then for every edge in this tree, we add another node in the middle if the respective nodes in $T_B$ did not have a direct edge between them. These extra nodes are given weight equal to the largest weight on the path between the two nodes under consideration in $T_B$. Intuitively, this is because nodes on such paths are isomorphic with respect to $\leafset(\tau)$, so we can compress them into a single node. Then, certain nodes are marked as \textit{spoiled}. These are nodes $u$ for which $\leafset(T_B||\tau[u]) \neq \leafset(T_B[u])$, i.e. nodes for which some descendants have been removed during the construction of $T_B||\tau$. Intuitively, this allows us to make compatibility checks against the original $T_B$ rather than only against $T_B||\tau$.\\
-
-    \textit{Looping over the centroid path}. The algorithm considers the centroid path top to bottom. Notice that the clusters associated with these nodes are nested since nodes on the centroid path have ancestor-descendant relationships. We maintain a data structure $IDS$ that at the end of the iteration handling $p_i \in \pi$ contains the nodes in $T_B$ that are incompatible with $\leafset(T_A[p_i])$. This allows us to find the maximum weight of such nodes, and if this is $\geq w(p_i)$, then mark $p_i$ to be deleted. We now describe how $IDS$ is maintained from one iteration to the next.\\
-
-    \textit{Maintaining $IDS$}. We follow the same principle as in \cite{jansson2018algorithms}. For any $p_i \in \pi$, $i \geq 2$, let $r_i = lca^{T_B}(\leafset(T_A[p_i]))$ and let $D = \leafset(T_A[p_i])\, \backslash\, \leafset(T_A[p_{i-1}])$. They argue that, nodes $v$ in $T_B$ for which $\leafset(T_B[v]) \not\compatible \leafset(T_A[p_i])$ must be on the path from some leaf $x \in \leafset(T_A[p_i])$ to $r_i$ and $\leafset(T_B[v]) \not\subseteq \leafset(T_A[p_i])$ [By Lemma~\ref{lem:incompatibility}]. In their version, they take care of the first part by inserting nodes between $r_{i-1}$ and $r_i$ into $IDS$ and, for any leaf $x \in D$, inserting all ancestors of $x$ until $r_i$. Then the second part is taken care of by maintaining $counter(u)$ for every node $u \in V(T_B)$. Here $counter(u) = |\leafset(T_B[u]) \cap \leafset(T_A[p_i])|$. These counters are updated by doing bottom up traversals from each $x \in D$. During these bottom up traversals, nodes $u$ for which the updated $counter(u) = |\leafset(T_A[p_i])|$ are then compatible with $\leafset(T_A[p_i])$ and are removed from $IDS$. This traversal continues until we reach a node that is not compatible, i.e. either the node is spoiled, or its counter $\neq |\leafset(T_A[p_i])|$.\\
-
-    Before describing how the altered version of \texttt{Filter\_Clusters} maintains $IDS$, we prove some important lemmas.
-
-    \begin{filterclustersremovednodesubset}
-        \label{lem:filterclustersremovednodesubset}
-
-        Let $\tau \in \sigma(\pi)$ be some side tree in $T_A$. For any node $u \in V(T_B)$ that was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, $\leafset(T_B[u]) \subseteq \leafset(\tau)$.
+        Let nodes $u \in V(T_A)$, $v \in V(T_B)$ such that $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. Then for any $w \in V(T_A) - V(T_A[u])$, $\leafset(T_A[w]) \compatible \leafset(T_B[v])$.
 
         \begin{proof}
-            Let the centroid path of $\tau$ be $\pi(\tau)$. Notice that when a node $u$ is removed from $IDS$, that means that for some node $q \in \pi(\tau)$, $counter(u) = |\leafset(T_B||\tau[u]) \cap \leafset(\tau[q])| = |\leafset(T_B||\tau[u])|$ and $u$ is not spoiled. The first condition implies that $\leafset(T_B||\tau[u]) \subseteq \leafset(\tau[q])$ and the second condition implies that $\leafset(T_B||\tau[u]) = \leafset(T_B[u])$. Thus $T_B[u] \subseteq \leafset(\tau[q])$. Since $\leafset(\tau[q]) \subseteq \leafset(\tau)$, $T_B[u] \subseteq \leafset(\tau)$.
+            There are two cases for $w$. Case 1: $w$ is on the path from $u$ to $root(T_A)$. Then $\leafset(T_A[u]) \subseteq \leafset(T_A[w])$. Thus $\leafset(T_B[v]) \subseteq \leafset(T_A[w])$, and so $\leafset(T_B[v]) \compatible \leafset(T_A[w])$. Case 2: $w$ is not on the path from $u$ to $root(T_A)$. Since $w$ is also not a descendant of $u$, $\leafset(T_A[w]) \cap \leafset(T_A[u]) = \emptyset$. Thus $\leafset(T_A[w]) \cap \leafset(T_B[v]) = \emptyset$ and so $\leafset(T_B[v]) \compatible \leafset(T_A[w])$.
         \end{proof}
-    \end{filterclustersremovednodesubset}
+    \end{filterclusterssubsetcompatible}
 
-    \begin{filterclustersremovednodesubtree}
-        \label{lem:filterclustersremovednodesubtree}
+    Additionally, notice that the same holds for any node $x \in V(T_B[v])$, since $\leafset(T_B[x]) \subseteq \leafset(T_B[v])$. Thus, the upshot of Lemma~\ref{lem:filterclusterssubsetcompatible} is that if a certain node $v \in V(T_B)$ is deemed to have a leafset that is a subset of some node $u \in V(T_A)$, then $v$ is the root of a subtree of $T_B$ that does not need to be ever considered again when attempting to determine which nodes in $V(T_B)$ are incompatible with nodes in $V(T_A) - V(T_A[u])$.
 
-        Let $\tau \in \sigma(\pi)$ be some side tree in $T_A$. For any node $u \in V(T_B)$ that was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, for any node $v \in V(T_B[u])$, $\leafset(T_B[v]) \subseteq \leafset(\tau)$.
+    \begin{filterclustersfindingincompatible}
+        \label{lem:filterclustersfindingincompatible}
+
+        For any cluster $C \subseteq L$, define $r_C$ to be $lca^{T_B}(C)$. Let node $u \in V(T_A)$, then for some node $v \in V(T_B)$, if $\leafset(T_B[v]) \not\compatible \leafset(T_A[u])$ and for each $c \in children(u)$, $\leafset(T_B[v]) \compatible \leafset(T_A[c])$, then $v$ is a proper descendant of $r_{\leafset(T_A[u])}$ and for some $c \in children(u)$, $v$ is an ancestor of $r_{\leafset(T_A[c])}$.
 
         \begin{proof}
-            Since $v \in V(T_B[u])$, $\leafset(T_B[v]) \subseteq \leafset(T_B[v])$. By Lemma~\ref{lem:filterclustersremovednodesubset}, $\leafset(T_B[u]) \subseteq \leafset(\tau)$. Thus $\leafset(T_B[v]) \subseteq \leafset(\tau)$.
+            Firstly, $v$ has to be a proper descendant of $r_{\leafset(T_A[u])}$ by Lemma~\ref{lem:incompatibility}. Further, for each $c \in children(u)$, $\leafset(T_B[v]) \not\subseteq \leafset(T_A[c])$, since $\leafset(T_A[c]) \subseteq \leafset(T_A[u])$, which would mean that $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. Thus, for each $c \in children(u)$, $\leafset(T_B[v]) \cap \leafset(T_A[c]) = \emptyset$ or $\leafset(T_A[c]) \subseteq \leafset(T_B[v])$, since $\leafset(T_B[v]) \compatible \leafset(T_A[c])$. Assume that for each $c \in children(u)$, $\leafset(T_B[v]) \cap \leafset(T_A[c]) = \emptyset$. Since $\leafset(T_A[u]) = \bigcup_{c \in children(u)} \leafset(T_A[c])$, $\leafset(T_B[v]) \cap \leafset(T_A[u]) = \emptyset$. But then $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. Thus there is some $c \in children(u)$, $\leafset(T_A[c]) \subseteq \leafset(T_B[v])$. Then $v$ is an ancestor of $r_{\leafset(T_A[c])}$.
         \end{proof}
-    \end{filterclustersremovednodesubtree}
+    \end{filterclustersfindingincompatible}
 
-    \begin{filterclusterssidetreecompatibility}
-        \label{lem:filterclusterssidetreecompatibility}
+    The upshot of Lemma~\ref{lem:filterclustersfindingincompatible} is that for any node $u \in V(T_A)$, to find nodes in $T_B$ which are incompatible with $u$, we could recursively find all nodes that are incompatible with the children of $u$. Then, for each $c \in children(u)$, we add to this set nodes that are ancestors of $r_{\leafset(T_A[c])}$, going up until $r_{\leafset(T_A[u])}$. This is then a superset of the nodes that are incompatible with $u$.
 
-        If for some cluster $C$ and some side tree $\tau \in \sigma(\pi)$, $C \subseteq \Lambda(\tau)$ then for all nodes $u \in V(T_A)\, \backslash\, V(\tau)$, $C \compatible \leafset(T_A[u])$.
+    \begin{filterclustersfindingcompatible}
+        \label{lem:filterclustersfindingcompatible}
+
+        For any node $u \in V(T_A)$, let $I$ be a set of candidate incompatible nodes from $T_B$ constructed using the process described above. Then any node $v$ in $I$ that is in fact compatible with $u$ is of the following form: $v$ is a proper descendant of $u$ and for some $x \in leafset(T_A[u])$, $v$ is a proper ancestor of $x$.
 
         \begin{proof}
-            Since the leaf sets of all sidetrees are mutually disjoint, and $C \subseteq \tau$, $C$ is disjoint with leaf sets of all other sidetrees, and so is compatible with all nodes in these. The only remaining nodes are those on the centroid path. Let $p_i \in \pi$ be the node on the centroid path that is a direct parent of $\tau$. Then for any $j$ such that $1 \leq j < i$, $\Lambda(T_A[p_j])$ is mutually disjoint with $C$ and so these are compatible. For any $j$ such that $i \leq j \leq \alpha$, $\Lambda(T_A[p_i]) \subseteq \Lambda(T_A[p_j])$. Also, $\Lambda(\tau) \subseteq \Lambda(T_A[p_i])$. Thus $C$ is compatible with $p_j$.
+            For any node $v$ in $I$, $v$ is either incompatible with some $c \in children(u)$, or for some $c \in children(u)$, $v$ lies on the path from $r_{\leafset(T_A[c])}$ to $r_{\leafset(T_A[u])}$. Let the child of $u$ associated with $v$ thus be $c$. Then if $v$ is of the first form, then by Lemma~\ref{lem:incompatibility}, for some $x \in \leafset(T_A[c])$, $v$ lies on the path between $x$ and $r_{\leafset(T_A[c])}$. If $v$ is of the second form, then $v$ clearly lies on the path from any $x \in \leafset(T_A[c])$ to $r_{\leafset(T_A[u])}$.
         \end{proof}
-    \end{filterclusterssidetreecompatibility}
+    \end{filterclustersfindingcompatible}
 
-    Let the tree obtained by deleting $\tau$ from $T_A$ be $T_{A \backslash \tau}$. From Lemmas~\ref{lem:filterclustersremovednodesubset},~\ref{lem:filterclustersremovednodesubtree} and~\ref{lem:filterclusterssidetreecompatibility}, for any node $u \in V(T_B)$ and side tree $\tau \in \sigma(\pi)$, if $u$ was removed from $IDS$ during the call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, $T_B[u]$ is compatible with $T_{A \backslash \tau}$. That is, $u$ is the root of a subtree that is compatible with $T_{A \backslash \tau}$. Since $\tau$ has already been handled in the aforementioned recursive call, $T_B[u]$ is compatible with any cluster that will be considered hence. Thus, we should never need to add any node in $T_B[u]$ to $IDS$ again. We detail below how this is ensured.\\
+    \begin{filterclustersfindingcompatibletermination}
+        \label{lem:filterclustersfindingcompatibletermination}
 
-    The altered \texttt{Filter\_Clusters} keeps track of the subtrees described above. More specifically, it keeps track of the parents of the roots of such subtrees. To achieve this, for any side tree $\tau \in \sigma(\pi)$, during the recursive call to \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$, we augment each node in $T_B||\tau$ with the properties $parentOfSubtree$ and $inIDS$, initialised to $False$. The first property is used to check membership in an initially empty linked list $parentsOfSubtrees$, and is updated every time a node is inserted/deleted from this list. Similarly, the second property is used to check membership in the initially empty $IDS$, and is updated every time a node is inserted/deleted from this structure. When traversing $T_B||\tau$ upwards while removing nodes from $IDS$, for every removed node $x$ we know that $x$ is the root of a compatible subtree. Thus, if $x$ is in $parentsOfSubtrees$ then $x$ is removed from $parentsOfSubtrees$. When the loop terminates, if $x$ is not $root(T_B||\tau)$ and is not in $parentsOfSubtrees$, then $x$ is added to $parentsOfSubtrees$. Notice that at the end of this process $parentsOfSubtrees$ contains exactly the parent of every desired subtree. The linked list may also be empty, indicating that $\Lambda(lca^{T_B}(\Lambda(\tau))) = \Lambda(\tau)$.\\
-
-    \begin{filterclustersremovednodemaximalsubtree}
-        \label{lem:filterclustersremovednodemaximalsubtree}
-
-        For any $x \in parentsOfSubtrees$ when \texttt{Filter\_Clusters}$(\tau, T_B||\tau)$ terminates, there is some child $y$ $T_B[x]$ is a maximal proper subtree of $T_B[root(T_B|\tau)]$ that is compatible with $T_{A \backslash \tau}$. In other words there is no node $u \in V(T_B[root(T_B|\tau)])\, \backslash\, root(T_B|\tau)$ such that $T_B[u]$ is compatible with $T_{A \backslash \tau}$ and $u$ is a proper ancestor of $x$.
+        For any node $u \in V(T_A)$, if for some $v \in V(T_B)$, $\leafset(T_A[u]) \not\compatible \leafset(T_B[v])$, then for any node $w$ on the path between $v$ and $r_{\leafset(T_A[u])}$, $\leafset(T_A[u]) \not\compatible \leafset(T_B[w])$.
 
         \begin{proof}
-
+            Since $v$ is a descendant of $r_{\leafset(T_A[u])}$ [by Lemma~\ref{lem:incompatibility}], $w$ is an ancestor of $v$. Also, since $\leafset(T_A[u]) \not\compatible \leafset(T_B[v])$, there is some $x \in \leafset(T_B[v])$ such that $x \not\in \leafset(T_A[u])$. Since $\leafset(T_B[v]) \subseteq \leafset(T_B[w])$, $x \in \leafset(T_B[w])$. Also, since $w$ is a proper descendant of $r_{\leafset(T_A[u])}$, there is some $y \in \leafset(T_A[u])$ such that $y \not\in \leafset(T_B[w])$ [otherwise $w$ would be an ancestor of $r_{\leafset(T_A[u])}$]. Thus $\leafset(T_A[u]) \not\compatible \leafset(T_B[w])$.
         \end{proof}
-    \end{filterclustersremovednodemaximalsubtree}
+    \end{filterclustersfindingcompatibletermination}
 
-    The altered \texttt{Filter\_Clusters} uses the same idea, with one change. Instead of starting our bottom up traversals from $x \in D$, we start them from $x \in V$, where $V$ is composed of nodes in $T_B$ that are the roots of subtrees that are compatible with $\leafset(T_A[p_i])$
+    By Lemmas~\ref{lem:filterclustersfindingcompatible} and~\ref{lem:filterclustersfindingcompatibletermination}, we can see that to remove nodes from the candidate set of incompatible nodes, we need to merely iterate upwards from each $x \in \leafset(T_A[u])$, removing nodes that are compatible, until we hit a node that is incompatible. Further, Lemma~\ref{lem:filterclusterssubsetcompatible} tell us that instead of starting from $x \in \leafset(T_A[u])$, we could start from the roots of the subtrees discovered in the children. These Lemmas taken together then give us the foundation of the altered \texttt{Filter\_Clusters} algorithm.\\
+
+    \textit{High Level Description.} The algorithm can be visualised as keeping track of two sets of nodes in $T_B$, an $upperBoundary$ and a $lowerBoundary$. For any node $u \in V(T_A)$, the $upperBoundary$ represents the nodes in $T_B$ that are $lca$'s of the clusters associated with children of $u$. These are the nodes from which we iterate upwards to add to the set of candidate incompatible nodes. The $lowerBoundary$ represents the nodes that are roots of subtrees that do not need to be checked again. These are the nodes from which we iterate upwards to remove from the set of candidate incompatible nodes.\\
+
+    \textit{Further Details}. We adopt an approach similar to that in \cite{jansson2018algorithms} for determining whether a given node in $T_B$ is incompatible with a given node in $T_A$. This involves maintaining a property $counter(v)$ for each node $v \in T_B$. If the current node in $T_A$ under consideration is $u$, then we would like $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. Then if $counter(v) = |\leafset(T_B[v])$, then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$ and so $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. We also keep track of the nodes that are being found to be compatible, since these will form the new roots of compatible subtrees.
 
     \begin{algorithm}
         \caption{Filter\_Clusters}
@@ -237,73 +228,71 @@
             \State \textbf{Side effects:} Marks any node $u \in V(T_A)$ for deletion iff $w(u) \leq w(x)$ for any $x \in V(T_B)$ with $\leafset(T_A[u]) \not\compatible \leafset(T_B[x])$.
 
             % TODO: Fix
-            \State \textbf{Output:} A linked list $parentsOfSubtrees$ that contains any node $u \in V(T_B)$ iff $u$ is the parent of the root of a maximal proper subtree in $T_B$ that is compatible with any $p_i \in \pi$. There are no duplicates in $parentsOfSubtrees$.
+            \State \textbf{Output:} A dictionary $parentsOfSubtrees$ that
+             A linked list $parentsOfSubtrees$ that contains any node $u \in V(T_B)$ iff $u$ is the parent of the root of a maximal proper subtree in $T_B$ that is compatible with any $p_i \in \pi$. There are no duplicates in $parentsOfSubtrees$.
 
-            \State Compute a centroid path $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$ of $T_A$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf.
+            \State Let $IDS$ be an initially empty Brodal queue for storing nodes from $T_B$.
 
-            \State For each side tree $\tau \in \sigma(\pi)$ construct $T_B||\tau$.
+            \State $c_h :=$ heaviest child of $a$, $r := null$, $lowerBoundary := \{\}$, $upperBoundary := \{\}$, $rootsOfSubtrees := \{\}$
 
-            \State Do a bottom up traversal of $T_B$ to precompute $|\leafset(T_B[x])|$ for every $x \in V(T_B)$. Preprocess $T_B$ for $lca$ queries. Let $IDS$ be an initially empty Brodal queue for storing nodes from $T_B$. For every $x \in V(T_B)$, initialise $counter(x) := 0$.
+            \ForAll{$c \in children(a)$ in increasing order of heaviness}
+                \State $r_c, lowerBoundary', IDS' :=$ \texttt{Filter\_Clusters}$(c, T_B)$
 
-            \State Let $r_i :=$ the leaf in $T_B$ labelled by $p_1$.\newline
-            Set $counter(r_1) := 1$, and if $\alpha \geq 2$ then $counter(parent^{T_B}(r_1)) := 1$.
+                \State $r := lca^{T_B}(r, r_c)$
 
-            \State $parentsOfSubtrees :=$ empty dictionary
+                \State $upperBoundary := upperBoundary \cup r_c$
 
-            \For{$i := 2$ \textbf{to} $\alpha$}
-                \State $lowerBoundary :=$ empty dictionary
+                \State $rootsOfSubtrees := rootsOfSubtrees \cup lowerBoundary'$
 
-                \ForAll{side trees $\tau$ associated with $p_i$}
-                    \State $lowerBoundary' :=$ \texttt{Filter\_Clusters}($\tau$, $T_B||\tau$)
+                % TODO: Enforce uniqueness of weights
+                \State $IDS := IDS \cup IDS'$
 
-                    \ForAll{$x \in lowerBoundary'$}
-                        \If{$x \not\in lowerBoundary$}
-                            \State $lowerBoundary(x) = lowerBoundary'(x)$
-                        \Else
-                            \State $lowerBoundary(x) := lowerBoundary(x) + lowerBoundary'(x)$
-                        \EndIf
-                    \EndFor
-                \EndFor
+                \If{$c \neq c_h$}
+                    \State $lowerBoundary := lowerBoundary \cup lowerBoundary'$
 
-                \State Compute $r_i := lca^{T_B}(r_{i-1} \cup lowerBoundary)$
-
-                \State Insert every node belonging to the path between $r_{i-1}$ and $r_i$, except $r_{i-1}$ and $r_i$, into $IDS$
-
-                \IIf{$r_{i-1} \neq root(T_B)$ and ($counter(r_{i-1}) < |\leafset(T_B[r_{i-1}])|$ or $r_{i-1}$ is spoiled)}
-                    insert $r_{i-1}$ into $IDS$
-
-                \ForAll{$x \in lowerBoundary$}
-                    \While{$x \not\in IDS$ and $x \neq r_i$}
-                        \State Insert $x$ into $D$
-                        \State $x := parent^{T_B}(x)$
-                    \EndWhile
-                \EndFor
-
-                \ForAll{$x \in lowerBoundary$}
-                    \State $counter(x) := |\leafset(T_B[x])|$
-
-                    \While{$counter(x) = |\leafset(T_B[x])|$ and $x$ is not spoiled and $x \neq r_i$}
-                        \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
-                        \State Remove $x$ from $IDS$
-                        \IIf{$x \in parentsOfSubtrees$}
-                            remove $x$ from $parentsOfSubtrees$
-                        \State $x := parent^{T_B}(x)$
-                    \EndWhile
-
-                    \State $parentsOfSubtrees(x) := counter(x)$
-                \EndFor
-
-                \IIEf{$IDS$ is empty}
-                    {$M := 0$}
-                    $M :=$ maximum weight of a node in $IDS$
-
-                \IIf{$w(\leafset(T_A[p_i])) \leq M$}
-                    mark $p_i$ for deletion
+                    \State \algorithmicforall\ $x \in lowerBoundary'$, $counter(parent^{T_B}(x)) := 0$
+                \EndIf
             \EndFor
 
-            \IIEf{$parentsOfSubtrees$ is empty}
-                {\Return $\{root(T_B): |\leafset(\tau)|\}$}
-                \Return $parentsOfSubtrees$
+            \ForAll{$x \in upperBoundary$}
+                \While{$x \not\in IDS$ and $x \neq r$}
+                    \State Insert $x$ into $D$
+                    \State $x := parent^{T_B}(x)$
+                \EndWhile
+            \EndFor
+
+            \State $parentsOfLowerBoundary := \{\}$
+
+            \ForAll{$x \in lowerBoundary$}
+                \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
+
+                \State $parentsOfLowerBoundary := parentsOfLowerBoundary \cup parent^{T_B}(x)$
+            \EndFor
+
+            \State $rootsOfSubtrees = lowerBoundary \cup lowerBoundary_h$
+
+            \ForAll{$x \in parentsOfLowerBoundary$}
+                \While{$counter(x) = |\leafset(T_B[x])|$ and $x \neq r$}
+                    \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
+
+                    \State Remove $x$ from $IDS$
+
+                    \State Add $x$ to $rootsOfSubtrees$
+
+                    \State \algorithmicforall\ $x_c \in children(x)$, remove $x_c$ from $rootsOfSubtrees$
+
+                    \State $x := parent^{T_B}(x)$
+                \EndWhile
+            \EndFor
+
+            \IIEf{$IDS$ is empty}
+                {$M := 0$}
+                $M :=$ maximum weight of a node in $IDS$
+
+            \IIf{$w(\leafset(T_A[p_i])) \leq M$}
+                mark $p_i$ for deletion
+
+            \State \Return $r$, $rootsOfSubtrees$, $IDS$
         \end{algorithmic}
     \end{algorithm}
 
