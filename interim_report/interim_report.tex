@@ -30,7 +30,7 @@
 
 \newtheorem{incompatibility}{Lemma}
 \newtheorem{mergetrees}[incompatibility]{Lemma}
-\newtheorem{freqdiffruntime}[incompatibility]{Corollary}
+\newtheorem{freqdiffruntimecomponents}[incompatibility]{Corollary}
 \newtheorem{assocnode}[incompatibility]{Lemma}
 \newtheorem{labelclusterscorrectness}[incompatibility]{Lemma}
 \newtheorem{labelclustersruntime}[incompatibility]{Lemma}
@@ -38,6 +38,8 @@
 \newtheorem{filterclustersfindingincompatible}[incompatibility]{Lemma}
 \newtheorem{filterclustersfindingcompatible}[incompatibility]{Lemma}
 \newtheorem{filterclustersfindingcompatibletermination}[incompatibility]{Lemma}
+\newtheorem{filterclustersruntime}[incompatibility]{Lemma}
+\newtheorem{freqdiffruntime}[incompatibility]{Theorem}
 
 \begin{document}
     \maketitle
@@ -52,6 +54,8 @@
     % \newpage
 
     \section{Introduction}
+    \label{sec:introduction}
+
     A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. A \textit{rooted phylogenetic tree} is one that presents the evolutionary relationships between various taxa. Here, the root represents their common ancestor, and children of nodes split each group into smaller ones. A \textit{consensus tree} reconciles multiple phylogenetic trees, summarising the branching information contained in each into a single tree. This report studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} and arrives at a fast algorithm for constructing this.
 
     \subsection{Definitions and Notation}
@@ -67,13 +71,13 @@
     Jansson et al. \cite{jansson2018algorithms} gave a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the frequency difference tree. Gawrychowski et al. \cite{gawrychowski2017faster} improved this to a deterministic $O(kn\,log^2n)$ algorithm.
 
     \subsection{Organisation of the Article and New Results}
-    Section 2 contains some results from previous works that are utilised later. Section 3 presents a new deterministic algorithm for constructing the frequency difference tree that runs in $O(kn\,log\,n)$ time. Section 4 lays out plans for future work.
+    Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later. Section~\ref{sec:freqdiffconstruction} presents a new deterministic algorithm for constructing the frequency difference tree that runs in $O(kn\,log\,n)$ time. Section~\ref{sec:futurework} lays out plans for future work.
 
     \section{Preliminaries}
+    \label{sec:preliminaries}
 
-    % TODO: Need delete not insert
-    \subsection{The \textit{insert} operation}
-    The \textit{insert} operation inserts a cluster into a tree. To do so, we specify some internal node $u$ in a tree $T$ and a proper subset of its children $X$, where $|X| \geq 2$. Then the \textit{insert} operation creates a new child $v$ of $u$, detaches all nodes in $X$ from $u$ and makes them children of $v$. This creates a new cluster in $T$, of the form $\bigcup_{x \in X}\leafset(T[x])$ while not changing any of the existing clusters. Observe that this process takes $O(|X|)$ time.
+    \subsection{The \textit{delete} operation}
+    As described in \cite{jansson2018algorithms}, the \textit{delete} operation deletes a cluster from a tree. To do so, we specify some internal node $u$ in a tree $T$, such that we wish $\leafset(T[u])$ to be deleted. Then the \textit{delete} operation makes $parent(u)$ the parent of all nodes in $children(u)$ and removes $u$, along with any associated edges from $T$. This has the effect of removing only $\leafset(T[u])$ from $T$, without affecting any other cluster.
 
     \subsection{Characterising incompatibility}
     We restate Lemma 6 of \cite{jansson2018algorithms} here since it is crucial in the development of an algorithm discussed below:
@@ -98,15 +102,17 @@
 
     Then the algorithm \texttt{Frequency\_Difference} runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $w(u)$. We call this the \textit{labelling} step. In the second part, it utilises \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} to compute the frequency difference consensus tree. Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
 
-    \begin{freqdiffruntime}
-        \label{cor:freqdiffruntime}
+    \begin{freqdiffruntimecomponents}
+        \label{cor:freqdiffruntimecomponents}
 
         The total runtime of \texttt{Frequency\_Difference} is given by $O(g(n, k) + k \cdot f(n))$ where $g(n, k)$ is the time taken by the labelling step and $f(n)$ is the runtime of \texttt{Filter\_Clusters}.
-    \end{freqdiffruntime}
+    \end{freqdiffruntimecomponents}
 
-    Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the labelling step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the labelling step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.\\
+    Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the labelling step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the labelling step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.
 
     \section{Constructing the Frequency Difference Consensus Tree}
+    \label{sec:freqdiffconstruction}
+
     We present an $O(kn\,log\,n)$ solution for the labelling step in section 3.1 and an $O(n\,log\,n)$ solution for \texttt{Filter\_Clusters} in section 3.2. Taken together with Corollary 2, this allows us to solve \texttt{Frequency\_Difference} in $O(kn\,log\,n)$ time.
 
     \subsection{Labelling}
@@ -166,7 +172,11 @@
 
     \subsection{\texttt{Filter\_Clusters}}
 
-    We first prove two important lemmas.
+    Recall that \texttt{Filter\_Clusters}$(T_A, T_B) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(T_A) \text{ and } w(C) > max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$.\\
+
+    We define a subroutine \texttt{Filter\_Clusters\_Helper} which takes as input a node $u$ from $T_A$ and $T_B$ and returns a few objects that help transfer information from a node to its parent (described below). As a side effect, any node $v \in V(T_A[u])$ is marked for deletion if $w(v) \leq max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})$. Thus \texttt{Filter\_Clusters}$(T_A, T_B)$ calls \texttt{Filter\_Clusters\_Helper}$(root(T_A), T_B)$, then does a top down traversal of $T_A$, deleting all the marked nodes.\\
+
+    Before detailing \texttt{Filter\_Clusters\_Helper}, we first prove some important lemmas.
 
     \begin{filterclusterssubsetcompatible}
         \label{lem:filterclusterssubsetcompatible}
@@ -212,31 +222,29 @@
         \end{proof}
     \end{filterclustersfindingcompatibletermination}
 
-    By Lemmas~\ref{lem:filterclustersfindingcompatible} and~\ref{lem:filterclustersfindingcompatibletermination}, we can see that to remove nodes from the candidate set of incompatible nodes, we need to merely iterate upwards from each $x \in \leafset(T_A[u])$, removing nodes that are compatible, until we hit a node that is incompatible. Further, Lemma~\ref{lem:filterclusterssubsetcompatible} tell us that instead of starting from $x \in \leafset(T_A[u])$, we could start from the roots of the subtrees discovered in the children. These Lemmas taken together then give us the foundation of the altered \texttt{Filter\_Clusters} algorithm.\\
+    By Lemmas~\ref{lem:filterclustersfindingcompatible} and~\ref{lem:filterclustersfindingcompatibletermination}, we can see that to remove nodes from the candidate set of incompatible nodes, we need to merely iterate upwards from each $x \in \leafset(T_A[u])$, removing nodes that are compatible, until we hit a node that is incompatible. Further, Lemma~\ref{lem:filterclusterssubsetcompatible} tell us that instead of starting from $x \in \leafset(T_A[u])$, we could start from the roots of the subtrees discovered in the children. These Lemmas taken together then give us the foundation of the \texttt{Filter\_Clusters\_Helper} algorithm.\\
 
     \textit{High Level Description.} The algorithm can be visualised as keeping track of two sets of nodes in $T_B$, an $upperBoundary$ and a $lowerBoundary$. For any node $u \in V(T_A)$, the $upperBoundary$ represents the nodes in $T_B$ that are $lca$'s of the clusters associated with children of $u$. These are the nodes from which we iterate upwards to add to the set of candidate incompatible nodes. The $lowerBoundary$ represents the nodes that are roots of subtrees that do not need to be checked again. These are the nodes from which we iterate upwards to remove from the set of candidate incompatible nodes.\\
 
-    \textit{Further Details}. We adopt an approach similar to that in \cite{jansson2018algorithms} for determining whether a given node in $T_B$ is incompatible with a given node in $T_A$. This involves maintaining a property $counter(v)$ for each node $v \in T_B$. If the current node in $T_A$ under consideration is $u$, then we would like $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. Then if $counter(v) = |\leafset(T_B[v])$, then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$ and so $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. We also keep track of the nodes that are being found to be compatible, since these will form the new roots of compatible subtrees.
+    \textit{Further Details}. We adopt an approach similar to that in \cite{jansson2018algorithms} for determining whether a given node in $T_B$ is incompatible with a given node in $T_A$. This involves maintaining a property $counter(v)$ for each node $v \in T_B$. If the current node in $T_A$ under consideration is $u$, then we would like $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. Then if $counter(v) = |\leafset(T_B[v])$, then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$ and so $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. We also keep track of the nodes that are being found to be compatible, since these will form the new roots of compatible subtrees. Finally notice that we only need to start iterating from the parents of the nodes in the $lowerBoundary$ when determining compatible nodes, since the nodes themselves are already known to be compatible. The resulting algorithm (Algorithm~\ref{alg:filterclustershelper}) is presented on the next page.\\
 
     \begin{algorithm}
-        \caption{Filter\_Clusters}
-        \label{alg:filterclusters}
+        \caption{Filter\_Clusters\_Helper}
+        \label{alg:filterclustershelper}
 
         \begin{algorithmic}[1]
-            \State \textbf{Input:} Two trees $T_A$, $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$ where every cluster has a known $weight$.
+            \State \textbf{Input:} A node $u \in V(T_A)$ and a tree $T_B$ with $\leafset(T_A[u]) \subseteq \leafset(T_B) = L$ where every cluster has a known $weight$.
 
-            \State \textbf{Side effects:} Marks any node $u \in V(T_A)$ for deletion iff $w(u) \leq w(x)$ for any $x \in V(T_B)$ with $\leafset(T_A[u]) \not\compatible \leafset(T_B[x])$.
+            \State \textbf{Side effects:} Marks any node $v \in V(T_A[u])$ for deletion iff $w(v) \leq w(x)$ for any $x \in V(T_B)$ with $\leafset(T_A[v]) \not\compatible \leafset(T_B[x])$.
 
-            % TODO: Fix
-            \State \textbf{Output:} A dictionary $parentsOfSubtrees$ that
-             A linked list $parentsOfSubtrees$ that contains any node $u \in V(T_B)$ iff $u$ is the parent of the root of a maximal proper subtree in $T_B$ that is compatible with any $p_i \in \pi$. There are no duplicates in $parentsOfSubtrees$.
+            \State \textbf{Output:} A triplet $(r, rootsOfSubtrees, IDS)$. $r = r_{\leafset(T_A[u])}$. $rootsOfSubtrees$ is a set containing the roots of compatible subtrees discovered. $IDS$ is a Brodal queue containing all nodes in $T_B$ incompatible with $u$.
 
             \State Let $IDS$ be an initially empty Brodal queue for storing nodes from $T_B$.
 
-            \State $c_h :=$ heaviest child of $a$, $r := null$, $lowerBoundary := \{\}$, $upperBoundary := \{\}$, $rootsOfSubtrees := \{\}$
+            \State $c_h :=$ heaviest child of $u$, $r := null$, $lowerBoundary := \{\}$, $upperBoundary := \{\}$, $rootsOfSubtrees := \{\}$
 
-            \ForAll{$c \in children(a)$ in increasing order of heaviness}
-                \State $r_c, lowerBoundary', IDS' :=$ \texttt{Filter\_Clusters}$(c, T_B)$
+            \ForAll{$c \in children(u)$ in increasing order of heaviness}
+                \State $r_c, lowerBoundary', IDS' :=$ \texttt{Filter\_Clusters\_Helper}$(c, T_B)$
 
                 \State $r := lca^{T_B}(r, r_c)$
 
@@ -256,7 +264,7 @@
 
             \ForAll{$x \in upperBoundary$}
                 \While{$x \not\in IDS$ and $x \neq r$}
-                    \State Insert $x$ into $D$
+                    \State Insert $x$ into $IDS$
                     \State $x := parent^{T_B}(x)$
                 \EndWhile
             \EndFor
@@ -295,6 +303,52 @@
             \State \Return $r$, $rootsOfSubtrees$, $IDS$
         \end{algorithmic}
     \end{algorithm}
+
+    There is one further optimisation we make which is critical to the runtime analysis. First, note that once we finish processing a node in $T_A$ and go to its sibling (if any), then the counter values seen so far need to be erased. However, observe that we do not need to erase counters of any node in a compatible subtree, since those nodes will never be encountered again. Due to the way the algorithm is structured, the only counters that will actually need to be erased are those of the parents of these subtrees. But we further observe that when moving on to process a node after finishing all its children, we could maintain the counters of the last child processed. In addition, we do not need to iterate upwards from the subtrees discovered by this last child; any nodes newly found to be compatible must be ancestors of two compatible subtrees, since otherwise no new information would have been obtained about that node. We choose this last child to be the heaviest child of the current node (as determined by size of leafset), to save as much computation as possible.\\
+
+    \begin{filterclustersruntime}
+        \label{lem:filterclustersruntime}
+
+        The algorithm \texttt{Filter\_Clusters}$(T_A, T_B)$ runs ins $O(n\,log\,n)$ time.
+
+        \begin{proof}
+            The helper algorithm uses a number of sets of nodes. To implement each of these, we utilise a linked list, while augmenting the node with a property that allows it to know whether it belongs to the set or not. In this manner, we can ensure that these sets do not contain duplicates, unions cost time proportional to the size of the second set and membership/addition/deletion operations can be done in constant time.\\
+
+            We also preprocess $T_B$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time.\\
+
+            The data structure used for $IDS$ is the Brodal queue of \cite{brodal1995fast}. This allows insertion and findMax in $O(1)$ time, delete in $O(log\,m)$ time (where $m$ is the number of elements in the queue) and merge in $O(1)$ time. Since the number of nodes in $T_B$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time.\\
+
+            Let the heaviest child of $u$ be $c_h$. Henceforth we will separate operations into two kinds. The first take time proportional to the number of children of the current node $u$. Then these steps take $O(c)$ time, where $c = |children(u)|$. The second type take time proportional to the total size of $lowerBoundary$. Recall that $lowerBoundary$ does not include the subtrees discovered in $c_h$. Thus the size of $lowerBoundary$ is bounded by the total number of leafs in all children that are not $c_h$. We show that all operations in the algorithm (except for those inside inner loops) are of one of these kinds.\\
+
+            All operations during the iteration over children of $u$ are clearly of one of these two kinds since they are either $O(1)$ operations or operations that take time proportional to the size of the $lowerBoundary$ returned by a child $\neq c_h$. The exception is the step which creates $rootsOfSubtrees$, as this also goes over the $lowerBoundary$ returned by $c_h$. This can be fixed by ensuring that we keep the associated augmented property from $c_h$, so that this union can be instead done by inserting the other nodes in $rootsOfSubtrees$ into this set.\\
+
+            For each node in $upperBoundary$ we iterate upwards once. The termination condition in this loop is then hit $O(c)$ times. Notice that a node can only pass through the inner loop once since a node is only inserted into $IDS$ once. Then the total cost of this inner loop over the entire call to \texttt{Filter\_Clusters} is $O(n)$, since insertions into $IDS$ cost constant time.\\
+
+            Similarly, for each node in $lowerBoundary$, we iterate upwards once. The termination condition is again hit $O(c)$ times. Again, we notice that a node can only pass through the inner loop once. We ensure that the amount of time taken while removing children of $x$ from $rootsOfSubtrees$ is proportional to the number of children in $rootsOfSubtrees$ rather than the total number of children by always keeping track of which children of a node are in this set, using a linked list. Since any node will be removed from $rootsOfSubtrees$ only once, this costs $O(n)$ time. All other operations in this inner loop are $O(log\,n)$ time (deletions in the Brodal queue cost $O(log\,n)$) and so the total cost over the entire call to \texttt{Filter\_Clusters} is $O(n\,log\,n)$.\\
+
+            The remaining operations are $O(1)$ time since findMax in a Brodal queue costs constant time.\\
+
+            Operations of the first kind as described above cost a total of $O(n)$ time, since there are a total of $O(n)$ children in the tree. To analyse operations of the second kind, we note that these cost time proportional to the total number of leaves in the children that are not $c_h$. By the standard argument of heavy path decomposition, it is clear that any leaf will have $O(log\,n)$ total work assigned to it over all calls. Since there are $n$ leaves, these operations take $O(n\,log\,n)$ time.\\
+
+            Thus \texttt{Filter\_Clusters\_Helper} takes $O(n\,log\,n)$ time overall. It remains to analyse the time taken by the final \textit{delete} steps. To do so, observe that if we do the deletions in a top down manner, the parent of any node changes at most once. Thus this costs $O(n)$ time total.\\
+        \end{proof}
+    \end{filterclustersruntime}
+
+    \subsection{\texttt{Frequency\_Difference}}
+
+    \begin{freqdiffruntime}
+        \label{theorem:freqdiffruntime}
+
+        The algorithm \texttt{Frequency\_Difference} runs in $O(kn\,log\,n)$ time.
+
+        \begin{proof}
+            By Corollary~\ref{cor:freqdiffruntimecomponents} and Lemmas~\ref{lem:labelclustersruntime} and~\ref{lem:filterclustersruntime}, \texttt{Frequency\_Difference} runs in $O(kn\,log\,n + k \cdot n\,log\,n) = O(kn\,log\,n)$ time.
+        \end{proof}
+    \end{freqdiffruntime}
+
+    % TODO: Future Work
+    \section{Future Work}
+    \label{sec:futurework}
 
     \newpage
     \bibliographystyle{plain}
