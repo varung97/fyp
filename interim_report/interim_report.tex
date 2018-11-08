@@ -18,40 +18,45 @@
 
 \algnewcommand\algorithmicinput{\textbf{Input:}}
 \algnewcommand\algorithmicoutput{\textbf{Output:}}
+\algnewcommand\algorithmicsideeffect{\textbf{Side Effect:}}
 \algnewcommand\Input{\item[\algorithmicinput]}
 \algnewcommand\Output{\item[\algorithmicoutput]}
+\algnewcommand\SideEffect{\item[\algorithmicsideeffect]}
 \algnewcommand{\IIf}[1]{\State\algorithmicif\ #1\ \algorithmicthen}
 \algnewcommand{\IIEf}[2]{\State\algorithmicif\ #1\ \algorithmicthen\ #2\ \algorithmicelse}
 \newcommand{\compatible}{\smile}
 \newcommand{\leafset}{\Lambda}
 
-\title{CG4001 Interim Report}
+\title{A Faster Construction of Frequency Difference Consensus Trees\\CG4001 Interim Report}
 \author{Varun Gupta\\A0147924X}
 
 \newtheorem{incompatibility}{Lemma}
-\newtheorem{mergetrees}[incompatibility]{Lemma}
 \newtheorem{freqdiffruntimecomponents}[incompatibility]{Corollary}
 \newtheorem{assocnode}[incompatibility]{Lemma}
 \newtheorem{labelclusterscorrectness}[incompatibility]{Lemma}
 \newtheorem{labelclustersruntime}[incompatibility]{Lemma}
 \newtheorem{filterclusterssubsetcompatible}[incompatibility]{Lemma}
-\newtheorem{filterclustersfindingincompatible}[incompatibility]{Lemma}
-\newtheorem{filterclustersfindingcompatible}[incompatibility]{Lemma}
+\newtheorem{computerootsofsubtreescorrectness}[incompatibility]{Lemma}
 \newtheorem{filterclustersfindingcompatibletermination}[incompatibility]{Lemma}
 \newtheorem{filterclustersruntime}[incompatibility]{Lemma}
 \newtheorem{freqdiffruntime}[incompatibility]{Theorem}
 
+% Improvements:
+% 1. Define things before we use - especially true for rootsOfSubtrees. Can put lemmas before Filter_Clusters_Helper also
+% 2. Do we really need side effects??
+% 3. Diagrams would be helpful!!
+% 4. Need a better introduction - what's the motivation behind this problem?
+% 5. Lemmas showing correctness of algorithm - some sort of recursive formulation
+% 6. Add r_{\alpha} to rootsOfSubtrees also?
+% 7. No inIDS queries any longer
+% 8. Will need to process all side trees first
+
 \begin{document}
     \maketitle
-    % \newpage
 
     \begin{abstract}
         This report presents a new deterministic algorithm for constructing a frequency difference consensus tree. Given $k$ phylogenetic trees with identical leaf label sets of size $n$, this algorithm constructs the frequency difference tree in $O(kn\,log\,n)$ time, bettering the previously best known time of $O(kn\,log^2n)$.
     \end{abstract}
-    % \newpage
-
-    % \tableofcontents
-    % \newpage
 
     \section{Introduction}
     \label{sec:introduction}
@@ -59,9 +64,9 @@
     A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. A \textit{rooted phylogenetic tree} is one that presents the evolutionary relationships between various taxa. Here, the root represents their common ancestor, and children of nodes split each group into smaller ones. A \textit{consensus tree} reconciles multiple phylogenetic trees, summarising the branching information contained in each into a single tree. This report studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} and arrives at a fast algorithm for constructing this.
 
     \subsection{Definitions and Notation}
-    We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label. Henceforth, we will simply refer to these as trees. For any tree $T$, let $V(T)$ be the vertex set of $T$ and $\leafset(T)$ be the leaf set of $T$. Non-empty subsets of $\leafset(T)$ are called \textit{clusters}. Clusters with cardinality $1$ or $|\leafset(T)|$ are \textit{trivial clusters}. For any $u \in V(T)$, $T[u]$ is the subtree of $T$ rooted at $u$. Then $\leafset(T[u])$ is the cluster associated with $u$. The \textit{cluster collection} of $T$, $\mathcal{C}(T)$ is the set $\bigcup_{u \in V(T)} {\leafset(T[u])}$, i.e. a set containing all the clusters in $T$. Any cluster $C \subseteq \leafset(T)$ \textit{occurs} in $T$ iff $C \in \mathcal{C(T)}$. Also define, for any tree $T$, for any cluster $C \subseteq \leafset(T)$, $lca^T(C)$ to be the least common ancestor of $C$ in $T$.\\
+    We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label. Henceforth, we will simply refer to these as trees. For any tree $T$, let $V(T)$ be the vertex set of $T$ and $\leafset(T)$ be the leaf set of $T$. Non-empty subsets of $\leafset(T)$ are called \textit{clusters}. Clusters with cardinality $1$ or $|\leafset(T)|$ are \textit{trivial clusters}. For any $u \in V(T)$, $T[u]$ is the subtree of $T$ rooted at $u$. Then $\leafset(T[u])$ is the cluster \textit{associated} with $u$. The \textit{cluster collection} of $T$, $\mathcal{C}(T)$ is the set $\bigcup_{u \in V(T)} {\leafset(T[u])}$, i.e. a set containing all the clusters in $T$. Any cluster $C \subseteq \leafset(T)$ \textit{occurs} in $T$ iff $C \in \mathcal{C(T)}$. Also define, for any tree $T$, for any cluster $C \subseteq \leafset(T)$, $lca^T(C)$ to be the least common ancestor of $C$ in $T$.\\
 
-    Any two clusters $C_1, C_2 \in \mathcal{C}(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible}, denoted as $C_1 \not\compatible C_2$. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ iff for every $u \in V(T)$, $C \compatible \leafset(T[u])$. Further, two trees $T_1$ and $T_2$ satisfying $\leafset(T_1) = \leafset(T_2)$ are \textit{compatible} iff for every $u \in V(T_1)$, $\leafset(T_1[u]) \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$.\\
+    Any two clusters $C_1, C_2 \in \mathcal{C}(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible}, denoted as $C_1 \not\compatible C_2$. Similarly given trees $T_1$ and $T_2$ with the same leaf sets, and nodes $u \in V(T_1)$, $v \in V(T_2)$, we say $u$ is compatible with $v$ if the clusters associated with $u$ and $v$ are compatible. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ iff for every $u \in V(T)$, $C \compatible \leafset(T[u])$. Further, two trees $T_1$ and $T_2$ satisfying $\leafset(T_1) = \leafset(T_2)$ are \textit{compatible} iff for every $u \in V(T_1)$, $\leafset(T_1[u]) \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$.\\
 
     A \textit{frequency difference consensus tree} can then be defined as thus. Let $\mathcal{S}$ be a set of $k$ trees with identical leafs labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let $K_C = \{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}$ be the set of trees in $\mathcal{S}$ which $C$ occurs in. Let $T_{FD}$ be the frequency difference consensus tree of $\mathcal{S}$, with $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } |K_C| > max(\{|K_{C_1}| : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$. [Need example]\\
 
@@ -88,19 +93,10 @@
         Given a tree $T$ and a cluster $C \subseteq \leafset(T)$, let $r_C = lca^T(X)$. Then for any $u \in V(T)$, $C \not\compatible \leafset(T[u])$ iff $u$ lies on the path between $r_C$ and some $x \in C$ and $\leafset(T[u]) \not\subseteq C$.
     \end{incompatibility}
 
-    \subsection{Subroutines}
-    This article uses the procedure \texttt{Merge\_Trees} from \cite{jansson2016improved}. \texttt{Merge\_Trees} takes two compatible trees $T_A$ and $T_B$ with identical leaf labels and outputs a tree with the same leaf labels which contains all the clusters in $T_A$ and $T_B$. This is formalized below:
-
-    \begin{mergetrees}
-        \label{lem:mergetrees}
-
-        Let $T_A$ and $T_B$ be two compatible trees with $\leafset(T_A) = \leafset(T_B) = L$ and $|L| = n$. Procedure \texttt{Merge\_Trees} takes $T_A$ and $T_B$ and outputs tree $T$ with $\leafset(T) = L$ and $\mathcal{C}(T) = \mathcal{C}(T_A) \cup \mathcal{C}(T_B)$ in $O(n)$ time.
-    \end{mergetrees}
-
     \subsection{\texttt{Frequency\_Difference} algorithm}
     The algorithm \texttt{Frequency\_Difference} is laid out in \cite{jansson2018algorithms}. Before describing this, we first define the weight of a node to be the number of trees in $\mathcal{S}$ that the the cluster associated with $u$ occurs in. Formally, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, let $C = \leafset(T[u])$, then $weight(u) = w(u) = |K_C|$ and also let $w(C) = w(u)$. Further, define a procedure \texttt{Filter\_Clusters} which takes in trees $T_A$ and $T_B$, with $\leafset(T_A) = \leafset(T_B) = L$ and $w(u)$ computed for any $u \in V(T_A) \cup V(T_B)$. It returns a tree $T$ which contains all clusters $C$ in $T_A$ for which $w(C) > $ weight of all clusters in $T_B$ that it is incompatible with. Formally, \texttt{Filter\_Clusters}$(T_A, T_B) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(T_A) \text{ and } w(C) > max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$.\\
 
-    Then the algorithm \texttt{Frequency\_Difference} runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $w(u)$. We call this the \textit{labelling} step. In the second part, it utilises \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} to compute the frequency difference consensus tree. Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
+    Then the algorithm \texttt{Frequency\_Difference} runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $w(u)$. We call this the \textit{labelling} step. In the second part, it utilises \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} (from \cite{jansson2016improved}) to compute the frequency difference consensus tree. Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
 
     \begin{freqdiffruntimecomponents}
         \label{cor:freqdiffruntimecomponents}
@@ -172,139 +168,182 @@
 
     \subsection{\texttt{Filter\_Clusters}}
 
-    Recall that \texttt{Filter\_Clusters}$(T_A, T_B) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(T_A) \text{ and } w(C) > max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$.\\
+    Recall that \texttt{Filter\_Clusters}$(T_A, T_B) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(T_A) \text{ and } w(C) > max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$. Thus, for any node $u \in V(T_A)$, we would like to find the set of nodes in $T_B$ that are incompatible with $u$, so that we can find the maximum weight of these.\\
 
-    We define a subroutine \texttt{Filter\_Clusters\_Helper} which takes as input a node $u$ from $T_A$ and $T_B$ and returns a few objects that help transfer information from a node to its parent (described below). As a side effect, any node $v \in V(T_A[u])$ is marked for deletion if $w(v) \leq max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})$. Thus \texttt{Filter\_Clusters}$(T_A, T_B)$ calls \texttt{Filter\_Clusters\_Helper}$(root(T_A), T_B)$, then does a top down traversal of $T_A$, deleting all the marked nodes.\\
-
-    Before detailing \texttt{Filter\_Clusters\_Helper}, we first prove some important lemmas.
+    Before describing how this is done, we prove some important lemmas.
 
     \begin{filterclusterssubsetcompatible}
         \label{lem:filterclusterssubsetcompatible}
 
-        Let nodes $u \in V(T_A)$, $v \in V(T_B)$ such that $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. Then for any $w \in V(T_A) - V(T_A[u])$, $\leafset(T_A[w]) \compatible \leafset(T_B[v])$.
+        Let nodes $u \in V(T_A)$, $v \in V(T_B)$ such that $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. Then for any $w \in V(T_A) - V(T_A[u])$, and any $x \in V(T_B[v])$, $\leafset(T_A[w]) \compatible \leafset(T_B[x])$.
 
         \begin{proof}
-            There are two cases for $w$. Case 1: $w$ is on the path from $u$ to $root(T_A)$. Then $\leafset(T_A[u]) \subseteq \leafset(T_A[w])$. Thus $\leafset(T_B[v]) \subseteq \leafset(T_A[w])$, and so $\leafset(T_B[v]) \compatible \leafset(T_A[w])$. Case 2: $w$ is not on the path from $u$ to $root(T_A)$. Since $w$ is also not a descendant of $u$, $\leafset(T_A[w]) \cap \leafset(T_A[u]) = \emptyset$. Thus $\leafset(T_A[w]) \cap \leafset(T_B[v]) = \emptyset$ and so $\leafset(T_B[v]) \compatible \leafset(T_A[w])$.
+            Note that $\leafset(T_B[x]) \subseteq \leafset(T_B[v])$ since $x$ is in the subtree rooted at $v$. There are two cases for $w$. Case 1: $w$ is on the path from $u$ to $root(T_A)$. Then $\leafset(T_A[u]) \subseteq \leafset(T_A[w])$. Thus $\leafset(T_B[x]) \subseteq \leafset(T_A[w])$, and so $\leafset(T_B[x]) \compatible \leafset(T_A[w])$. Case 2: $w$ is not on the path from $u$ to $root(T_A)$. Since $w$ is also not a descendant of $u$, $\leafset(T_A[w]) \cap \leafset(T_A[u]) = \emptyset$. Thus $\leafset(T_A[w]) \cap \leafset(T_B[x]) = \emptyset$ and so $\leafset(T_B[x]) \compatible \leafset(T_A[w])$.
         \end{proof}
     \end{filterclusterssubsetcompatible}
 
-    Additionally, notice that the same holds for any node $x \in V(T_B[v])$, since $\leafset(T_B[x]) \subseteq \leafset(T_B[v])$. Thus, the upshot of Lemma~\ref{lem:filterclusterssubsetcompatible} is that if a certain node $v \in V(T_B)$ is deemed to have a leafset that is a subset of some node $u \in V(T_A)$, then $v$ is the root of a subtree of $T_B$ that does not need to be ever considered again when attempting to determine which nodes in $V(T_B)$ are incompatible with nodes in $V(T_A) - V(T_A[u])$.
+    This lemma says that if the cluster associated with some node $v \in V(T_B)$ is a subset of the cluster associated with some node $u \in V(T_A)$, then $v$ is the root of a subtree of $T_B$ that is compatible with every node in $V(T_A) - V(T_A[u])$. The upshot of this is that if once we process $u$ we are known to have also processed the entirety of $T_A[u]$, then for the remaining nodes, no node in $V(T_B[v])$ needs to be considered for incompatibility again.\\
 
-    \begin{filterclustersfindingincompatible}
-        \label{lem:filterclustersfindingincompatible}
+    For any cluster $C \subseteq L$, define any node $v \in V(T_B)$ to be the root of a \textit{maximal subtree compatible with $C$} to satisfy the following property: $\leafset(T_B[v]) \subseteq C$ and there is no proper ancestor $w$ of $v$ such that $\leafset(T_B[w]) \subseteq C$. We denote this as $rootsOfSubtrees(C)$. We would then be interested in determining $rootsOfSubtrees(\leafset(T_A[u]))$ for any node $u \in V(T_A)$.\\
 
-        For any cluster $C \subseteq L$, define $r_C$ to be $lca^{T_B}(C)$. Let node $u \in V(T_A)$, then for some node $v \in V(T_B)$, if $\leafset(T_B[v]) \not\compatible \leafset(T_A[u])$ and for each $c \in children(u)$, $\leafset(T_B[v]) \compatible \leafset(T_A[c])$, then $v$ is a proper descendant of $r_{\leafset(T_A[u])}$ and for some $c \in children(u)$, $v$ is an ancestor of $r_{\leafset(T_A[c])}$.
+    To compute $rootsOfSubtrees(u)$, we define a property $counter(v)$ for every $v \in V(T_B)$. $counter(v) =$ number of leaves in $T_B[v]$ that belong to some set under consideration. If we take this set to be $\leafset(T_A[u])$, then $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. When $counter(v) = |\leafset(T_B[v])|$ then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. So our problem is reduced to computing $counter(v)$ correctly. The process we follows is presented in Algorithm~\ref{alg:computerootsofsubtrees}. This algorithm starts off by recursively computing $rootsOfSubtrees(c)$ for each $c \in children(u)$, and putting these sets together into a set called $lowerBoundary$. Then we iterate upwards from each node in $lowerBoundary$, updating $counter$ and $rootsOfSubtrees$ as shown. We show the correctness of this algorithm by proving a loop invariant.\\
 
-        \begin{proof}
-            Firstly, $v$ has to be a proper descendant of $r_{\leafset(T_A[u])}$ by Lemma~\ref{lem:incompatibility}. Further, for each $c \in children(u)$, $\leafset(T_B[v]) \not\subseteq \leafset(T_A[c])$, since $\leafset(T_A[c]) \subseteq \leafset(T_A[u])$, which would mean that $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. Thus, for each $c \in children(u)$, $\leafset(T_B[v]) \cap \leafset(T_A[c]) = \emptyset$ or $\leafset(T_A[c]) \subseteq \leafset(T_B[v])$, since $\leafset(T_B[v]) \compatible \leafset(T_A[c])$. Assume that for each $c \in children(u)$, $\leafset(T_B[v]) \cap \leafset(T_A[c]) = \emptyset$. Since $\leafset(T_A[u]) = \bigcup_{c \in children(u)} \leafset(T_A[c])$, $\leafset(T_B[v]) \cap \leafset(T_A[u]) = \emptyset$. But then $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. Thus there is some $c \in children(u)$, $\leafset(T_A[c]) \subseteq \leafset(T_B[v])$. Then $v$ is an ancestor of $r_{\leafset(T_A[c])}$.
-        \end{proof}
-    \end{filterclustersfindingincompatible}
+    \begin{algorithm}
+        \caption{Compute\_Roots\_Of\_Subtrees}
+        \label{alg:computerootsofsubtrees}
 
-    The upshot of Lemma~\ref{lem:filterclustersfindingincompatible} is that for any node $u \in V(T_A)$, to find nodes in $T_B$ which are incompatible with $u$, we could recursively find all nodes that are incompatible with the children of $u$. Then, for each $c \in children(u)$, we add to this set nodes that are ancestors of $r_{\leafset(T_A[c])}$, going up until $r_{\leafset(T_A[u])}$. This is then a superset of the nodes that are incompatible with $u$.
+        \begin{algorithmic}[1]
+            \Input Node $u \in V(T_A)$ and $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$.
 
-    \begin{filterclustersfindingcompatible}
-        \label{lem:filterclustersfindingcompatible}
+            \Output $rootsOfSubtrees(u)$
 
-        For any node $u \in V(T_A)$, let $I$ be a set of candidate incompatible nodes from $T_B$ constructed using the process described above. Then any node $v$ in $I$ that is in fact compatible with $u$ is of the following form: $v$ is a proper descendant of $u$ and for some $x \in leafset(T_A[u])$, $v$ is a proper ancestor of $x$.
+            \State $lowerBoundary := \bigcup_{c \in children(u)} rootsOfSubtrees(c)$
 
-        \begin{proof}
-            For any node $v$ in $I$, $v$ is either incompatible with some $c \in children(u)$, or for some $c \in children(u)$, $v$ lies on the path from $r_{\leafset(T_A[c])}$ to $r_{\leafset(T_A[u])}$. Let the child of $u$ associated with $v$ thus be $c$. Then if $v$ is of the first form, then by Lemma~\ref{lem:incompatibility}, for some $x \in \leafset(T_A[c])$, $v$ lies on the path between $x$ and $r_{\leafset(T_A[c])}$. If $v$ is of the second form, then $v$ clearly lies on the path from any $x \in \leafset(T_A[c])$ to $r_{\leafset(T_A[u])}$.
-        \end{proof}
-    \end{filterclustersfindingcompatible}
+            \State $rootsOfSubtrees := lowerBoundary$
+
+            \ForAll{$x \in lowerBoundary$}
+                \While{$counter(x) = |\leafset(T_B[x])|$}
+                    \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
+
+                    \State $rootsOfSubtrees := (rootsOfSubtrees \cup {x}) - children(x)$
+
+                    \State $x := parent^{T_B}(x)$
+                \EndWhile
+            \EndFor
+
+            \Return $rootsOfSubtrees$
+        \end{algorithmic}
+    \end{algorithm}
+
+    \begin{computerootsofsubtreescorrectness}
+        \label{lem:computerootsofsubtreescorrectness}
+
+        Let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over, i.e. $lowerBoundary = \{x_1, x_2, ..., x_{\beta}$. Then after the loop in \texttt{Compute\_Roots\_Of\_Subtrees} is finished processing $x_i$, $1 \leq i \leq \beta$,
+    \end{computerootsofsubtreescorrectness}
+
+    Additionally, notice that the same holds for any node $x \in V(T_B[v])$, since $\leafset(T_B[x]) \subseteq \leafset(T_B[v])$. Thus, the upshot of Lemma~\ref{lem:filterclusterssubsetcompatible} is that if a certain node $v \in V(T_B)$ is deemed to have a leafset that is a subset of some node $u \in V(T_A)$, then $v$ is the \textit{root of a subtree} of $T_B$ that does not need to be ever considered again when attempting to determine which nodes in $V(T_B)$ are incompatible with nodes in $V(T_A) - V(T_A[u])$.\\
+
+    We define a subroutine \texttt{Filter\_Clusters\_Helper} which takes as input a subtree of $T_A$ (say $T_A[u]$) and $T_B$. It returns a subset of nodes in $T_B$, denoted by $rootsOfSubtrees$, where any node $v \in rootsOfSubtrees$ iff $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$ and no proper ancestor of $v$ also obeys this property. As a side effect, any node $v \in V(T_A[u])$ is marked for deletion if $w(v) \leq max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible \leafset(T_A[u])\})$. This means that any node in $T_A$ which is not more frequent that every cluster it is incompatible with in $T_B$ is marked for deletion. Then \texttt{Filter\_Clusters} uses \texttt{Filter\_Clusters\_Helper} in the following manner:
+
+    \begin{algorithm}
+        \caption{Filter\_Clusters}
+        \begin{algorithmic}[1]
+            \Input Trees $T_A$ and $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$ where every cluster has a known $weight$.
+            \Output A tree $T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(T_A) \text{ and } w(C) > max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$
+
+            \State Preprocess $T_B$ for $lca$ queries
+
+            \State Do a bottom-up traversal of $T_B$ to compute $|\leafset(T_B[v])|$ for all $v \in V(T_B)$
+
+            \State Construct an RMQ structure over $T_B$
+
+            \State Let $T_{A1} :=$ copy of $T_A$
+
+            \State \texttt{Filter\_Clusters\_Helper}$(T_{A1}, T_B)$
+
+            \State Do a top-down traversal of $T_{A1}$, deleting all marked nodes
+
+            \State \Return $T_{A1}$
+        \end{algorithmic}
+    \end{algorithm}
+
+    To write \texttt{Filter\_Clusters\_Helper}, we use the \textit{centroid path decomposition technique} of \cite{cole2000n} to decompose $T_A$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). A \textit{centroid path} in $T_A$ is the path formed by starting at the root and at each point following the child with the largest leaf set. The centroid path is denoted by $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf. Removing all nodes in $\pi$ along with all associated edges from $T_A$ results in a set of disjoint subtrees of $T_A$, where the root of each such subtree is a child of some node in $\pi$. These trees are called the \textit{side trees} of $\pi$, denoted by $\sigma(\pi)$. Also let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Observe that for any side tree $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq n/2$ and that $\{\leafset(\tau) : \tau \in \sigma(\pi)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any $i \geq 2$, $\leafset(T_A[p_{i - 1}]) \subset \leafset(T_A[p_i])$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind \texttt{Filter\_Clusters\_Helper} - recursively compute \texttt{Filter\_Clusters\_Helper} for side trees, then use Lemma~\ref{lem:incompatibility} to characterise incompatibility for the nested clusters rooted at nodes in the centroid path.\\
+
+    The key insight which makes our version of \texttt{Filter\_Clusters\_Helper} faster than \texttt{Filter\_Clusters} in \cite{jansson2018algorithms} is that we can reuse some information from the side trees. To show this, we prove the following lemma:
+
+    Then for some $p_i \in \pi$, $i \geq 2$, we find nodes in $T_B$ incompatible with $\leafset(T_A[p_i])$ in the following manner. Let $r_i$ be $lca^{T_B}(\leafset(T_A[p_i]))$. By Lemma~\ref{lem:incompatibility}, we know that any node $v \in V(T_B)$ that is incompatible with $\leafset(T_A[p_i])$ lies on the path from some leaf $x \in \leafset(T_A[p_i])$ to $r_i$ and $\leafset(T_B[v]) \not\subseteq \leafset(T_A[p_i])$. Since $\leafset(T_A[p_{i-1}]) \subseteq \leafset(T_A[p_i])$, we optimise by keeping track of the nodes incompatible with $\leafset(T_A[p_{i-1}])$ in a priority queue. Then we only need to insert nodes between $r_{i-1}$ and $r_i$ and the nodes between leaves of the side trees associated with $p_i$ and $r_i$ into this queue. We further use Lemma~\ref{lem:filterclusterssubsetcompatible} to note that rather than iterating upwards from the leaves of side trees, we can instead iterate upwards from the roots of the subtrees discovered in these.\\
+
+    The final optimisation we make is to utilise an RMQ structure on $T_B$ that allows us to query for the maximum weight of any node on the path between two given nodes. Thus, rather than inserting all the nodes between say $r_{i-1}$ and $r_i$, we could just insert a single number that we get from the RMQ structure. If we realise that an inserted node is compatible, then it can be removed and its parent inserted in a similar manner. This optimisation relies on the observation that if a node $v \in V(T_B)$ is incompatible with $\leafset(T_A[p_i])$, then in fact all nodes that are ancestors of $v$ and proper descendants of $r_i$ are incompatible with $\leafset(T_A[p_i])$. This observation is proved below:
 
     \begin{filterclustersfindingcompatibletermination}
         \label{lem:filterclustersfindingcompatibletermination}
 
-        For any node $u \in V(T_A)$, if for some $v \in V(T_B)$, $\leafset(T_A[u]) \not\compatible \leafset(T_B[v])$, then for any node $w$ on the path between $v$ and $r_{\leafset(T_A[u])}$, $\leafset(T_A[u]) \not\compatible \leafset(T_B[w])$.
+        For any node $p_i \in \pi$, if for some $v \in V(T_B)$, $\leafset(T_A[p_i]) \not\compatible \leafset(T_B[v])$, then for any node $w$ that is an ancestor of $v$ and a proper descendant of $r_i$, $\leafset(T_A[p_i]) \not\compatible \leafset(T_B[w])$.
 
         \begin{proof}
-            Since $v$ is a descendant of $r_{\leafset(T_A[u])}$ [by Lemma~\ref{lem:incompatibility}], $w$ is an ancestor of $v$. Also, since $\leafset(T_A[u]) \not\compatible \leafset(T_B[v])$, there is some $x \in \leafset(T_B[v])$ such that $x \not\in \leafset(T_A[u])$. Since $\leafset(T_B[v]) \subseteq \leafset(T_B[w])$, $x \in \leafset(T_B[w])$. Also, since $w$ is a proper descendant of $r_{\leafset(T_A[u])}$, there is some $y \in \leafset(T_A[u])$ such that $y \not\in \leafset(T_B[w])$ [otherwise $w$ would be an ancestor of $r_{\leafset(T_A[u])}$]. Thus $\leafset(T_A[u]) \not\compatible \leafset(T_B[w])$.
+            Since $\leafset(T_A[p_i]) \not\compatible \leafset(T_B[v])$, there is some $x \in \leafset(T_B[v])$ such that $x \not\in \leafset(T_A[p_i])$. Since $\leafset(T_B[v]) \subseteq \leafset(T_B[w])$, $x \in \leafset(T_B[w])$. Also, since $w$ is a proper descendant of $r_i$, there is some $y \in \leafset(T_A[p_i])$ such that $y \not\in \leafset(T_B[w])$ [otherwise $w$ would be an ancestor of $r_i$]. Thus $\leafset(T_A[p_i]) \not\compatible \leafset(T_B[w])$.
         \end{proof}
     \end{filterclustersfindingcompatibletermination}
 
-    By Lemmas~\ref{lem:filterclustersfindingcompatible} and~\ref{lem:filterclustersfindingcompatibletermination}, we can see that to remove nodes from the candidate set of incompatible nodes, we need to merely iterate upwards from each $x \in \leafset(T_A[u])$, removing nodes that are compatible, until we hit a node that is incompatible. Further, Lemma~\ref{lem:filterclusterssubsetcompatible} tell us that instead of starting from $x \in \leafset(T_A[u])$, we could start from the roots of the subtrees discovered in the children. These Lemmas taken together then give us the foundation of the \texttt{Filter\_Clusters\_Helper} algorithm.\\
+    We adopt an approach similar to that in \cite{jansson2018algorithms} for determining whether a given node in $T_B$ is incompatible with a given node in $T_A$. This involves maintaining a property $counter(v)$ for each node $v \in T_B$. If the current node in $T_A$ under consideration is $u$, then we would like $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. Then if $counter(v) = |\leafset(T_B[v])$, then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$ and so $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. Nodes that are found to be compatible in this manner then become the roots of compatible subtrees, and any children of these that were originally known to be such roots can be forgotten about.\\
 
-    \textit{High Level Description.} The algorithm can be visualised as keeping track of two sets of nodes in $T_B$, an $upperBoundary$ and a $lowerBoundary$. For any node $u \in V(T_A)$, the $upperBoundary$ represents the nodes in $T_B$ that are $lca$'s of the clusters associated with children of $u$. These are the nodes from which we iterate upwards to add to the set of candidate incompatible nodes. The $lowerBoundary$ represents the nodes that are roots of subtrees that do not need to be checked again. These are the nodes from which we iterate upwards to remove from the set of candidate incompatible nodes.\\
+    Finally, we need to erase the counter values seen in any call to \texttt{Filter\_Clusters\_Helper}, otherwise they will interfere with the processing of other calls. However, observe that we do not need to erase counters of any node in a compatible subtree, since those nodes will never be encountered again. Further, due to the way the algorithm is structured, the only counters that will actually need to be erased are those of the parents of these subtrees, and this is done at the end of a given call to the function.\\
 
-    \textit{Further Details}. We adopt an approach similar to that in \cite{jansson2018algorithms} for determining whether a given node in $T_B$ is incompatible with a given node in $T_A$. This involves maintaining a property $counter(v)$ for each node $v \in T_B$. If the current node in $T_A$ under consideration is $u$, then we would like $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. Then if $counter(v) = |\leafset(T_B[v])$, then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$ and so $\leafset(T_B[v]) \compatible \leafset(T_A[u])$. We also keep track of the nodes that are being found to be compatible, since these will form the new roots of compatible subtrees. Finally notice that we only need to start iterating from the parents of the nodes in the $lowerBoundary$ when determining compatible nodes, since the nodes themselves are already known to be compatible. The resulting algorithm (Algorithm~\ref{alg:filterclustershelper}) is presented on the next page.\\
+    The resulting algorithm (Algorithm~\ref{alg:filterclustershelper}) is presented on the next page. In this algorithm, $maxWeight(path(u, v))$ represents the maximum weight of any node on the path between nodes $u$ and $v$, excluding $v$.
 
     \begin{algorithm}
         \caption{Filter\_Clusters\_Helper}
         \label{alg:filterclustershelper}
 
         \begin{algorithmic}[1]
-            \State \textbf{Input:} A node $u \in V(T_A)$ and a tree $T_B$ with $\leafset(T_A[u]) \subseteq \leafset(T_B) = L$ where every cluster has a known $weight$.
+            \Input Trees $T_A$ and $T_B$ with $\leafset(T_A) \subseteq \leafset(T_B) = L$ where every cluster has a known $weight$.
 
-            \State \textbf{Side effects:} Marks any node $v \in V(T_A[u])$ for deletion iff $w(v) \leq w(x)$ for any $x \in V(T_B)$ with $\leafset(T_A[v]) \not\compatible \leafset(T_B[x])$.
+            \SideEffect Marks any node $v \in V(T_A)$ for deletion iff $w(v) \leq w(x)$ for any $x \in V(T_B)$ with $\leafset(T_A[v]) \not\compatible \leafset(T_B[x])$.
 
-            \State \textbf{Output:} A triplet $(r, rootsOfSubtrees, IDS)$. $r = r_{\leafset(T_A[u])}$. $rootsOfSubtrees$ is a set containing the roots of compatible subtrees discovered. $IDS$ is a Brodal queue containing all nodes in $T_B$ incompatible with $u$.
+            \Output A set $rootsOfSubtrees$, containing the roots of compatible subtrees discovered.
 
-            \State Let $IDS$ be an initially empty Brodal queue for storing nodes from $T_B$.
+            \State Compute a centroid path $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$ of $T_A$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf.
 
-            \State $c_h :=$ heaviest child of $u$, $r := null$, $lowerBoundary := \{\}$, $upperBoundary := \{\}$, $rootsOfSubtrees := \{\}$
+            \State Let $r_1 :=$ leaf in $T_B$ labelled by $p_1$
 
-            \ForAll{$c \in children(u)$ in increasing order of heaviness}
-                \State $r_c, lowerBoundary', IDS' :=$ \texttt{Filter\_Clusters\_Helper}$(c, T_B)$
+            \State $counter(r_1) := 1$ and \algorithmicif\ $\alpha > 2$ \algorithmicthen\ $counter(parent^{T_B}(r_1)) := 1$
 
-                \State $r := lca^{T_B}(r, r_c)$
+            \State $rootsOfSubtrees := \{r_1\}$
 
-                \State $upperBoundary := upperBoundary \cup r_c$
+            \For{$i := 2$ \textbf{to} $\alpha$}
+                \State $lowerBoundary := \{\}$
 
-                \State $rootsOfSubtrees := rootsOfSubtrees \cup lowerBoundary'$
+                \ForAll{side trees $\tau$ associated with $p_i$}
+                    \ForAll{$x \in$ \texttt{Filter\_Clusters\_Helper}($\tau$, $T_B$)}
+                        \State Add $x$ to $lowerBoundary$
 
-                % TODO: Enforce uniqueness of weights
-                \State $IDS := IDS \cup IDS'$
+                        \State Add $x$ to $rootsOfSubtrees$
+                    \EndFor
+                \EndFor
 
-                \If{$c \neq c_h$}
-                    \State $lowerBoundary := lowerBoundary \cup lowerBoundary'$
+                \State $r_i := lca^{T_B}(r_{i-1} \cup lowerBoundary)$
 
-                    \State \algorithmicforall\ $x \in lowerBoundary'$, $counter(parent^{T_B}(x)) := 0$
+                \If{$counter(r_{i-1}) < |\leafset(T_B[r_{i-1}])|$}
+                    \State insert $r_{i-1}, maxWeight(\pi(r_{i-1}, r_i))$ into $IDS$
+                \Else
+                    \State insert $parent^{T_B}(r_{i-1}), maxWeight(path(parent^{T_B}(r_{i-1}), r_i))$ into $IDS$
                 \EndIf
-            \EndFor
 
-            \ForAll{$x \in upperBoundary$}
-                \While{$x \not\in IDS$ and $x \neq r$}
-                    \State Insert $x$ into $IDS$
-                    \State $x := parent^{T_B}(x)$
-                \EndWhile
-            \EndFor
-
-            \State $parentsOfLowerBoundary := \{\}$
-
-            \ForAll{$x \in lowerBoundary$}
-                \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
-
-                \State $parentsOfLowerBoundary := parentsOfLowerBoundary \cup parent^{T_B}(x)$
-            \EndFor
-
-            \State $rootsOfSubtrees = lowerBoundary \cup lowerBoundary_h$
-
-            \ForAll{$x \in parentsOfLowerBoundary$}
-                \While{$counter(x) = |\leafset(T_B[x])|$ and $x \neq r$}
+                \ForAll{$x \in lowerBoundary$}
                     \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
 
-                    \State Remove $x$ from $IDS$
-
-                    \State Add $x$ to $rootsOfSubtrees$
-
-                    \State \algorithmicforall\ $x_c \in children(x)$, remove $x_c$ from $rootsOfSubtrees$
-
                     \State $x := parent^{T_B}(x)$
-                \EndWhile
+
+                    \State Insert $x, maxWeight(\pi(x, r_i))$ into $IDS$
+
+                    \While{$counter(x) = |\leafset(T_B[x])|$ and $x \neq r$}
+                        \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
+
+                        \State Remove $x$ from $IDS$
+
+                        \State Add $x$ to $rootsOfSubtrees$
+
+                        \State \algorithmicforall\ $x_c \in children(x)$, remove $x_c$ from $rootsOfSubtrees$
+
+                        \State $x := parent^{T_B}(x)$
+
+                        \State Insert $x, maxWeight(path(x, r_i))$ into $IDS$
+                    \EndWhile
+                \EndFor
+
+                \IIEf{$IDS$ is empty}
+                    {$M := 0$}
+                    $M :=$ maximum weight of a node in $IDS$
+
+                \IIf{$w(\leafset(T_A[p_i])) \leq M$}
+                    mark $p_i$ for deletion
             \EndFor
 
-            \IIEf{$IDS$ is empty}
-                {$M := 0$}
-                $M :=$ maximum weight of a node in $IDS$
+            \State \algorithmicforall\ $x \in rootsOfSubtrees$, $counter(parent^{T_B(x)}) := 0$
 
-            \IIf{$w(\leafset(T_A[p_i])) \leq M$}
-                mark $p_i$ for deletion
-
-            \State \Return $r$, $rootsOfSubtrees$, $IDS$
+            \State \Return $rootsOfSubtrees$
         \end{algorithmic}
     \end{algorithm}
-
-    There is one further optimisation we make which is critical to the runtime analysis. First, note that once we finish processing a node in $T_A$ and go to its sibling (if any), then the counter values seen so far need to be erased. However, observe that we do not need to erase counters of any node in a compatible subtree, since those nodes will never be encountered again. Due to the way the algorithm is structured, the only counters that will actually need to be erased are those of the parents of these subtrees. But we further observe that when moving on to process a node after finishing all its children, we could maintain the counters of the last child processed. In addition, we do not need to iterate upwards from the subtrees discovered by this last child; any nodes newly found to be compatible must be ancestors of two compatible subtrees, since otherwise no new information would have been obtained about that node. We choose this last child to be the heaviest child of the current node (as determined by size of leafset), to save as much computation as possible.\\
 
     \begin{filterclustersruntime}
         \label{lem:filterclustersruntime}
@@ -312,25 +351,19 @@
         The algorithm \texttt{Filter\_Clusters}$(T_A, T_B)$ runs ins $O(n\,log\,n)$ time.
 
         \begin{proof}
-            The helper algorithm uses a number of sets of nodes. To implement each of these, we utilise a linked list, while augmenting the node with a property that allows it to know whether it belongs to the set or not. In this manner, we can ensure that these sets do not contain duplicates, unions cost time proportional to the size of the second set and membership/addition/deletion operations can be done in constant time.\\
+            We preprocess $T_B$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time. $T_B$ is also preprocessed for RMQ queries using Lemma 8 of \cite{jansson2018algorithms}. This takes $O(n\,log\,n)$ preprocessing time and thereafter allows us to answer \textit{maxWeight} queries in $O(1)$ time. The bottom-up traversal of $T_B$ to compute $|leafset(T_B[v])|$ for all $v \in V(T_B)$ takes $O(n)$ time. Finally, copying $T_A$ takes $O(n)$ time.\\
 
-            We also preprocess $T_B$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time.\\
+            The helper algorithm uses a number of sets of nodes. To implement each of these, we utilise a linked list, while augmenting the node with a property that allows it to know whether it belongs to the set or not. In this manner, we can ensure that these sets do not contain duplicates and membership/addition/deletion operations can be done in constant time. The same is done for for the $IDS$ structure to allow membership queries.\\
 
-            The data structure used for $IDS$ is the Brodal queue of \cite{brodal1995fast}. This allows insertion and findMax in $O(1)$ time, delete in $O(log\,m)$ time (where $m$ is the number of elements in the queue) and merge in $O(1)$ time. Since the number of nodes in $T_B$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time.\\
+            The data structure used for $IDS$ is the Brodal queue of \cite{brodal1995fast}. This allows insertion and findMax in $O(1)$ time and delete in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $T_B$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time.\\
 
-            Let the heaviest child of $u$ be $c_h$. Henceforth we will separate operations into two kinds. The first take time proportional to the number of children of the current node $u$. Then these steps take $O(c)$ time, where $c = |children(u)|$. The second type take time proportional to the total size of $lowerBoundary$. Recall that $lowerBoundary$ does not include the subtrees discovered in $c_h$. Thus the size of $lowerBoundary$ is bounded by the total number of leafs in all children that are not $c_h$. We show that all operations in the algorithm (except for those inside inner loops) are of one of these kinds.\\
+            Let $m = |\leafset(T_A)|$ for some call to \texttt{Filter\_Clusters\_Helper}$(T_A, T_B)$. Observe that for any cluster $C$, the number of compatible subtrees that can be discovered is $O(|C|)$. Recall that $n = |\leafset(T_B)|$.\\
 
-            All operations during the iteration over children of $u$ are clearly of one of these two kinds since they are either $O(1)$ operations or operations that take time proportional to the size of the $lowerBoundary$ returned by a child $\neq c_h$. The exception is the step which creates $rootsOfSubtrees$, as this also goes over the $lowerBoundary$ returned by $c_h$. This can be fixed by ensuring that we keep the associated augmented property from $c_h$, so that this union can be instead done by inserting the other nodes in $rootsOfSubtrees$ into this set.\\
+            Computing the centroid path takes $O(m)$ time. Since the total number of leaves over all side trees is $O(m)$, the additions to $rootsOfSubtrees$ and $lowerBoundary$ cost $O(m)$ time. Similarly, since $lca$ queries can be made in constant time and the total number of $lca$ queries is $O(m)$, this also costs $O(m)$ time. It remains to analyse the upward iterations. First, note that this loop is entered a total of $O(m)$ times. Secondly, by Lemma~\ref{lem:filterclusterssubsetcompatible}, we know that a node that is removed from an $IDS$ will never be inserted into an $IDS$ again. Thus any node will only enter this inner loop once. All operations within this are $O(log\,n)$, so total time inside this loop is $O(n\,log\,n)$. The exception to this analysis is the step that removes all children of $x$ from $rootsOfSubtrees$. We ensure that the amount of time taken here is proportional to the number of children of $x$ already in $rootsOfSubtrees$ rather than the total number of children by always keeping track of which children of a node are in this set, using a linked list. Since any node will be removed from $rootsOfSubtrees$ only once, this costs $O(n)$ time total.\\
 
-            For each node in $upperBoundary$ we iterate upwards once. The termination condition in this loop is then hit $O(c)$ times. Notice that a node can only pass through the inner loop once since a node is only inserted into $IDS$ once. Then the total cost of this inner loop over the entire call to \texttt{Filter\_Clusters} is $O(n)$, since insertions into $IDS$ cost constant time.\\
+            Thus we can write a recurrence for \texttt{Filter\_Clusters\_Helper} (ignoring steps that are being analysed over the entire call to \texttt{Filter\_Clusters}) in the following manner: $T(m) = \sum_{\tau \in \sigma(\pi)}T(|\leafset(\tau))|) + O(m)$. Since for any $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq m/2$, there are $log\,m$ recursion levels, we get $T(n) = O(n\,log\,n)$.\\
 
-            Similarly, for each node in $lowerBoundary$, we iterate upwards once. The termination condition is again hit $O(c)$ times. Again, we notice that a node can only pass through the inner loop once. We ensure that the amount of time taken while removing children of $x$ from $rootsOfSubtrees$ is proportional to the number of children in $rootsOfSubtrees$ rather than the total number of children by always keeping track of which children of a node are in this set, using a linked list. Since any node will be removed from $rootsOfSubtrees$ only once, this costs $O(n)$ time. All other operations in this inner loop are $O(log\,n)$ time (deletions in the Brodal queue cost $O(log\,n)$) and so the total cost over the entire call to \texttt{Filter\_Clusters} is $O(n\,log\,n)$.\\
-
-            The remaining operations are $O(1)$ time since findMax in a Brodal queue costs constant time.\\
-
-            Operations of the first kind as described above cost a total of $O(n)$ time, since there are a total of $O(n)$ children in the tree. To analyse operations of the second kind, we note that these cost time proportional to the total number of leaves in the children that are not $c_h$. By the standard argument of heavy path decomposition, it is clear that any leaf will have $O(log\,n)$ total work assigned to it over all calls. Since there are $n$ leaves, these operations take $O(n\,log\,n)$ time.\\
-
-            Thus \texttt{Filter\_Clusters\_Helper} takes $O(n\,log\,n)$ time overall. It remains to analyse the time taken by the final \textit{delete} steps. To do so, observe that if we do the deletions in a top down manner, the parent of any node changes at most once. Thus this costs $O(n)$ time total.\\
+            Finally, we note that time taken to process $T_{A1}$ after \texttt{Filter\_Clusters\_Helper} is done takes $O(n)$ time. This is because deleting all marked nodes can be done in a top down traversal, where every node's parent changes at most once. Further, recall that the total preprocessing time is $O(n\,log\,n)$ and the time set aside to be analysed over the entire call to \texttt{Filter\_Clusters} is $O(n\,log\,n)$. Thus, \texttt{Filter\_Clusters} runs in $O(n\,log\,n)$ time.
         \end{proof}
     \end{filterclustersruntime}
 
@@ -346,9 +379,15 @@
         \end{proof}
     \end{freqdiffruntime}
 
-    % TODO: Future Work
     \section{Future Work}
     \label{sec:futurework}
+
+    I plan on looking into the following items over the coming semester:
+    \begin{itemize}
+        \item The writeup above is perhaps too verbose; it might be possible to make it more concise. It might also be possible to improve the presentation of the algorithm.
+        \item The algorithm presented above needs to be implemented and experimental results obtained.
+        \item There are further types of consensus trees that I can investigate. I will likely pick up greedy consensus trees next and attempt to improve on the best known time presented in \cite{gawrychowski2017faster}.
+    \end{itemize}
 
     \newpage
     \bibliographystyle{plain}
