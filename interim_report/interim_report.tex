@@ -186,7 +186,7 @@
 
     For any cluster $C \subseteq L$, define any node $v \in V(T_B)$ to be the root of a \textit{maximal subtree compatible with $C$} to satisfy the following property: $\leafset(T_B[v]) \subseteq C$ and there is no proper ancestor $w$ of $v$ such that $\leafset(T_B[w]) \subseteq C$. We denote this as $rootsOfSubtrees(C)$. We would then be interested in determining $rootsOfSubtrees(\leafset(T_A[u]))$ for any node $u \in V(T_A)$.\\
 
-    To compute $rootsOfSubtrees(u)$, we define a property $counter(v)$ for every $v \in V(T_B)$. $counter(v) =$ number of leaves in $T_B[v]$ that belong to some set under consideration. If we take this set to be $\leafset(T_A[u])$, then $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. When $counter(v) = |\leafset(T_B[v])|$ then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. So our problem is reduced to computing $counter(v)$ correctly. The process we follows is presented in Algorithm~\ref{alg:computerootsofsubtrees}. This algorithm starts off by recursively computing $rootsOfSubtrees(c)$ for each $c \in children(u)$, and putting these sets together into a set called $lowerBoundary$. Then we iterate upwards from each node in $lowerBoundary$, updating $counter$ and $rootsOfSubtrees$ as shown. We show the correctness of this algorithm by proving a loop invariant.\\
+    To compute $rootsOfSubtrees(\leafset(T_A[u]))$, we define a property $counter(v)$ for every $v \in V(T_B)$. $counter(v) =$ number of leaves in $T_B[v]$ that belong to some set under consideration. If we take this set to be $\leafset(T_A[u])$, then $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. When $counter(v) = |\leafset(T_B[v])|$ then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. So our problem is reduced to computing $counter(v)$ correctly. The process we follows is presented in Algorithm~\ref{alg:computerootsofsubtrees}. This algorithm starts off by recursively computing $rootsOfSubtrees(\leafset(T_A[c]))$ for each $c \in children(u)$, and putting these sets together into a set called $lowerBoundary$. Then we iterate upwards from each node in $lowerBoundary$, updating $counter$ and $rootsOfSubtrees$ as shown. We show the correctness of this algorithm below.
 
     \begin{algorithm}
         \caption{Compute\_Roots\_Of\_Subtrees}
@@ -195,30 +195,44 @@
         \begin{algorithmic}[1]
             \Input Node $u \in V(T_A)$ and $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$.
 
-            \Output $rootsOfSubtrees(u)$
+            \Output $rootsOfSubtrees(\leafset(T_A[u]))$
 
-            \State $lowerBoundary := \bigcup_{c \in children(u)} rootsOfSubtrees(c)$
+            \State $lowerBoundary := \bigcup_{c \in children(u)} rootsOfSubtrees(\leafset(T_A[c]))$
 
-            \State $rootsOfSubtrees := lowerBoundary$
+            \State $roots := \{\}$
 
             \ForAll{$x \in lowerBoundary$}
                 \While{$counter(x) = |\leafset(T_B[x])|$}
                     \State $counter(parent^{T_B}(x)) := counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$
 
-                    \State $rootsOfSubtrees := (rootsOfSubtrees \cup {x}) - children(x)$
+                    \State $roots := (roots \cup {x}) - children(x)$
 
                     \State $x := parent^{T_B}(x)$
                 \EndWhile
             \EndFor
 
-            \Return $rootsOfSubtrees$
+            \State \Return $roots$
         \end{algorithmic}
     \end{algorithm}
+
+    \newpage
 
     \begin{computerootsofsubtreescorrectness}
         \label{lem:computerootsofsubtreescorrectness}
 
-        Let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over, i.e. $lowerBoundary = \{x_1, x_2, ..., x_{\beta}$. Then after the loop in \texttt{Compute\_Roots\_Of\_Subtrees} is finished processing $x_i$, $1 \leq i \leq \beta$,
+        The algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(u, T_B)$ outputs $rootsOfSubtrees(\leafset(T_A[u]))$.
+
+        \begin{proof}
+            We prove a loop invariant. Let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over, i.e. $lowerBoundary = \{x_1, x_2, ..., x_{\beta}\}$. For any $i$, $1 \leq i \leq \beta$, let $D_i = \bigcup_{j = 1}^{i} \leafset(T_B[x_j])$. Then after the loop in \texttt{Compute\_Roots\_Of\_Subtrees} is finished processing $x_i \in lowerBoundary$, the set $roots = rootsOfSubtrees(D_i)$. Additionally, for any node $p \in \bigcup_{r \in roots} parent^{T_B}(r)$, $counter(p) = \sum_{c \in children(p) \cap roots} |\leafset(T_B[c])|$.\\
+
+            We consider the loop for $x_i \in lowerBoundary$, $i > 1$. For any node $r \in rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1})$, $\leafset(T_B[r]) \subseteq D_i$ and $\leafset(T_B[r]) \not\subseteq D_{i-1}$. Thus there is some $x \in \leafset(T_B[r])$ such that $x \in D_i - D_{i-1}$. Note that $r$ is an ancestor of $x$. $x_i$ is also an ancestor of $x$ since $x \in D_i - D_{i-1} = \leafset(T_B[x_i])$. But $\leafset(T_B[x_i]) \subseteq D_i$. Then $r$ must be an ancestor of $x_i$ since $r$ is a maximal subtree compatible with $D_i$. Thus any new node $r$ that needs to be added to $roots$ is an ancestor of $x_i$.\\
+
+            We now prove a loop invariant for the inner loop. We claim that when the inner loop is done processing some $x \in V(T_B)$, it is true that $\leafset(T_B[x]) \subseteq D_i$, the parent counter invariant is satisified and no proper descendant of $x$ is in $roots$. To see this true, consider the processing of some $x \in V(T_B)$. Since $x$ passed the while loop check, $counter(x) = |\leafset(T_B[x])|$. Also, by the parent counter invariant, $counter(x) = \sum_{c \in children(x) \cap roots} |\leafset(T_B[c])|$. Then it must be true that $\leafset(T_B[x]) \subseteq D_i$ and for all $c \in children(x)$, $c \in roots$. So $counter(parent^{T_B}(x)) = \sum_{c \in children(x) \cap roots} |\leafset(T_B[c])|$ by the parent counter invariant. Also, $x$ cannot have already been in $roots$ since $D_i - D{i-1} \subseteq \leafset(T_B[x])$. Finally, it is true that for any $c \in children(parent^{T_B}(x))$, $c \neq x$, $\leafset(T_B[c]) \cap \leafset(T_B[x]) = \emptyset$. Thus the updated counter for $parent^{T_B}(x) = counter(parent^{T_B}(x)) + |\leafset(T_B[x])|$, since $x$ is being added to $roots$. Notice that this is the only node in $T_B$ whose counter needs to be updated in this step, hence showing that the algorithm maintains the parent counter invariant. We can also apply the outer and inner loop invariants to see that for all $c \in children(x)$, no proper descendant of $c$ is in $roots$. Then we add $x$ to $roots$ and remove all children of $x$ from $roots$, maintaining the invariant that no proper descendant of $x$ is in $roots$.\\
+
+            Applying the inner loop invariant, we see that when the inner loop terminates, the parent counter invariant is maintained. Further we note that since it terminated, the current $x$ is such that $counter(x) \neq |\leafset(T_B[x])|$. Then if for all $c \in children(x)$, $c \in roots$, in fact $counter(x) = |\leafset(T_B[x])|$. Thus there is some $c \in children(x)$, $c \not\in roots$. $c$ cannot be on the path from $x_i$ to $x$, otherwise by our algorithm it would have been added to $roots$ in the last iteration. Thus we can apply our outer loop invariant to $c$ to see that $\leafset(T_B[c]) \not\subseteq D_i$. Hence it must be true that $\leafset(T_B[x]) \not\subseteq D_i$, so $x \not\in rootsOfSubtrees(D_i)$. Further no ancestor of $x$ is in $rootsOfSubtrees(D_i)$ either. Thus the node that was added to $roots$ in the last iteration of the inner loop is the root of a maximal subtree compatible with $D_i$ and so $roots = rootsOfSubtrees(D_i)$.
+
+            Applying the outer loop invariant, when this loop finishes, $roots = rootsOfSubtrees(D_{\beta}) = \leafset(T_A[u])$.
+        \end{proof}
     \end{computerootsofsubtreescorrectness}
 
     Additionally, notice that the same holds for any node $x \in V(T_B[v])$, since $\leafset(T_B[x]) \subseteq \leafset(T_B[v])$. Thus, the upshot of Lemma~\ref{lem:filterclusterssubsetcompatible} is that if a certain node $v \in V(T_B)$ is deemed to have a leafset that is a subset of some node $u \in V(T_A)$, then $v$ is the \textit{root of a subtree} of $T_B$ that does not need to be ever considered again when attempting to determine which nodes in $V(T_B)$ are incompatible with nodes in $V(T_A) - V(T_A[u])$.\\
