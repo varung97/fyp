@@ -38,6 +38,7 @@
 \newtheorem{labelclustersruntime}[incompatibility]{Lemma}
 \newtheorem{filterclusterssubsetcompatible}[incompatibility]{Lemma}
 \newtheorem{computerootsofsubtreescorrectness}[incompatibility]{Lemma}
+\newtheorem{findincompatiblecorrectness}[incompatibility]{Lemma}
 \newtheorem{incompatibilityrootsofsubtrees}[incompatibility]{Lemma}
 \newtheorem{incompatiblecandidates}[incompatibility]{Lemma}
 \newtheorem{incompatibleactualset}[incompatibility]{Lemma}
@@ -240,7 +241,7 @@
         The algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(u, T_B)$ outputs $rootsOfSubtrees(\leafset(T_A[u]))$.
 
         \begin{proof}
-            We prove a loop invariant. Let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over, i.e. $lowerBoundary = \{x_1, x_2, ..., x_{\beta}\}$. For any $i$, $1 \leq i \leq \beta$, let $D_i = \bigcup_{j = 1}^{i} \leafset(T_B[x_j])$. Then after the loop in \texttt{Compute\_Roots\_Of\_Subtrees} is finished processing $x_i \in lowerBoundary$, the set $roots = rootsOfSubtrees(D_i)$. Additionally, for any node $p \in \bigcup_{r \in roots} parent^{T_B}(r)$, $counter(p) = \sum_{c \in children(p) \cap roots} |\leafset(T_B[c])|$.
+            We prove a loop invariant. Let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over, i.e. $lowerBoundary = \{x_1, x_2, ..., x_{\beta}\}$. For any $i$, $1 \leq i \leq \beta$, let $D_i = \bigcup_{j = 1}^{i} \leafset(T_B[x_j])$. Then we claim that after the loop in \texttt{Compute\_Roots\_Of\_Subtrees} is finished processing $x_i \in lowerBoundary$, the set $roots = rootsOfSubtrees(D_i)$. Additionally, for any node $p \in \bigcup_{r \in roots} parent^{T_B}(r)$, $counter(p) = \sum_{c \in children(p) \cap roots} |\leafset(T_B[c])|$.
 
             We consider the loop for $x_i \in lowerBoundary$, $i > 1$. For any node $r \in rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1})$, $\leafset(T_B[r]) \subseteq D_i$ and $\leafset(T_B[r]) \not\subseteq D_{i-1}$. Thus there is some $x \in \leafset(T_B[r])$ such that $x \in D_i - D_{i-1}$. Note that $r$ is an ancestor of $x$. $x_i$ is also an ancestor of $x$ since $x \in D_i - D_{i-1} = \leafset(T_B[x_i])$. But $\leafset(T_B[x_i]) \subseteq D_i$. Then $r$ must be an ancestor of $x_i$ since $r$ is a maximal subtree compatible with $D_i$. Thus any new node $r$ that needs to be added to $roots$ is an ancestor of $x_i$.
 
@@ -252,7 +253,53 @@
         \end{proof}
     \end{computerootsofsubtreescorrectness}
 
-    We can then use $rootsOfSubtrees(\leafset(T_A[u]))$ for some $u \in V(T_A)$ to find the set of nodes $incompatible(u) = \{v : v \in V(T_B) \text{ and } \leafset(T_B[v]) \not\compatible \leafset(T_A[u])\}$:
+    We now prove a stronger version of Lemma~\ref{lem:incompatibility} that takes $rootsOfSubtrees$ into account to compute the set $incompatible(u) = \{v : v \in V(T_B) \text{ and } \leafset(T_B[v]) \not\compatible \leafset(T_A[u])\}$ for any $u \in V(T_A)$.
+
+    \begin{incompatibilityrootsofsubtrees}
+        \label{lem:incompatibilityrootsofsubtrees}
+
+        Let $path(x, y)$ for any nodes $x, y \in T_B$ be a set containing all nodes that are ancestors of $x$ and proper descendants of $y$. For any node $u \in V(T_A)$, define $l_u = lca^{T_B}(\leafset(T_A[u]))$. Then for any $u \in V(T_A)$, $v \in incompatible(u)$ iff $v$ is a proper descendant of $l_u$ and for some $x \in rootsOfSubtrees(u)$, $v$ is a proper ancestor of $x$. i.e. $incompatible(u) = \bigcup_{x \in rootsOfSubtrees(u)} path(parent^{T_B}(x), l_u)$.
+
+        \begin{proof}
+            Recall that for any $x \in rootsOfSubtrees(u)$, $\leafset(T_B[x]) \subseteq \leafset(T_A[u])$ and there is no proper ancestor $w$ of $x$ such that $\leafset(T_B[w]) \subseteq \leafset(T_A[u])$.
+
+            \textit{Forward direction}: Given some $v \in V(T_B)$ such that $\leafset(T_B[v]) \not\compatible \leafset(T_A[u])$, $v$ must be a proper descendant of $l_u$ by Lemma~\ref{lem:incompatibility}. Further, for some $y \in \leafset(T_A[u])$, $v$ is a proper ancestor of $y$ by Lemma~\ref{lem:incompatibility}. Then there must be $x \in rootsOfSubtrees(u)$, $x$ is an ancestor of $y$. $v \not\in V(T_B[x])$, otherwise $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. Thus $v$ is a proper ancestor of $x$.
+
+            \textit{Backward direction}: Given some $v \in V(T_B)$ such that $v$ is a proper descendant of $l_u$ and for some $x \in rootsOfSubtrees(u)$, $v$ is a proper ancestor of $x$. Since $v$ is a proper descendant of $l_u$, $\leafset(T_A[u]) \not\subseteq \leafset(T_B[v])$. Since $v$ is a proper ancestor of some $x \in rootsOfSubtrees(u)$, $\leafset(T_B[x]) \subset \leafset(T_B[v])$, so $\leafset(T_B[v]) \cap \leafset(T_A[u]) \neq \emptyset$. Finally, $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$, otherwise $x \not\in rootsOfSubtrees(u)$.
+        \end{proof}
+    \end{incompatibilityrootsofsubtrees}
+
+    Finally, we show how, given an internal node $u \in V(T_A)$ and node $c_1 \in children(u)$, we can build $incompatible(u)$ using $incompatible(c_1)$. To be able to do this, we present Lemma~\ref{lem:incompatiblecandidates}, showing how we can build up a set of nodes that are candidates for being incompatible with $u$.
+
+    \begin{incompatiblecandidates}
+        \label{lem:incompatiblecandidates}
+
+        Given an internal node $u \in V(T_A)$ and node $c_1 \in children(u)$, let the set $lowerBoundary(u, c_1) = \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(\leafset(T_A[c]))$. Arbitrarily fix some ordering for the nodes in $lowerBoundary$, such that $lowerBoundary = \{x_1, x_2, ..., x_{\beta}\}$.
+
+        We define $D_0 = \leafset(T_B[c_1])$ for convenience. Further define $candidates_0 = incompatible(c_1) \cup path(l_{c_1}, l_u)$ if $l_{c_1} \not\in rootsOfSubtrees(\leafset(T_B[c_1]))$, otherwise $candidates_0 = incompatible(c_1) \cup path(parent^{T_B}(l_{c_1}), l_u)$.
+
+        For any $i$, $1 \leq i \leq \beta$, let $D_i = D_0 \cup \bigcup_{j = 1}^{i} \leafset(T_B[x_j])$. For any $i$, $0 \leq i \leq \beta$, let $candidates_i = \bigcup_{s \in rootsOfSubtrees(D_i)} path(parent^{T_B}(s), l_u)$. Clearly, there is some $r \in rootsOfSubtrees(D_i)$, such that $\leafset(T_B[x_i]) \subseteq \leafset(T_B[r])$. Then $candidates_i = (candidates_{i-1} - V(T_B[r])) \cup path(parent^{T_B}(r), l_u)$.
+
+        \begin{proof}
+            First, we show that $candidates_0 = \bigcup_{s \in rootsOfSubtrees(D_0)} path(parent^{T_B}(s), l_u)$. This holds because $incompatible(c_1) = \bigcup_{s \in rootsOfSubtrees(D_0)} path(parent^{T_B}(s), l_{c_1})$ [By Lemma~\ref{lem:incompatibilityrootsofsubtrees}], to which we add $path(parent^{T_B}(l_{c_1}), l_u)$ and $l_{c_1}$ if $l_{c_1} \not\in rootsOfSubtrees(D_0)$.
+
+            We show that $rootsOfSubtrees(D_i) \cap rootsOfSubtrees(D_{i-1}) = rootsOfSubtrees(D_{i-1}) - V(T_B[r])$.
+
+            Take some $v \in rootsOfSubtrees(D_i) \cap rootsOfSubtrees(D_{i-1})$. Note that $v \neq r$ since $\leafset(T_B[v]) \subseteq D_{i-1}$, $D_{i-1} \cap \leafset(T_B[x_i]) = \emptyset$ and $\leafset(T_B[x_i]) \subseteq \leafset(T_B[r])$. Also, $v$ is not a proper descendant of $r$, otherwise both $v$ and $r$ could not belong to $rootsOfSubtrees(D_i)$. Thus $v \in rootsOfSubtrees(D_{i-1}) - V(T_B[r])$. Now take some $v \in rootsOfSubtrees(D_{i-1}) - V(T_B[r])$. Since $\leafset(T_B[v]) \subseteq D_{i-1} \subseteq D_i$, if $v \not\in rootsOfSubtrees(D_i)$ then there is some proper ancestor $w$ of $v$ such that $\leafset(T_B[w]) \subseteq D_i$. If $\leafset(T_B[w]) \cap \leafset(T_B[x_i]) = \emptyset$, then $\leafset(T_B[w]) \subseteq D_{i-1}$, but then $v \not\in rootsOfSubtrees(D_{i-1})$. So $\leafset(T_B[w]) \cap \leafset(T_B[x_i]) \neq \emptyset$. Since $\leafset(T_B[x_i]) \subseteq \leafset(T_B[r])$, $w$ is either a descendant of $r$ (which is not possible, otherwise $v \in V(T_B[r])$) or $w$ is a proper ancestor of $r$ (which is not possible, otherwise $r \not\in rootsOfSubtrees(D_i)$). Thus $v \in rootsOfSubtrees(D_i)$.
+
+            Now we show that $rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1}) = \{r\}$. Let $v$ be a node such that $v \in rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1})$ and $v \neq r$. Then $\leafset(T_B[v]) \subseteq D_i$ and $\leafset(T_B[v]) \not\subseteq D_{i-1}$. Thus there is some $x \in \leafset(T_B[x_i])$ such that $x \in \leafset(T_B[v])$. Since $\leafset(T_B[x_i]) \subseteq \leafset(T_B[r])$, $v$ is either a proper descendant or proper ancestor of $r$. But then both $v$ and $r$ cannot be in $rootsOfSubtrees(D_i)$. Thus there is no such node $v$.
+
+            Thus the sets $rootsOfSubtrees(D_{i-1}) - V(T_B[r])$ and $\{r\}$ partition $rootsOfSubtrees{D_i}$.
+
+            Take some node $v \in candidates_i$. If $v$ is a proper ancestor of $r$, then clearly $v \in path(parent^{T_B}(r), l_u)$. Otherwise $v$ is a proper ancestor of some node $s \in rootsOfSubtrees(D_i)$, $s \neq r$. Then $s \in rootsOfSubtrees(D_{i-1}) - V(T_B[r])$, so $s \in rootsOfSubtrees(D_{i-1})$. Thus $v \in candidates_{i-1}$. Since $v \not\in V(T_B[r])$ (otherwise $s$ would be a proper descendant of $r$), $v \in candidates_{i-1} - V(T_B[r])$.
+
+            Now take some node $v \in (candidates_{i-1} - V(T_B[r])) \cup path(parent^{T_B}(r), l_u)$. If $v \in path(parent^{T_B}(r), l_u)$, then clearly $v \in candidates_i$. Otherwise, $v \in candidates_{i-1} - V(T_B[r]) - path(parent^{T_B}(r), l_u)$. Then there is some node $s \in rootsOfSubtrees(D_{i-1})$ such that $v$ is a proper ancestor of $s$. If $s \in V(T_B[r])$ then $v \in V(T_B[r]) \cup path(parent^{T_B}(r), l_u)$. Thus $s \not\in V(T_B[r])$. This means $s \in rootsOfSubtrees(D_i) \cap rootsOfSubtrees(D_{i-1})$, so $s \in rootsOfSubtrees(D_i)$, hence $v \in candidates_i$.
+
+            To complete the recurrence for $candidates_i$, let $candidates_0 = incompatible(c_1)$
+        \end{proof}
+    \end{incompatiblecandidates}
+
+    Note that $candidates_{\beta} = \bigcup_{s \in rootsOfSubtrees(D_i)} path(parent^{T_B}(s), l_u) = \bigcup_{s \in rootsOfSubtrees(\leafset(T_B[u]))} path(parent^{T_B}(s), l_u) = incompatible(u)$. With these results in hand, we present Algorithm~\ref{alg:findincompatible}, to find $incompatible(u)$. Note that the input tree $T_B$ is required to satisfy the parent counter invariant for $\leafset(T_B[c_1])$.
 
     \begin{algorithm}
         \caption{Find\_Incompatible}
@@ -265,13 +312,15 @@
 
             \State $candidates := incompatible(c_1)$
 
-            \State $roots := rootsOfSubtrees(c_1)$
+            \State $roots := rootsOfSubtrees(\leafset(T_A[c_1]))$
 
             \State $lowerBoundary := \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(\leafset(T_A[c]))$
 
-            \IIf{$\leafset(T_B[l_{c_1}]) \in roots$}
-                {$candidates := candidates \cup path(parent^{T_B}(l_{c_1}), l_u)$}
-                $candidates := candidates \cup path(l_{c_1}, l_u)$
+            \If{$\leafset(T_B[l_{c_1}]) \in roots$}
+                \State $candidates := candidates \cup path(parent^{T_B}(l_{c_1}), l_u)$
+            \Else
+                \State $candidates := candidates \cup path(l_{c_1}, l_u)$
+            \EndIf
 
             \ForAll{$x \in lowerBoundary$}
                 \While{$counter(x) = |\leafset(T_B[x])|$}
@@ -289,55 +338,61 @@
                     $candidates := candidates \cup path(x, l_u)$
             \EndFor
 
-            \State \Return $roots$
+            \State \Return $candidates$
         \end{algorithmic}
     \end{algorithm}
 
+    \begin{findincompatiblecorrectness}
+        \label{lem:findincompatiblecorrectness}
 
-    \begin{incompatibilityrootsofsubtrees}
-        \label{lem:incompatibilityrootsofsubtrees}
-
-        % TODO: Can probably define l_u here
-        For any $u \in V(T_A)$, $v \in incompatible(u)$ iff $v$ is a proper descendant of $lca^{T_B}(\leafset(T_A[u]))$ and for some $x \in rootsOfSubtrees(u)$, $v$ is a proper ancestor of $x$.
+        The algorithm \texttt{Find\_Incompatible}$(u, T_B)$ outputs $incompatible(u)$.
 
         \begin{proof}
-            Recall that for any $x \in rootsOfSubtrees(u)$, $\leafset(T_B[x]) \subseteq \leafset(T_A[u])$ and there is no proper ancestor $w$ of $x$ such that $\leafset(T_B[w]) \subseteq \leafset(T_A[u])$.
+            Similarly to Lemma~\ref{lem:incompatiblecandidates}, we let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over. We define $D_0 = \leafset(T_B[c_1])$ and for any $i$, $1 \leq i \leq \beta$, $D_i = D_0 \cup \bigcup_{j = 1}^{i} \leafset(T_B[x_j])$.
 
-            \textit{Forward direction}: Given some $v \in V(T_B)$ such that $\leafset(T_B[v]) \not\compatible \leafset(T_A[u])$, $v$ must be a proper descendant of $lca^{T_B}(\leafset(T_A[u]))$ by Lemma~\ref{lem:incompatibility}. Further, for some $y \in \leafset(T_A[u])$, $v$ is a proper ancestor of $y$ by Lemma~\ref{lem:incompatibility}. Then there must be $x \in rootsOfSubtrees(u)$, $x$ is an ancestor of $y$. $v \not\in V(T_B[x])$, otherwise $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. Thus $v$ is a proper ancestor of $x$.
+            First, notice that the algorithm follows the same structure for updating $roots$ as \texttt{Compute\_Roots\_Of\_Subtrees}. Then by applying the same arguments as in Lemma~\ref{lem:computerootsofsubtreescorrectness}, we can see that the parent counter invariant is maintained and after $x_i$ is processed, $roots = rootsOfSubtrees(D_i)$.
 
-            \textit{Backward direction}: Given some $v \in V(T_B)$ such that $v$ is a proper descendant of $lca^{T_B}(\leafset(T_A[u]))$ and for some $x \in rootsOfSubtrees(u)$, $v$ is a proper ancestor of $x$. Since $v$ is a proper descendant of $lca^{T_B}(\leafset(T_A[u]))$, $\leafset(T_A[u]) \not\subseteq \leafset(T_B[v])$. Since $v$ is a proper ancestor of some $x \in rootsOfSubtrees(u)$, $\leafset(T_B[x]) \subset \leafset(T_B[v])$, so $\leafset(T_B[v]) \cap \leafset(T_A[u]) \neq \emptyset$. Finally, $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$, otherwise $x \not\in rootsOfSubtrees(u)$.
+            The set $candidates$ is initialised to exactly $candidates_0$.
+
+            Note that the inner loop discovers one new node $r \in rootsOfSubtrees(D_i)$ and removes any node $y \in rootsOfSubtrees(D_{i-1})$ from $roots$ iff $y$ is a proper descendant of $r$. The algorithm then adds $path(parent^{T_B}(r), l_u)$ to $candidates$ if $parent^{T_B}(r) \not\in candidates$.
+
+            We claim that after the inner loop terminates, $candidates = candidates_{i-1} - V(T_B[r])$. Take any node $v \in candidates_{i-1} \cap V(T_B[r])$. Since $v \in candidates_{i-1}$, there is some $s \in rootsOfSubtrees(D_{i-1})$ such that $v \in path(parent^{T_B}(s), l_{c_1})$. Since $v$ is a proper ancestor of $s$, there is some leaf $y \in \leafset(T_B[v])$ such that $y \not\in D_{i-1}$. If $v$ is not a proper ancestor of $x_i$, then $y \not\in \leafset(T_B[x_i])$ and so $y \not\in D_i$. But since $v \in V(T_B[r])$, $y \in \leafset(T_B[r])$, which is a contradiction as $\leafset(T_B[r]) \subseteq D_i$. Thus $v$ is a proper ancestor of $x_i$. Since the inner loop removes all nodes in $path(x_i, parent^{T_B}(r))$ from $candidates$, when this loop terminates, $v \not\in candidates$.
+
+            Then if $parent^{T_B}(r) \in candidates$, $path(parent^{T_B}(r), l_u) \subseteq candidates$. This is because $candidates_{i-1}$ consists only of paths between nodes from $rootsOfSubtrees(D_{i-1})$ and $l_u$, so for any node $v \in candidates_i$, $path(v, l_u) \subseteq candidates_i$. Removing an entire subtree does not break this property, so it holds for $candidates_i - V(T_B[r]) = candidates$.
+
+            Thus when we finish processing $x_i$, $candidates = (candidates_{i-1} - V(T_B[x])) \cup path(parent^{T_B}(x), l_u) = candidates_i$. As mentioned earlier, $candidates_{\beta} = incompatible(u)$, so \texttt{Find\_Incompatible}$(u, T_B)$ returns $incompatible(u)$.
         \end{proof}
-    \end{incompatibilityrootsofsubtrees}
+    \end{findincompatiblecorrectness}
 
-    \begin{incompatiblecandidates}
-        \label{lem:incompatiblecandidates}
+    % \begin{incompatiblecandidates}
+    %     \label{lem:incompatiblecandidates}
+    %
+    %     Let $path(x, y)$ for any nodes $x, y \in T_B$ be a set containing all nodes that are ancestors of $x$ and proper descendants of $y$. For any node $u \in T_A$, let $l_u = lca^{T_B}(\leafset(T_A[u]))$. Then, given any internal node $u \in V(T_A)$ and any $c_1 \in children(u)$, let $rootsOfSubtreesChildren = \bigcup_{c \in children(u)} rootsOfSubtrees(c)$ and $rootsExceptc_1 = \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(c)$. Let $candidates(u, c_1) = incompatible(c_1)\ \cup\ path(parent^{T_B}(l_{c_1}), l_u)\ \cup\ \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. Then $incompatible(u)\subseteq candidates$.
+    %
+    %     \begin{proof}
+    %         Let $v \in incompatible(u) - \{l_{c_1}\}$. By Lemma~\ref{lem:incompatibilityrootsofsubtrees} $v$ is a proper descendant of $l_u$ and there is at least one node $r \in rootsOfSubtrees(u)$, such that $r$ is a proper descendant of $v$. Using Algorithm~\ref{alg:computerootsofsubtrees} it is easy to see that for any $r \in rootsOfSubtrees(u)$, $V(T_B[r]) \cap rootsOfSubtreesChildren \neq \emptyset$. Thus $V(T_B[v]) \cap rootsOfSubtreesChildren \neq \emptyset$. Also note that $rootsExceptc_1$ and $rootsOfSubtrees(c_1)$ partition $rootsOfSubtreesChildren$.
+    %
+    %         Now, if there is some node $r_1 \in rootsExceptc_1$, such that $v$ is a proper ancestor of $r_1$, then $v \in path(parent^{T_B}(r_1), l_u)$. Otherwise, there must be some $r_1 \in rootsOfSubtrees(c_1)$ such that $v$ is a proper ancestor of $r_1$. If $v$ is a proper descendant of $l_{c_1}$, then by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, $v \in incompatible(c_1)$. If not, then $v \in path(l_{c_1}, l_u)$.
+    %     \end{proof}
+    % \end{incompatiblecandidates}
 
-        Let $path(x, y)$ for any nodes $x, y \in T_B$ be a set containing all nodes that are ancestors of $x$ and proper descendants of $y$. For any node $u \in T_A$, let $l_u = lca^{T_B}(\leafset(T_A[u]))$. Then, given any internal node $u \in V(T_A)$ and any $c_1 \in children(u)$, let $rootsOfSubtreesChildren = \bigcup_{c \in children(u)} rootsOfSubtrees(c)$ and $rootsExceptc_1 = \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(c)$. Let $candidates(u, c_1) = incompatible(c_1)\ \cup\ path(parent^{T_B}(l_{c_1}), l_u)\ \cup\ \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. Then $incompatible(u)\subseteq candidates$.
-
-        \begin{proof}
-            Let $v \in incompatible(u) - \{l_{c_1}\}$. By Lemma~\ref{lem:incompatibilityrootsofsubtrees} $v$ is a proper descendant of $l_u$ and there is at least one node $r \in rootsOfSubtrees(u)$, such that $r$ is a proper descendant of $v$. Using Algorithm~\ref{alg:computerootsofsubtrees} it is easy to see that for any $r \in rootsOfSubtrees(u)$, $V(T_B[r]) \cap rootsOfSubtreesChildren \neq \emptyset$. Thus $V(T_B[v]) \cap rootsOfSubtreesChildren \neq \emptyset$. Also note that $rootsExceptc_1$ and $rootsOfSubtrees(c_1)$ partition $rootsOfSubtreesChildren$.
-
-            Now, if there is some node $r_1 \in rootsExceptc_1$, such that $v$ is a proper ancestor of $r_1$, then $v \in path(parent^{T_B}(r_1), l_u)$. Otherwise, there must be some $r_1 \in rootsOfSubtrees(c_1)$ such that $v$ is a proper ancestor of $r_1$. If $v$ is a proper descendant of $l_{c_1}$, then by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, $v \in incompatible(c_1)$. If not, then $v \in path(l_{c_1}, l_u)$.
-        \end{proof}
-    \end{incompatiblecandidates}
-
-    \begin{incompatibleactualset}
-        \label{lem:incompatibleactualset}
-
-        Given any internal node $u \in V(T_A)$ and any $c_1 \in children(u)$, construct $candidates(u, c_1)$ as in Lemma~\ref{lem:incompatiblecandidates}. Create a new set $tweakedCandidates(u, c_1)$. If $\leafset(T_B[l_{c_1}]) \subseteq \leafset(T_A[c_1])$, $tweakedCandidates(u, c_1) = candidates(u, c_1) - \{l_{c_1}\}$, otherwise $tweakedCandidates(u, c_1) = candidates(u, c_1)$. Now, for all $r \in rootsExceptc_1$, remove all nodes $v \in V(T_B)$ that are proper ancestors of $r$ and $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$ from $tweakedCandidates(u, c_1)$ to give a set $correctCandidates(u, c_1)$. Then $incompatible(u) = correctCandidates(u, c_1)$.
-
-        \begin{proof}
-            Recall $candidates(u, c_1) = incompatible(c_1)\ \cup\ path(l_{c_1}, l_u)\ \cup\ \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. Take any $v \in correctCandidates(u, c_1)$. It is easily seen that $\leafset(T_B[v]) \cap \leafset(T_A[u]) \neq \emptyset$ and $\leafset(T_A[u]) \not\subseteq \leafset(T_B[v])$. We show that $\leafset(T_B[v]) \not\subseteq \leafset(T_A[u])$.
-
-            \textit{Case 1}: $v \in \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. If $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$, then $v$ would have been removed from $correctCandidates(u, c_1)$ since $v$ is a proper ancestor of some $r \in rootsExceptc_1$.
-
-            \textit{Case 2}: $v \in incompatible(c_1)$ and $v \not\in \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. Then $\leafset(T_B[v]) \cap (\leafset(T_A[u]) - \leafset(T_A[c_1])) = \emptyset$. Also, there is some leaf $x \in \leafset(T_B[v])$ such that $x \not\in \leafset(T_A[c_1])$, since $v \in incompatible(c_1)$. Since $x \not\in (\leafset(T_A[u]) - \leafset(T_A[c_1]))$, $x \not\in \leafset(T_A[u])$. Thus $\leafset(T_B[v]) \not\subseteq \leafset(T_A[u])$.
-
-            \textit{Case 3}: $v \in path(l_{c_1}, l_u)$ and $v \not\in \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. Similarly to \textit{Case 2}, $\leafset(T_B[v]) \cap (\leafset(T_A[u]) - \leafset(T_A[c_1])) = \emptyset$. If $v$ is a proper ancestor of $l_{c_1}$, $\leafset(T_B[v]) \not\subseteq \leafset(T_A[c_1])$. This also holds if $v = l_{c_1}$, due to the way $tweakedCandidates(u, c_1)$ was constructed. Thus there is some leaf $x \in \leafset(T_B[v])$ such that $x \not\in \leafset(T_A[c_1])$. Further, $x \not\in (\leafset(T_A[u]) - \leafset(T_A[c_1]))$. Thus $x \not\in \leafset(T_A[u])$ and so $\leafset(T_B[v]) \not\subseteq \leafset(T_A[u])$.
-
-            Thus $v \in incompatible(u)$, so $correctCandidates(u, c_1) \subseteq incompatible(u)$. Further, note that we did not remove any node that would have been incompatible with $u$ during this process, so $incompatible(u) \subseteq correctCandidates(u, c_1)$, leading to $correctCandidates(u, c_1) = incompatible(u)$.
-        \end{proof}
-    \end{incompatibleactualset}
+    % \begin{incompatibleactualset}
+    %     \label{lem:incompatibleactualset}
+    %
+    %     Given any internal node $u \in V(T_A)$ and any $c_1 \in children(u)$, construct $candidates(u, c_1)$ as in Lemma~\ref{lem:incompatiblecandidates}. Create a new set $tweakedCandidates(u, c_1)$. If $\leafset(T_B[l_{c_1}]) \subseteq \leafset(T_A[c_1])$, $tweakedCandidates(u, c_1) = candidates(u, c_1) - \{l_{c_1}\}$, otherwise $tweakedCandidates(u, c_1) = candidates(u, c_1)$. Now, for all $r \in rootsExceptc_1$, remove all nodes $v \in V(T_B)$ that are proper ancestors of $r$ and $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$ from $tweakedCandidates(u, c_1)$ to give a set $correctCandidates(u, c_1)$. Then $incompatible(u) = correctCandidates(u, c_1)$.
+    %
+    %     \begin{proof}
+    %         Recall $candidates(u, c_1) = incompatible(c_1)\ \cup\ path(l_{c_1}, l_u)\ \cup\ \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. Take any $v \in correctCandidates(u, c_1)$. It is easily seen that $\leafset(T_B[v]) \cap \leafset(T_A[u]) \neq \emptyset$ and $\leafset(T_A[u]) \not\subseteq \leafset(T_B[v])$. We show that $\leafset(T_B[v]) \not\subseteq \leafset(T_A[u])$.
+    %
+    %         \textit{Case 1}: $v \in \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. If $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$, then $v$ would have been removed from $correctCandidates(u, c_1)$ since $v$ is a proper ancestor of some $r \in rootsExceptc_1$.
+    %
+    %         \textit{Case 2}: $v \in incompatible(c_1)$ and $v \not\in \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. Then $\leafset(T_B[v]) \cap (\leafset(T_A[u]) - \leafset(T_A[c_1])) = \emptyset$. Also, there is some leaf $x \in \leafset(T_B[v])$ such that $x \not\in \leafset(T_A[c_1])$, since $v \in incompatible(c_1)$. Since $x \not\in (\leafset(T_A[u]) - \leafset(T_A[c_1]))$, $x \not\in \leafset(T_A[u])$. Thus $\leafset(T_B[v]) \not\subseteq \leafset(T_A[u])$.
+    %
+    %         \textit{Case 3}: $v \in path(l_{c_1}, l_u)$ and $v \not\in \bigcup_{r \in rootsExceptc_1} path(parent^{T_B}(r), l_u)$. Similarly to \textit{Case 2}, $\leafset(T_B[v]) \cap (\leafset(T_A[u]) - \leafset(T_A[c_1])) = \emptyset$. If $v$ is a proper ancestor of $l_{c_1}$, $\leafset(T_B[v]) \not\subseteq \leafset(T_A[c_1])$. This also holds if $v = l_{c_1}$, due to the way $tweakedCandidates(u, c_1)$ was constructed. Thus there is some leaf $x \in \leafset(T_B[v])$ such that $x \not\in \leafset(T_A[c_1])$. Further, $x \not\in (\leafset(T_A[u]) - \leafset(T_A[c_1]))$. Thus $x \not\in \leafset(T_A[u])$ and so $\leafset(T_B[v]) \not\subseteq \leafset(T_A[u])$.
+    %
+    %         Thus $v \in incompatible(u)$, so $correctCandidates(u, c_1) \subseteq incompatible(u)$. Further, note that we did not remove any node that would have been incompatible with $u$ during this process, so $incompatible(u) \subseteq correctCandidates(u, c_1)$, leading to $correctCandidates(u, c_1) = incompatible(u)$.
+    %     \end{proof}
+    % \end{incompatibleactualset}
 
     These results now lead us to the solution for \texttt{Filter\_Clusters}. We define a subroutine \texttt{Filter\_Clusters\_Helper} which takes as input a subtree of $T_A$ (say $T_A[u]$) and $T_B$. It returns $rootsOfSubtrees(\leafset(T_A[u]))$. As a side effect, any node $v \in V(T_A[u])$ is marked for deletion if $w(v) \leq max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible \leafset(T_A[u])\})$. This means that any node in $T_A$ which is not more frequent that every cluster it is incompatible with in $T_B$ is marked for deletion. Then \texttt{Filter\_Clusters} uses \texttt{Filter\_Clusters\_Helper} in the following manner:
 
