@@ -36,10 +36,10 @@
 \newtheorem{labelclusterscorrectness}[incompatibility]{Lemma}
 \newtheorem{labelclustersruntime}[incompatibility]{Lemma}
 \newtheorem{filterclusterssubsetcompatible}[incompatibility]{Lemma}
-\newtheorem{computerootsofsubtreescorrectness}[incompatibility]{Lemma}
-\newtheorem{findincompatiblecorrectness}[incompatibility]{Lemma}
 \newtheorem{incompatibilityrootsofsubtrees}[incompatibility]{Lemma}
-\newtheorem{incompatiblecandidates}[incompatibility]{Lemma}
+\newtheorem{incompatibilityrecursive}[incompatibility]{Lemma}
+\newtheorem{computerootsofsubtreescorrectness}[incompatibility]{Lemma}
+\newtheorem{computerootsofsubtreesruntime}[incompatibility]{Lemma}
 \newtheorem{filterclustersruntime}[incompatibility]{Lemma}
 \newtheorem{freqdiffruntime}[incompatibility]{Theorem}
 
@@ -221,32 +221,84 @@
         \end{proof}
     \end{incompatibilityrootsofsubtrees}
 
-    Thus we would be interested in determining $rootsOfSubtrees(\leafset(T_A[u]))$ for any node $u \in V(T_A)$. To compute this, we define a property $counter(v)$ for every $v \in V(T_B)$ (as in \cite{jansson2018algorithms}). $counter(v) =$ number of leaves in $T_B[v]$ that belong to some set under consideration. If we take this set to be $\leafset(T_A[u])$, then $counter(v) = |\leafset(T_B[v]) \cap \leafset(T_A[u])|$. When $counter(v) = |\leafset(T_B[v])|$ then $\leafset(T_B[v]) \subseteq \leafset(T_A[u])$. So our problem is reduced to computing $counter(v)$ correctly. The process we follows is presented in Algorithm~\ref{alg:computerootsofsubtrees}. This algorithm starts off by recursively computing $rootsOfSubtrees(\leafset(T_A[c]))$ for each $c \in children(u)$, and putting these sets together into a set called $lowerBoundary$. Then we iterate upwards from each node in $lowerBoundary$, updating $counter$ and $rootsOfSubtrees$ as shown. We show the correctness of this algorithm below.
+    We now build a recursive definition of $incompatible(u)$, for any internal node $u \in V(T_A)$. To do so, we use $incompatible(c_1)$, for some $c_1 \in children(u)$.
+    \newline
+
+    \begin{incompatibilityrecursive}
+        \label{lem:incompatibilityrecursive}
+
+        Given any internal node $u \in V(T_A)$ and $c_1 \in children(u)$, define
+        \begin{align*}
+            newRootsOfSubtrees(u, c_1) &= rootsOfSubtrees(\leafset(T_A[u])) - rootsOfSubtrees(\leafset(T_A[c_1]))\\[0.5em]
+            removedRootsOfSubtrees(u, c_1) &= rootsOfSubtrees(\leafset(T_A[c_1])) - rootsOfSubtrees(\leafset(T_A[u]))\\[0.5em]
+            oldRootsOfSubtrees(u, c_1) &= rootsOfSubtrees(\leafset(T_A[u])) \cap rootsOfSubtrees(\leafset(T_A[c_1]))
+        \end{align*}
+        Then for any $r_1 \in oldRootsOfSubtrees(u, c_1)$ (if this does not exist then the relevant term below is empty),
+        \begin{align*}
+            incompatible(u) = &\left(incompatible(c_1)\ -\ \bigcup_{r \in removedRootsOfSubtrees(u, c_1)} path(parent^{T_B}(r), l_{c_1})\right)\\
+            &\cup\ \bigcup_{r \in newRootsOfSubtrees(u, c_1)} path(parent^{T_B}(r), l_u)\\
+            &\cup\ path(parent^{T_B}(r_1), l_u)
+        \end{align*}
+
+        \begin{proof}
+            The intuition behind this is to see that nodes that are proper ancestors of any $r \in removedRootsOfSubtrees(u, c_1)$ and descendants of any $r' \in newRootsOfSubtrees(u, c_1)$ need to be removed from $incompatible(c_1)$ since they are compatible with $u$. This accounts for the first two lines in the statement. The last line is to ensure that nodes between $l_{c_1}$ and $l_u$ are added to the set of incompatible nodes if necessary.
+
+            First, it must be true that for any $r \in removedRootsOfSubtrees(u, c_1)$, there is some $r' \in newRootsOfSubtrees(u, c_1)$ such that $r'$ is a proper ancestor of $r$. If not, then we note that $\leafset(T_B[r]) \subseteq \leafset(T_A[c_1]) \subseteq \leafset(T_A[u])$ and there is no ancestor $r''$ of $r$ such that $\leafset(T_B[r'']) \subseteq \leafset(T_A[u])$, thus $r \in rootsOfSubtrees(\leafset(T_A[u]))$. But then $r \not\in removedRootsOfSubtrees(u, c_1)$.
+
+            \textit{Forward direction.} Let $v \in incompatible(u)$. Then by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, $v$ is a proper descendant of $l_u$. If there is some $r \in newRootsOfSubtrees(u, c_1)$ such that $v$ is a proper ancestor of $r$ then $v \in path(parent^{T_B}(r), l_u)$. Otherwise, by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, there must be some $r \in oldRootsOfSubtrees(u, c_1)$ such that $v$ is a proper ancestor of $r$. Then for all $r' \in removedRootsOfSubtrees(u, c_1)$, it cannot be that $v$ is a proper ancestor of $r'$. To see why, assume this is not true, i.e. there is some $r' \in removedRootsOfSubtrees(u, c_1)$ such that $v$ is a proper ancestor of $r'$. Then there is some $r'' \in newRootsOfSubtrees(u, c_1)$ such that $r''$ is a proper ancestor of $r'$. If $v$ is a descendant of $r''$, then $\leafset(T_B[v]) \subseteq \leafset(T_B[r'']) \subseteq \leafset(T_A[u])$. But then $v \not\in incompatible(u)$. Otherwise, if $v$ is a proper ancestor of $r''$, then there is some $r'' \in newRootsOfSubtrees(u, c_1)$ such that $v$ is a proper ancestor of $r''$, which contradicts our earlier assumption. Thus is $v$ is a proper descendant of $l_{c_1}$, then $v \in incompatible(c_1)\ -\ \bigcup_{r \in removedRootsOfSubtrees(u, c_1)} path(parent^{T_B}(r), l_{c_1}$. Otherwise, $v \in path(parent^{T_B}(r_1), l_u)$ since $path(l_{c_1}, l_u) \subseteq path(parent^{T_B}(r_1), l_u)$.
+
+            \textit{Backward direction.} Let $v \in RHS$ of equation above.
+
+            \textit{Case 1.} $v \in \bigcup_{r \in newRootsOfSubtrees(u, c_1)} path(parent^{T_B}(r), l_u)$. Then by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, $v \in incompatible(u)$.
+
+            \textit{Case 2.} $v \in path(parent^{T_B}(r_1), l_u)$. Since $r_1 \in rootsOfSubtrees(\leafset(T_A[u]))$, by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, $v \in incompatible(u)$.
+
+            \textit{Case 3.} $v \in incompatible(c_1)\ -\ \bigcup_{r \in removedRootsOfSubtrees(u, c_1)} path(parent^{T_B}(r), l_{c_1})$ and $v \not\in \bigcup_{r \in newRootsOfSubtrees(u, c_1)} path(parent^{T_B}(r), l_u)$. Since $v \in incompatible(c_1)$, it is easy to see that $\leafset(T_B[v]) \cap \leafset(T_A[u]) \neq \emptyset$ and $\leafset(T_A[u]) \not\subseteq \leafset(T_B[v])$. Also, there is some leaf $x \in \leafset(T_B[v])$ such that $x \not\in \leafset(T_A[c_1])$. If $x \in \leafset(T_A[u])$, then there is some $r \in rootsOfSubtrees(\leafset(T_A[u]))$ such that $r$ is an ancestor of $x$. Then $r \in newRootsOfSubtrees(u, c_1)$ since $x \in \leafset(T_B[r])$ and $x \not\in \leafset(T_A[c_1])$. We also note that $v$ is an ancestor of $x$. If $v$ is a proper ancestor of $r$, then $v \in path(parent^{T_B}(r), l_u)$, which contradicts the definition of $v$. Thus $v$ is a descendant of $r$. Since $v \in incompatible(c_1)$, there is some $r' \in rootsOfSubtrees(\leafset(T_A[c_1]))$ such that $v$ is a proper ancestor of $r'$. But then $r$ is a proper ancestor of $r'$, so $r' \not\in rootsOfSubtrees(\leafset(T_A[u]))$. Thus $r \in removedRootsOfSubtrees(u, c_1)$. But then $v \in \bigcup_{r \in removedRootsOfSubtrees(u, c_1)} path(parent^{T_B}(r), l_{c_1})$. Thus $x \not\in \leafset(T_A[u])$ and so $v \in incompatible(u)$.
+        \end{proof}
+    \end{incompatibilityrecursive}
+
+    We also define a property $counter(v)$ for any $v \in T_B$ (as in \cite{jansson2018algorithms}). $T_B$ satisfies the parent counter invariant for some cluster $C \subseteq L$, denoted as $pci(C)$, iff for all nodes $v \in \bigcup_{r \in rootsOfSubtrees(C)} parent^{T_B}(r)$, $counter(v) = \sum_{c \in children(v) \cap rootsOfSubtrees(C)} |\leafset(T[c])|$.
+
+    We thus present Algorithm~\ref{alg:computerootsofsubtrees}, which, for some internal node $u \in V(T_A)$ and $c_1 \in children(u)$, takes in $rootsOfSubtrees(c_1)$, $lowerBoundary(u, c_1) = \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(\leafset(T_A[c]))$ and $T_B$ where $pci(\leafset(T_A[c_1]))$ holds and returns $newRootsOfSubtrees(u, c_1)$, $removedRootsOfSubtrees(u, c_1)$ and $oldRootsOfSubtrees(u, c_1)$. In addition $T_B$ is updated so that $pci^{T_B}(\leafset(T_A[u]))$.
+
+    The algorithm iterate upwards from each node in $lowerBoundary$, updating $counter$ values, and in doing so discovering which nodes are compatible with $\leafset(T_A[u])$. We prove the correctness of this algorithm below.
 
     \begin{algorithm}
         \caption{Compute\_Roots\_Of\_Subtrees}
         \label{alg:computerootsofsubtrees}
 
         \begin{algorithmic}[1]
-            \Input Node $u \in V(T_A)$ and $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$.
+            \Input For some internal node $u \in V(T_A)$ and $c_1 \in children(u)$, $rootsOfSubtrees(c_1)$, $lowerBoundary(u, c_1)$ and $T_B$ where $pci(\leafset(T_A[c_1]))$ holds with $\leafset(T_A) = \leafset(T_B) = L$.
 
-            \Output $rootsOfSubtrees(\leafset(T_A[u]))$
+            \Output $newRootsOfSubtrees(u, c_1)$, $removedRootsOfSubtrees(u, c_1)$ and $oldRootsOfSubtrees(u, c_1)$.
 
-            \State $lowerBoundary := \bigcup_{c \in children(u)} rootsOfSubtrees(\leafset(T_A[c]))$
+            \SideEffect $pci(\leafset(T_A[u]))$ holds.
 
-            \State $roots := \{\}$
+            \State $new, removed := \{\}$
 
-            \ForAll{$v \in lowerBoundary$}
+            \ForAll{$v \in lowerBoundary(u, c_1)$}
+                \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + |\leafset(T_B[v])|$
+
+                \State $v := parent^{T_B}(v)$
+
                 \While{$counter(v) = |\leafset(T_B[v])|$}
                     \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + |\leafset(T_B[v])|$
 
-                    \State $roots := (roots \cup {v}) - children(v)$
+                    \State $new := (new \cup \{v\}) - children(v)$
+
+                    \State $removed := removed \cup (children(v) \cap rootsOfSubtrees(c_1))$
 
                     \State $v := parent^{T_B}(v)$
                 \EndWhile
             \EndFor
 
-            \State \Return $roots$
+            \State $newRoots := new$
+
+            \State $removedRoots := removed$
+
+            \State $oldRoots := rootsOfSubtrees(c_1) - removed$
+
+            \State \Return $newRoots$, $removedRoots$, $oldRoots$
         \end{algorithmic}
     \end{algorithm}
 
@@ -254,119 +306,46 @@
     \begin{computerootsofsubtreescorrectness}
         \label{lem:computerootsofsubtreescorrectness}
 
-        The algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(u, T_B)$ outputs $rootsOfSubtrees(\leafset(T_A[u]))$.
+        For any internal node $u \in V(T_A)$ and $c_1 \in children(u)$, the algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(rootsOfSubtrees(c_1), lowerBoundary(u, c_1), T_B)$ outputs $newRootsOfSubtrees(u, c_1)$, $removedRootsOfSubtrees(u, c_1)$ and $oldRootsOfSubtrees(u, c_1)$.
 
         \begin{proof}
-            We prove a loop invariant. Let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over, i.e. $lowerBoundary = \{r_1, r_2, ..., r_{\beta}\}$. For any $i$, $1 \leq i \leq \beta$, let $D_i = \bigcup_{j = 1}^{i} \leafset(T_B[r_j])$. Then we claim that after the loop in \texttt{Compute\_Roots\_Of\_Subtrees} is finished processing $r_i \in lowerBoundary$, the set $roots = rootsOfSubtrees(D_i)$. Additionally, for any node $v \in \bigcup_{r \in roots} parent^{T_B}(r)$, $counter(v) = \sum_{c \in children(v) \cap roots} |\leafset(T_B[c])|$.
+            We prove a loop invariant. Let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over, i.e. $lowerBoundary = \{r_1, r_2, ..., r_{\beta}\}$. We define $D_0 = \leafset(T_A[c_1])$ for convenience. For any $i$, $1 \leq i \leq \beta$, let $D_i = D_0 \cup \bigcup_{j = 1}^{i} \leafset(T_B[r_j])$. Define $new_i = rootsOfSubtrees(D_i) - rootsOfSubtrees(D_0)$ and $removed_i = rootsOfSubtrees(D_0) - rootsOfSubtrees(D_i)$. Then we claim that after the loop in \texttt{Compute\_Roots\_Of\_Subtrees} is finished processing $r_i \in lowerBoundary$, the sets $new = new_i$ and $removed = removed_i$. Additionally, $pci(D_i)$ holds. Notice that the base case holds trivially.
 
-            We consider the loop for $r_i \in lowerBoundary$, $i > 1$. For any node $r \in rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1})$, $\leafset(T_B[r]) \subseteq D_i$ and $\leafset(T_B[r]) \not\subseteq D_{i-1}$. Thus there is some $x \in \leafset(T_B[r])$ such that $x \in D_i - D_{i-1}$. Note that $r$ is an ancestor of $x$. $r_i$ is also an ancestor of $x$ since $x \in D_i - D_{i-1} = \leafset(T_B[r_i])$. But $\leafset(T_B[r_i]) \subseteq D_i$. Then $r$ must be an ancestor of $r_i$ since $r \in rootsOfSubtrees(D_i)$. Thus any new node $r$ that needs to be added to $roots$ is an ancestor of $r_i$.
+            We consider the loop for $r_i \in lowerBoundary$. First, observe the following properties of $new_i$ and $removed_i$.
 
-            We now prove a loop invariant for the inner loop. We claim that when the inner loop is done processing some $v \in V(T_B)$, it is true that $\leafset(T_B[v]) \subseteq D_i$, the parent counter invariant is satisified and no proper descendant of $v$ is in $roots$. To see this is true, consider the processing of some $v \in V(T_B)$. Since $v$ passed the while loop check, $counter(v) = |\leafset(T_B[v])|$. Also, by the parent counter invariant, $counter(v) = \sum_{c \in children(v) \cap roots} |\leafset(T_B[c])|$. Then it must be true that $\leafset(T_B[v]) \subseteq D_i$ and for all $c \in children(v)$, $c \in roots$. So $counter(parent^{T_B}(v)) = \sum_{c \in children(v) \cap roots} |\leafset(T_B[c])|$ by the parent counter invariant. Also, $v$ cannot have already been in $roots$ since $D_i - D{i-1} \subseteq \leafset(T_B[v])$. Finally, it is true that for any $c \in children(parent^{T_B}(v))$, $c \neq v$, $\leafset(T_B[c]) \cap \leafset(T_B[v]) = \emptyset$. Thus the updated counter for $parent^{T_B}(v) = counter(parent^{T_B}(v)) + |\leafset(T_B[v])|$, since $v$ is being added to $roots$. Notice that this is the only node in $T_B$ whose counter needs to be updated in this step, hence showing that the algorithm maintains the parent counter invariant. We can also apply the outer and inner loop invariants to see that for all $c \in children(v)$, no proper descendant of $c$ is in $roots$. Then we add $v$ to $roots$ and remove all children of $v$ from $roots$, maintaining the invariant that no proper descendant of $v$ is in $roots$.
+            \textit{$new_i - new_{i-1}$.} Take any $r \in new_i - new_{i-1}$. Then $r \in rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1}) - rootsOfSubtrees(D_0)$. Since $r \in rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1})$, $\leafset(T_B[r]) \subseteq D_i$ and $\leafset(T_B[r]) \not\subseteq D_{i-1}$. Thus there is some $x \in \leafset(T_B[r])$ such that $x \in D_i - D_{i-1}$. Note that $r$ is an ancestor of $x$. $r_i$ is also an ancestor of $x$ since $x \in D_i - D_{i-1} = \leafset(T_B[r_i])$. But $\leafset(T_B[r_i]) \subseteq D_i$. Then $r$ must be an ancestor of $r_i$ since $r \in rootsOfSubtrees(D_i)$. Moreover, there can only be one such $r$, otherwise the definition of $rootsOfSubtrees(D_i)$ would be violated. As $D_i \neq D_{i-1}$, clearly $rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1}) - rootsOfSubtrees(D_0) \neq \emptyset$. Thus $|new_i - new_{i-1}| = 1$, where this node is the shallowest ancestor $r$ of $r_i$ for which $\leafset(T_B[r]) \subseteq D_i$.
 
-            Applying the inner loop invariant, we see that when the inner loop terminates, the parent counter invariant is maintained. Further we note that since it terminated, the current $v$ is such that $counter(v) \neq |\leafset(T_B[v])|$. Then if for all $c \in children(v)$, $c \in roots$, in fact $counter(v) = |\leafset(T_B[v])|$. Thus there is some $c \in children(v)$, $c \not\in roots$. $c$ cannot be on the path from $r_i$ to $v$, otherwise by our algorithm it would have been added to $roots$ in the last iteration. Thus we can apply our outer loop invariant to $c$ to see that $\leafset(T_B[c]) \not\subseteq D_i$. Hence it must be true that $\leafset(T_B[v]) \not\subseteq D_i$, so $v \not\in rootsOfSubtrees(D_i)$. Further no ancestor of $v$ is in $rootsOfSubtrees(D_i)$ either. Thus the node that was added to $roots$ in the last iteration of the inner loop is the root of a maximal subtree compatible with $D_i$ and so $roots = rootsOfSubtrees(D_i)$.
+            \textit{$new_{i-1} - new_i$.} Take any $r \in new_{i-1} - new_i$. Then $r \in rootsOfSubtrees(D_{i-1}) - rootsOfSubtrees(D_i) - rootsOfSubtrees(D_0)$. If $\leafset(T_B[parent^{T_B}(r)]) \not\subseteq D_i$ then there is some leaf $x \in \leafset(T_B[parent^{T_B}(r)])$ such that $x \not\in D_i$. Then for any proper ancestor $r'$ of $r$, $x \in \leafset(T_B[r'])$ and so $\leafset(T_B[r'])) \not\subseteq D_i$. Also note that $\leafset(T_B[r]) \subseteq D_{i-1} \subseteq D_i$, hence $r \in rootsOfSubtrees(D_i)$. But this contradicts the construction of $r$, hence $\leafset(T_B[parent^{T_B}(r)]) \subseteq D_i$. Further note that the parent of $r$ must be a proper ancestor of $r_i$ since $\leafset(T_B[r_i]) \subseteq D_i$ and $r \not\in V(T_B[r_i])$.
 
-            Applying the outer loop invariant, when this loop finishes, $roots = rootsOfSubtrees(D_{\beta}) = rootsOfSubtrees(\leafset(T_A[u]))$.
+            \textit{$removed_i - removed_{i-1}$.} Take any $r \in removed_i - removed_{i-1}$. Then $r \in (rootsOfSubtrees(D_0) \cap rootsOfSubtrees(D_{i-1})) - rootsOfSubtrees(D_i)$. By the same argument as in the previous paragraph, the parent of $r$ must be a proper ancestor of $r_i$ such that $\leafset(T_B[parent^{T_B}(r)]) \subseteq D_i$.
+
+            \textit{$removed_{i-1} - removed_i$.} Take any $r \in removed_{i-1} - removed_i$. Then $r \in (rootsOfSubtrees(D_0) \cap rootsOfSubtrees(D_i)) - rootsOfSubtrees(D_{i-1})$. Since $\leafset(T_B[r]) \subseteq D_0$, $\leafset(T_B[r]) \subseteq D_{i-1}$. Since $r \not\in rootsOfSubtrees(D_{i-1})$, there is some proper ancestor $r'$ of $r$ such that $\leafset(T_B[r']) \subseteq D_{i-1}$. But then $\leafset(T_B[r']) \subseteq D_i$ and so $r \not\in rootsOfSubtrees(D_i)$. Thus $removed_{i-1} - removed_i = \emptyset$.
+
+            The inner loop updates $new$ and $removed$ following these properties. We now need to show that it maintains the parent counter invariant. Note that for any $v \in V(T_B)$ that passes the while loop check, $v \not\in \bigcup_{r \in rootsOfSubtrees(D_i)} parent^{T_B}(r)$, so its counter is immaterial. Take the node $v$ when the loop terminates. Let the child of $v$ that was processed before this be $v'$. Then before its counter is updated in the last iteration of the loop, $counter(v) = \sum_{c \in children(v) \cap rootsOfSubtrees(D_{i-1})} |\leafset(T[c])|$. The only change to membership of $children(v)$ in $rootsOfSubtrees(D_i)$ is that $v'$ is also added to this set and hence the new $counter(v) := counter(v) + |\leafset(T_B[v'])|$. Also note that no other counter needs to be updated since this is the only node added to $rootsOfSubtrees(D_{i-1})$ to get $rootsOfSubtrees(D_i)$. Further, observe that the setup before the while loop ensures that the above holds even if the while loop terminates immediately, as seen by setting $v' = r_i$.
+
+            Thus our invariants hold. Since $D_{\beta} = \leafset(T_A[u])$, the output of \texttt{Compute\_Roots\_Of\_Subtrees}$(rootsOfSubtrees(c_1), lowerBoundary(u, c_1), T_B)$ is as expected.
         \end{proof}
     \end{computerootsofsubtreescorrectness}
 
-    Finally, we show how, given an internal node $u \in V(T_A)$ and node $c_1 \in children(u)$, we can build $incompatible(u)$ using $incompatible(c_1)$. To be able to do this, we present Lemma~\ref{lem:incompatiblecandidates}, showing how we can build up a set of nodes that are candidates for being incompatible with $u$.
-    \newline
+    \begin{computerootsofsubtreesruntime}
+        \label{lem:computerootsofsubtreesruntime}
 
-    \begin{incompatiblecandidates}
-        \label{lem:incompatiblecandidates}
-
-        Given an internal node $u \in V(T_A)$ and node $c_1 \in children(u)$, let the set $lowerBoundary(u, c_1) = \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(\leafset(T_A[c]))$. Arbitrarily fix some ordering for the nodes in $lowerBoundary$, such that $lowerBoundary = \{r_1, r_2, ..., r_{\beta}\}$.
-
-        We define $D_0 = \leafset(T_B[c_1])$ for convenience. Further define $candidates_0 = incompatible(c_1) \cup path(l_{c_1}, l_u)$ if $l_{c_1} \not\in rootsOfSubtrees(\leafset(T_B[c_1]))$, otherwise $candidates_0 = incompatible(c_1) \cup path(parent^{T_B}(l_{c_1}), l_u)$.
-
-        For any $i$, $1 \leq i \leq \beta$, let $D_i = D_0 \cup \bigcup_{j = 1}^{i} \leafset(T_B[r_j])$. For any $i$, $0 \leq i \leq \beta$, let $candidates_i = \bigcup_{s \in rootsOfSubtrees(D_i)} path(parent^{T_B}(s), l_u)$. Clearly, there is some $r \in rootsOfSubtrees(D_i)$, such that $\leafset(T_B[r_i]) \subseteq \leafset(T_B[r])$. Then $candidates_i = (candidates_{i-1} - V(T_B[r])) \cup path(parent^{T_B}(r), l_u)$.
+        For any internal node $u \in V(T_A)$ and $c_1 \in children(u)$, the algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(rootsOfSubtrees(c_1), lowerBoundary(u, c_1), T_B)$ runs in $O(|lowerBoundary(u, c_1)| + |removedRootsOfSubtrees(u, c_1)|)$ time.
 
         \begin{proof}
-            First, we show that $candidates_0 = \bigcup_{s \in rootsOfSubtrees(D_0)} path(parent^{T_B}(s), l_u)$. This holds because $incompatible(c_1) = \bigcup_{s \in rootsOfSubtrees(D_0)} path(parent^{T_B}(s), l_{c_1})$ [By Lemma~\ref{lem:incompatibilityrootsofsubtrees}], to which we add $path(parent^{T_B}(l_{c_1}), l_u)$ and $l_{c_1}$ if $l_{c_1} \not\in rootsOfSubtrees(D_0)$.
+            We implement each of the set of nodes using a linked list, while augmenting the nodes with a property that lets it know whether it belongs to the set or not. This allows us to perform operations like union, intersection and set difference in time proportional to the size of either of the sets.
 
-            We show that $rootsOfSubtrees(D_i) \cap rootsOfSubtrees(D_{i-1}) = rootsOfSubtrees(D_{i-1}) - V(T_B[r])$.
+            The outer loop is entered $O(|lowerBoundary(u, c_1)|)$ times.
 
-            Take some $v \in rootsOfSubtrees(D_i) \cap rootsOfSubtrees(D_{i-1})$. Note that $v \neq r$ since $\leafset(T_B[v]) \subseteq D_{i-1}$, $D_{i-1} \cap \leafset(T_B[r_i]) = \emptyset$ and $\leafset(T_B[r_i]) \subseteq \leafset(T_B[r])$. Also, $v$ is not a proper descendant of $r$, otherwise both $v$ and $r$ could not belong to $rootsOfSubtrees(D_i)$. Thus $v \in rootsOfSubtrees(D_{i-1}) - V(T_B[r])$. Now take some $v \in rootsOfSubtrees(D_{i-1}) - V(T_B[r])$. Since $\leafset(T_B[v]) \subseteq D_{i-1} \subseteq D_i$, if $v \not\in rootsOfSubtrees(D_i)$ then there is some proper ancestor $v'$ of $v$ such that $\leafset(T_B[v']) \subseteq D_i$. If $\leafset(T_B[v']) \cap \leafset(T_B[r_i]) = \emptyset$, then $\leafset(T_B[v']) \subseteq D_{i-1}$, but then $v \not\in rootsOfSubtrees(D_{i-1})$. So $\leafset(T_B[v']) \cap \leafset(T_B[r_i]) \neq \emptyset$. Since $\leafset(T_B[r_i]) \subseteq \leafset(T_B[r])$, $v'$ is either a descendant of $r$ (which is not possible, otherwise $v \in V(T_B[r])$) or $v'$ is a proper ancestor of $r$ (which is not possible, otherwise $r \not\in rootsOfSubtrees(D_i)$). Thus $v \in rootsOfSubtrees(D_i)$.
+            No node is added to $removed$ twice. This is because when this happens, the leafset of the parent of such a node is known to be a subset of $D_i$, for some $i$. Then it can never be encountered again when iterating upwards from $r_j$, $j > i$. Thus the total cost of the processing inside the inner loop is $O(|removedRootsOfSubtrees(u, c_1)|)$.
 
-            Now we show that $rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1}) = \{r\}$. Let $v$ be a node such that $v \in rootsOfSubtrees(D_i) - rootsOfSubtrees(D_{i-1})$ and $v \neq r$. Then $\leafset(T_B[v]) \subseteq D_i$ and $\leafset(T_B[v]) \not\subseteq D_{i-1}$. Thus there is some $x \in \leafset(T_B[r_i])$ such that $x \in \leafset(T_B[v])$. Since $\leafset(T_B[r_i]) \subseteq \leafset(T_B[r])$, $v$ is either a proper descendant or proper ancestor of $r$. But then both $v$ and $r$ cannot be in $rootsOfSubtrees(D_i)$. Thus there is no such node $v$.
+            Finally, to ensure that the last set difference happens in $O(|removedRootsOfSubtrees(u, c_1)|)$, we modify the linked list $rootsOfSubtrees(c_1)$ and return this as $oldRootsOfSubtrees(u, c_1)$.
 
-            Thus the sets $rootsOfSubtrees(D_{i-1}) - V(T_B[r])$ and $\{r\}$ partition $rootsOfSubtrees{D_i}$.
-
-            Take some node $v \in candidates_i$. If $v$ is a proper ancestor of $r$, then clearly $v \in path(parent^{T_B}(r), l_u)$. Otherwise $v$ is a proper ancestor of some node $r' \in rootsOfSubtrees(D_i)$, $r' \neq r$. Then $r' \in rootsOfSubtrees(D_{i-1}) - V(T_B[r])$, so $r' \in rootsOfSubtrees(D_{i-1})$. Thus $v \in candidates_{i-1}$. Since $v \not\in V(T_B[r])$ (otherwise $r'$ would be a proper descendant of $r$), $v \in candidates_{i-1} - V(T_B[r])$.
-
-            Now take some node $v \in (candidates_{i-1} - V(T_B[r])) \cup path(parent^{T_B}(r), l_u)$. If $v \in path(parent^{T_B}(r), l_u)$, then clearly $v \in candidates_i$. Otherwise, $v \in candidates_{i-1} - V(T_B[r]) - path(parent^{T_B}(r), l_u)$. Then there is some node $r' \in rootsOfSubtrees(D_{i-1})$ such that $v$ is a proper ancestor of $r'$. If $r' \in V(T_B[r])$ then $v \in V(T_B[r]) \cup path(parent^{T_B}(r), l_u)$. Thus $r' \not\in V(T_B[r])$. This means $r' \in rootsOfSubtrees(D_i) \cap rootsOfSubtrees(D_{i-1})$, so $r' \in rootsOfSubtrees(D_i)$, hence $v \in candidates_i$.
-
-            To complete the recurrence for $candidates_i$, let $candidates_0 = incompatible(c_1)$
+            Thus the total time taken is $O(|lowerBoundary(u, c_1)| + |removedRootsOfSubtrees(u, c_1)|)$
         \end{proof}
-    \end{incompatiblecandidates}
+    \end{computerootsofsubtreesruntime}
 
-    Note that $candidates_{\beta} = \bigcup_{s \in rootsOfSubtrees(D_i)} path(parent^{T_B}(s), l_u) = \bigcup_{s \in rootsOfSubtrees(\leafset(T_B[u]))} path(parent^{T_B}(s), l_u) = incompatible(u)$. With these results in hand, we present Algorithm~\ref{alg:findincompatible}, to find $incompatible(u)$. Note that the input tree $T_B$ is required to satisfy the parent counter invariant for $\leafset(T_B[c_1])$.
-
-    \begin{algorithm}
-        \caption{Find\_Incompatible}
-        \label{alg:findincompatible}
-
-        \begin{algorithmic}[1]
-            \Input Internal node $u \in V(T_A)$, node $c_1 \in children(u)$ and tree $T_B$ with $\leafset(T_A) = \leafset(T_B) = L$.
-
-            \Output $incompatible(u)$
-
-            \State $candidates := incompatible(c_1)$
-
-            \State $roots := rootsOfSubtrees(\leafset(T_A[c_1]))$
-
-            \State $lowerBoundary := \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(\leafset(T_A[c]))$
-
-            \If{$\leafset(T_B[l_{c_1}]) \in roots$}
-                \State $candidates := candidates \cup path(parent^{T_B}(l_{c_1}), l_u)$
-            \Else
-                \State $candidates := candidates \cup path(l_{c_1}, l_u)$
-            \EndIf
-
-            \ForAll{$v \in lowerBoundary$}
-                \While{$counter(v) = |\leafset(T_B[v])|$}
-                    \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + |\leafset(T_B[v])|$
-
-                    \State $roots := (roots \cup {v}) - children(v)$
-
-                    \IIf{$v \in candidates$}
-                        {$candidates := candidates - \{v\}$}
-
-                    \State $v := parent^{T_B}(v)$
-                \EndWhile
-
-                \IIf{$v \not\in candidates$}
-                    $candidates := candidates \cup path(v, l_u)$
-            \EndFor
-
-            \State \Return $candidates$
-        \end{algorithmic}
-    \end{algorithm}
-
-    \bigskip
-    \begin{findincompatiblecorrectness}
-        \label{lem:findincompatiblecorrectness}
-
-        The algorithm \texttt{Find\_Incompatible}$(u, T_B)$ outputs $incompatible(u)$.
-
-        \begin{proof}
-            Similarly to Lemma~\ref{lem:incompatiblecandidates}, we let the nodes in $lowerBoundary$ be numbered $1$ to $\beta = |lowerBoundary|$ in the order that they will be iterated over. We define $D_0 = \leafset(T_B[c_1])$ and for any $i$, $1 \leq i \leq \beta$, $D_i = D_0 \cup \bigcup_{j = 1}^{i} \leafset(T_B[r_j])$.
-
-            First, notice that the algorithm follows the same structure for updating $roots$ as \texttt{Compute\_Roots\_Of\_Subtrees}. Then by applying the same arguments as in Lemma~\ref{lem:computerootsofsubtreescorrectness}, we can see that the parent counter invariant is maintained and after $r_i$ is processed, $roots = rootsOfSubtrees(D_i)$.
-
-            The set $candidates$ is initialised to exactly $candidates_0$.
-
-            Note that the inner loop discovers one new node $r \in rootsOfSubtrees(D_i)$ and removes any node $r' \in rootsOfSubtrees(D_{i-1})$ from $roots$ iff $r'$ is a proper descendant of $r$. The algorithm then adds $path(parent^{T_B}(r), l_u)$ to $candidates$ if $parent^{T_B}(r) \not\in candidates$.
-
-            We claim that after the inner loop terminates, $candidates = candidates_{i-1} - V(T_B[r])$. Take any node $v \in candidates_{i-1} \cap V(T_B[r])$. Since $v \in candidates_{i-1}$, there is some $r' \in rootsOfSubtrees(D_{i-1})$ such that $v \in path(parent^{T_B}(r'), l_{c_1})$. Since $v$ is a proper ancestor of $r'$, there is some leaf $x \in \leafset(T_B[v])$ such that $x \not\in D_{i-1}$. If $v$ is not a proper ancestor of $r_i$, then $x \not\in \leafset(T_B[r_i])$ and so $x \not\in D_i$. But since $v \in V(T_B[r])$, $x \in \leafset(T_B[r])$, which is a contradiction as $\leafset(T_B[r]) \subseteq D_i$. Thus $v$ is a proper ancestor of $r_i$. Since the inner loop removes all nodes in $path(r_i, parent^{T_B}(r))$ from $candidates$, when this loop terminates, $v \not\in candidates$.
-
-            Then if $parent^{T_B}(r) \in candidates$, $path(parent^{T_B}(r), l_u) \subseteq candidates$. This is because $candidates_{i-1}$ consists only of paths between nodes from $rootsOfSubtrees(D_{i-1})$ and $l_u$, so for any node $v \in candidates_i$, $path(v, l_u) \subseteq candidates_i$. Removing an entire subtree does not break this property, so it holds for $candidates_i - V(T_B[r]) = candidates$.
-
-            Thus when we finish processing $r_i$, $candidates = (candidates_{i-1} - V(T_B[r])) \cup path(parent^{T_B}(r), l_u) = candidates_i$. As mentioned earlier, $candidates_{\beta} = incompatible(u)$, so \texttt{Find\_Incompatible}$(u, T_B)$ returns $incompatible(u)$.
-        \end{proof}
-    \end{findincompatiblecorrectness}
-
-    These results now lead us to the solution for \texttt{Filter\_Clusters}. We define a subroutine \texttt{Filter\_Clusters\_Helper} which takes as input a subtree of $T_A$ (say $T_A[u]$) and $T_B$. It returns $rootsOfSubtrees(\leafset(T_A[u]))$. As a side effect, any node $u' \in V(T_A[u])$ is marked for deletion if $w(u') \leq max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible \leafset(T_A[u'])\})$. This means that any node in $T_A$ which is not more frequent that every cluster it is incompatible with in $T_B$ is marked for deletion. Then \texttt{Filter\_Clusters} uses \texttt{Filter\_Clusters\_Helper} in the following manner:
+    We now build the solution for \texttt{Filter\_Clusters}. We define a subroutine \texttt{Filter\_Clusters\_Helper} which takes as input a subtree of $T_A$ (say $T_A[u]$) and $T_B$. It returns $rootsOfSubtrees(\leafset(T_A[u]))$. As a side effect, any node $u' \in V(T_A[u])$ is marked for deletion if $w(u') \leq max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible \leafset(T_A[u'])\})$. This means that any node in $T_A$ which is not more frequent that every cluster it is incompatible with in $T_B$ is marked for deletion. Then \texttt{Filter\_Clusters} uses \texttt{Filter\_Clusters\_Helper} in the following manner:
 
     \begin{algorithm}
         \caption{Filter\_Clusters}
@@ -391,15 +370,15 @@
         \end{algorithmic}
     \end{algorithm}
 
-    At this point, we are ready to describe \texttt{Filter\_Clusters\_Helper}. This algorithm uses the \textit{centroid path decomposition technique} of \cite{cole2000n} to decompose $T_A$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). A \textit{centroid path} in $T_A$ is the path formed by starting at the root and at each point following the child with the largest leaf set. The centroid path is denoted by $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf. Removing all nodes in $\pi$ along with all associated edges from $T_A$ results in a set of disjoint subtrees of $T_A$, where the root of each such subtree is a child of some node in $\pi$. These trees are called the \textit{side trees} of $\pi$, denoted by $\sigma(\pi)$. Also let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Observe that for any side tree $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq n/2$ and that $\{\leafset(\tau) : \tau \in \sigma(\pi)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any $i \geq 2$, $\leafset(T_A[p_{i - 1}]) \subset \leafset(T_A[p_i])$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind \texttt{Filter\_Clusters\_Helper} - recursively compute \texttt{Filter\_Clusters\_Helper} for side trees, then for the nested clusters rooted at nodes in the centroid path, use Algorithm~\ref{alg:computerootsofsubtrees} to find the maximal compatible subtrees and Algorithm~\ref{alg:findincompatible} to find incompatible nodes.
+    \texttt{Filter\_Clusters\_Helper} uses the \textit{centroid path decomposition technique} of \cite{cole2000n} to decompose $T_A$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). A \textit{centroid path} in $T_A$ is the path formed by starting at the root and at each point following the child with the largest leaf set. The centroid path is denoted by $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf. Removing all nodes in $\pi$ along with all associated edges from $T_A$ results in a set of disjoint subtrees of $T_A$, where the root of each such subtree is a child of some node in $\pi$. These trees are called the \textit{side trees} of $\pi$, denoted by $\sigma(\pi)$. Also let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Observe that for any side tree $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq n/2$ and that $\{\leafset(\tau) : \tau \in \sigma(\pi)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any $i \geq 2$, $\leafset(T_A[p_{i - 1}]) \subset \leafset(T_A[p_i])$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind \texttt{Filter\_Clusters\_Helper} - recursively compute \texttt{Filter\_Clusters\_Helper} for side trees, then for the nested clusters rooted at nodes in the centroid path, use Algorithm~\ref{alg:computerootsofsubtrees} to find the maximal compatible subtrees and Lemma~\ref{lem:incompatibilityrecursive} to find incompatible nodes.
 
-    The algorithm initialises $roots$ with $p_1$ and sets up the parent counter invariant. It then uses the same structure as in Algorithm~\ref{alg:computerootsofsubtrees} and Algorithm~\ref{alg:findincompatible} to find the nodes incompatible with any $p_i \in \pi$. Thus it uses $incompatible(p_{i-1})$ and $rootsOfSubtrees(c)$ for each $c \in children(p_i) - \{p_{i-1}\}$ to compute $incompatible(p_i)$. To facilitate this process, \texttt{Filter\_Clusters\_Helper} returns $rootsOfSubtrees(\leafset(T_A))$ for the caller to use. Once $incompatible(p_i)$ is computed, we compare the largest weight in this set with the weight of $p_i$, and mark $p_i$ for deletion if its weight is not larger.
+    A crucial part of this algorithm is the usage of an RMQ structure on $T_B$ that allows us to query for the maximum weight of any node on the path between two given nodes. This is because we do not actually need the set of incompatible nodes, we just need to find the largest weight over all incompatible nodes. Thus, rather than inserting all the nodes in say $path(v, v')$ into a set, we just insert $v$ indexed by $maxWeight(path(v, v'))$ (as obtained from the RMQ structure) into a priority queue. Notice that this plays well with Lemma~\ref{lem:incompatibilityrecursive}, which formulates incompatible nodes solely in terms of paths (apart from the recursive portion).
 
-    A crucial optimisation we make in this algorithm is utilising an RMQ structure on $T_B$ that allows us to query for the maximum weight of any node on the path between two given nodes. This is because we do not actually need the set of incompatible nodes, we just need to find the largest weight over all incompatible nodes. Thus, rather than inserting all the nodes in say $path(v, v')$ into candidates, we just insert $maxWeight(path(v, v'))$ obtained from the RMQ structure. To delete a node from $candidates$, we remove its entry and instead insert its parent.
+    The algorithm initialises $roots$ with $p_1$ and sets up $T_B$ to satisfy $pci(\{p_1\})$. It then uses Algorithm~\ref{alg:computerootsofsubtrees} and Lemma~\ref{lem:incompatibilityrecursive} to find the nodes incompatible with any $p_i \in \pi$. Thus it uses $incompatible(p_{i-1})$ and $rootsOfSubtrees(c)$ for each $c \in children(p_i) - \{p_{i-1}\}$ to compute $incompatible(p_i)$. To facilitate this process, \texttt{Filter\_Clusters\_Helper} returns $rootsOfSubtrees(\leafset(T_A))$ for the caller to use. Once $incompatible(p_i)$ is computed, we compare the largest weight in this set with the weight of $p_i$, and mark $p_i$ for deletion if its weight is not larger.
 
-    Finally note that we need to erase the counter values set in a call to \texttt{Filter\_Clusters\_Helper}, otherwise they will interfere with the processing of other calls. However, observe that we do not need to erase counters of any node in a compatible subtree, since those nodes will never be encountered again. Further, due to the way the algorithm is structured, the only other counters that are set are those of the parents of these subtrees, and this is done at the end of a given call to the function.
+    Finally note that we need to erase the counter values set in a call to \texttt{Filter\_Clusters\_Helper}, otherwise they will interfere with the processing of other calls. However, observe that we do not need to erase counters of any node in a compatible subtree, since those nodes will never be encountered again. Further, due to the way the algorithm is structured, the only other counters that are set are those of the parents of these subtrees, and erasing these is done at the end of a given call to the function.
 
-    The resulting algorithm (Algorithm~\ref{alg:filterclustershelper}) is presented on the next page.
+    The resulting algorithm is presented below.
 
     \begin{algorithm}
         \caption{Filter\_Clusters\_Helper}
@@ -408,9 +387,9 @@
         \begin{algorithmic}[1]
             \Input Trees $T_A$ and $T_B$ with $\leafset(T_A) \subseteq \leafset(T_B) = L$ where every cluster has a known $weight$.
 
-            \SideEffect Marks any node $u' \in V(T_A)$ for deletion iff $w(u') \leq w(v)$ for any $v \in V(T_B)$ with $\leafset(T_A[u']) \not\compatible \leafset(T_B[v])$.
-
             \Output $rootsOfSubtrees(\leafset(T_A))$
+
+            \SideEffect Marks any node $u' \in V(T_A)$ for deletion iff $w(u') \leq w(v)$ for any $v \in V(T_B)$ with $\leafset(T_A[u']) \not\compatible \leafset(T_B[v])$.
 
             \State Compute a centroid path $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$ of $T_A$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf.
 
@@ -423,42 +402,28 @@
 
             \State $roots := \{l_1\}$
 
-            \State $candidates :=$ empty Brodal queue
+            \State $incompatible :=$ empty Brodal queue
 
             \For{$i := 2$ \textbf{to} $\alpha$}
                 \State $lowerBoundary := \{\}$
 
                 \ForAll{side trees $\tau$ associated with $p_i$}
-                    \State $lowerBoundary := roots\ \cup$ list of roots associated with $\tau$
+                    \State $lowerBoundary := lowerBoundary\ \cup$ list of roots associated with $\tau$
                 \EndFor
+
+                \State $new, removed, old :=$ \texttt{Compute\_Roots\_Of\_Subtrees}$(roots, lowerBoundary, T_B)$
 
                 \State $l_i := lca^{T_B}(l_{i-1} \cup lowerBoundary)$
 
-                \If{$counter(l_{i-1}) \not\in roots$}
-                    \State Insert $l_{i-1}, maxWeight(path(l_{i-1}, l_i))$ into $candidates$
-                \Else
-                    \State Insert $parent^{T_B}(l_{i-1}), maxWeight(path(parent^{T_B}(l_{i-1}), l_i))$ into $candidates$
+                \State \algorithmicforall\ $r \in removed$, remove $r$ from $incompatible$
+
+                \State \algorithmicforall\ $r \in new$, add $r, maxWeight(path(parent^{T_B}(r), l_i))$ to $incompatible$
+
+                \If{$old \neq \emptyset$}
+                    \State For any $r_1 \in old$, remove $r_1$ from $incompatible$
+
+                    \State For the same $r_1 \in old$, add $r_1, maxWeight(path(parent^{T_B}(r_1), l_i))$ to $incompatible$
                 \EndIf
-
-                \ForAll{$v \in lowerBoundary$}
-                    \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + |\leafset(T_B[v])|$
-
-                    \State $roots := roots \cup \{v\}$
-
-                    \State $v := parent^{T_B}(v)$
-
-                    \While{$counter(v) = |\leafset(T_B[v])|$}
-                        \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + |\leafset(T_B[v])|$
-
-                        \IIf{$v \in candidates$} remove $v$ from $candidates$
-
-                        \State $roots := (roots \cup \{v\}) - children(v)$
-
-                        \State $v := parent^{T_B}(v)$
-                    \EndWhile
-
-                    \IIf{$v \not\in candidates$} insert $v, maxWeight(path(v, l_i))$ into $candidates$
-                \EndFor
 
                 \IIEf{$candidates$ is empty}
                     {$M := 0$}
@@ -466,9 +431,11 @@
 
                 \IIf{$w(\leafset(T_A[p_i])) \leq M$}
                     mark $p_i$ for deletion
+
+                \State $roots := old \cup new$
             \EndFor
 
-            \State \algorithmicforall\ $r \in roots$, $counter(parent^{T_B(r)}) := 0$
+            \State \algorithmicforall\ $r \in roots$, $counter(parent^{T_B}(r)) := 0$
 
             \State \Return $roots$
         \end{algorithmic}
@@ -478,18 +445,18 @@
     \begin{filterclustersruntime}
         \label{lem:filterclustersruntime}
 
-        The algorithm \texttt{Filter\_Clusters}$(T_A, T_B)$ runs ins $O(n\,log\,n)$ time.
+        The algorithm \texttt{Filter\_Clusters}$(T_A, T_B)$ runs in $O(n\,log\,n)$ time.
 
         \begin{proof}
             We preprocess $T_B$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time. $T_B$ is also preprocessed for RMQ queries using Lemma 8 of \cite{jansson2018algorithms}. This takes $O(n\,log\,n)$ preprocessing time and thereafter allows us to answer $maxWeight$ queries in $O(1)$ time. The bottom-up traversal of $T_B$ to compute $|leafset(T_B[v])|$ for all $v \in V(T_B)$ takes $O(n)$ time. Finally, copying $T_A$ takes $O(n)$ time.
 
-            The helper algorithm uses a number of sets of nodes. To implement each of these, we utilise a linked list, while augmenting the node with a property that allows it to know whether it belongs to the set or not. In this manner, we can ensure that these sets do not contain duplicates and membership/addition/deletion operations can be done in constant time. The same is done for for the $candidates$ structure to allow membership queries.
+            As before, we use linked lists to implement sets of nodes, coupled with membership properties.
 
-            The data structure used for $candidates$ is the Brodal queue of \cite{brodal1995fast}. This allows insertion and findMax in $O(1)$ time and delete in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $T_B$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time.
+            The data structure used for $incompatible$ is the Brodal queue of \cite{brodal1995fast}. This allows insertion and findMax in $O(1)$ time and delete in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $T_B$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time.
 
             Let $m = |\leafset(T_A)|$ for some call to \texttt{Filter\_Clusters\_Helper}$(T_A, T_B)$. Observe that for any cluster $C$, the number of compatible subtrees that can be discovered is $O(|C|)$. Recall that $n = |\leafset(T_B)|$.
 
-            Computing the centroid path takes $O(m)$ time. Since the total number of leaves over all side trees is $O(m)$, the additions to $rootsOfSubtrees$ and $lowerBoundary$ cost $O(m)$ time. Similarly, since $lca$ queries can be made in constant time and the total number of $lca$ queries is $O(m)$, this also costs $O(m)$ time. It remains to analyse the upward iterations. First, note that this loop is entered a total of $O(m)$ times. Secondly, by Lemma~\ref{lem:filterclusterssubsetcompatible}, we know that a node that is removed from a $candidates$ set will never be inserted into any $candidates$ set again. Thus any node will only enter this inner loop once. All operations within this are $O(log\,n)$, so total time inside this loop is $O(n\,log\,n)$. The exception to this analysis is the step that removes all children of $x$ from $rootsOfSubtrees$. Since any node will be removed from $rootsOfSubtrees$ only once, this step costs $O(n)$ time total.
+            Computing the centroid path takes $O(m)$ time. Since the total number of leaves over all side trees is $O(m)$, the additions to $lowerBoundary$ cost $O(m)$ time. The calls to \texttt{Compute\_Roots\_Of\_Subtrees} cost $O(m)$ time due to $lowerBoundary$ and $O(1)$ time for each node over all calls to \texttt{Filter\_Clusters\_Helper} (since any node belongs to $removed$ only once). Since $lca$ queries can be made in constant time and the total number of $lca$ queries is $O(m)$, this also costs $O(m)$ time. $O(m)$ insertions are made into $incompatible$, costing $O(m)$ time. Since any node belongs to $removed$ only once, there are a total of $O(n)$ deletions over all calls due to Step 14. Step 17 also causes a total of $O(n)$ deletions over all calls as this step happens once for each node in the centroid path, and every node in $T_A$ belongs to exactly one centroid path. Thus deletions cost a total of $O(n\,log\,n)$ time.
 
             Thus we can write a recurrence for \texttt{Filter\_Clusters\_Helper} (ignoring steps that are being analysed over the entire call to \texttt{Filter\_Clusters}) in the following manner: $T(m) = \sum_{\tau \in \sigma(\pi)}T(|\leafset(\tau))|) + O(m)$. Since for any $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq m/2$, there are $log\,m$ recursion levels, we get $T(n) = O(n\,log\,n)$.
 
