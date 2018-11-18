@@ -8,6 +8,8 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{parskip}
+\usepackage{graphicx}
+\graphicspath{{images/}}
 
 \usepackage[
   top    = 2.75cm,
@@ -34,6 +36,7 @@
 \newtheorem{freqdiffruntimecomponents}[incompatibility]{Corollary}
 \newtheorem{assocnode}[incompatibility]{Lemma}
 \newtheorem{labelclusterscorrectness}[incompatibility]{Lemma}
+\newtheorem{labelclustersidbounds}[incompatibility]{Lemma}
 \newtheorem{labelclustersruntime}[incompatibility]{Lemma}
 \newtheorem{filterclusterssubsetcompatible}[incompatibility]{Lemma}
 \newtheorem{incompatibilityrootsofsubtrees}[incompatibility]{Lemma}
@@ -44,17 +47,7 @@
 \newtheorem{freqdiffruntime}[incompatibility]{Theorem}
 
 % Improvements:
-% 1- Define things before we use - especially true for rootsOfSubtrees. Can put lemmas before Filter_Clusters_Helper also
-% 2- Lemmas showing correctness of algorithm - some sort of recursive formulation
-% 3- Rework proofs
-% 4- Add r_i to rootsOfSubtrees also?
-% 5- Will need to process all side trees first
-% 6- Insert r_{i-1} first, then iterate upwards then insert parents(roots)
-% 7- Don't need all that analysis for deleting kids from roots
-% 8- Rename lots of things
-
 % 9. Figure out what's up with the RMQ structure
-% 10. Do we really need side effects??
 % 11. Diagrams would be helpful!!
 % 12. Need a better introduction - what's the motivation behind this problem?
 
@@ -75,7 +68,9 @@
 
     Any two clusters $C_1, C_2 \in \mathcal{C}(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible}, denoted as $C_1 \not\compatible C_2$. Similarly given trees $T_1$ and $T_2$ with the same leaf sets, and nodes $u \in V(T_1)$, $v \in V(T_2)$, we say $u$ is compatible with $v$ if the clusters associated with $u$ and $v$ are compatible. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ iff for every $u \in V(T)$, $C \compatible \leafset(T[u])$. Further, two trees $T_1$ and $T_2$ satisfying $\leafset(T_1) = \leafset(T_2)$ are \textit{compatible} iff for every $u \in V(T_1)$, $\leafset(T_1[u]) \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$.
 
-    A \textit{frequency difference consensus tree} can then be defined as thus. Let $\mathcal{S}$ be a set of $k$ trees with identical leafs labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let $K_C = \{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}$ be the set of trees in $\mathcal{S}$ which $C$ occurs in. Let $T_{FD}$ be the frequency difference consensus tree of $\mathcal{S}$, with $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } |K_C| > max(\{|K_{C_1}| : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$. [Need example]
+    A \textit{frequency difference consensus tree} can then be defined as thus. Let $\mathcal{S}$ be a set of $k$ trees with identical leafs labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let $K_C = \{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}$ be the set of trees in $\mathcal{S}$ which $C$ occurs in. Let $T_{FD}$ be the frequency difference consensus tree of $\mathcal{S}$, with $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } |K_C| > max(\{|K_{C_1}| : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$.
+
+    \includegraphics{freqdiff}
 
     Henceforth, $\mathcal{S}$ is taken to be the input set of trees with identical leaf labels. This set of leaf labels is denoted by $L$. Let $|\mathcal{S}| = k$ and $|L| = n$.
 
@@ -120,9 +115,9 @@
     We present an $O(kn\,log\,n)$ solution for the labelling step in section 3.1 and an $O(n\,log\,n)$ solution for \texttt{Filter\_Clusters} in section 3.2. Taken together with Corollary 2, this allows us to solve \texttt{Frequency\_Difference} in $O(kn\,log\,n)$ time.
 
     \subsection{Labelling}
-    As in \cite{gawrychowski2017faster}, we divide the labelling step into two parts. First, we give a label to every node $u$, where $u \in V(T)$ for some $T \in \mathcal{S}$, denoted by $id(u)$. The labels obey the restrictions that $id(u) \in [1, kn]$ and for some $u' \in T'$, $T' \in \mathcal{S}$, $id(u) = id(u')$ iff $\leafset(T[u]) = \leafset(T'[u'])$. That is, two nodes will have the same label iff they are associated with the same cluster. Second, we counting sort these labels, allowing us to count how many nodes exist with a certain label, giving us the frequency of those nodes in $\mathcal{S}$.
+    As in \cite{gawrychowski2017faster}, we divide the labelling step into two parts. First, we give a label to every node $u$, where $u \in V(T)$ for some $T \in \mathcal{S}$, denoted by $id(u)$. The labels obey the restrictions that $id(u) \in [1, 2kn]$ and for some $u' \in T'$, $T' \in \mathcal{S}$, $id(u) = id(u')$ iff $\leafset(T[u]) = \leafset(T'[u'])$. That is, two nodes will have the same label iff they are associated with the same cluster. Second, we counting sort these labels, allowing us to count how many nodes exist with a certain label, giving us the frequency of those nodes in $\mathcal{S}$.
 
-    First, for some tree $T$ and some cluster $C \subseteq \leafset(T)$ define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all nonempty $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leafs in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Further, for any node $u$ in $T$, define the node that $u$ is associated with when $T$ is restricted to $C$ to be the descendant of $u$ with least depth that is in $T|C$, denoted as $assoc^{C}(u)$.
+    First, for some tree $T$ and some cluster $C \subseteq \leafset(T)$ define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all nonempty $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leafs in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Further, for any node $u$ in $T$, define the node that $u$ is associated with when $T$ is restricted to $C$ to be the descendant of $u$ with least depth that is in $T|C$, denoted as $assoc^{C}(u)$. If no such node exists, then define for convenience a node with an empty leaf set and id $0$.
 
     The algorithm \texttt{Label\_Clusters} is laid out below.
 
@@ -133,7 +128,7 @@
         \begin{algorithmic}[1]
             \Input A set $\mathcal{S}$ of trees $\{T_1, T_2, ..., T_k\}$ where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$
 
-            \Output Every node in the trees in $\mathcal{S}$ is labelled such that nodes associated with the same cluster have the same labels and for any $u$, $id(u) \in [1, k |L|]$
+            \Output Every node in the trees in $\mathcal{S}$ is labelled such that nodes associated with the same cluster have the same labels and for any $u$, $id(u) \in [1, 2k |L|]$
 
             \State Partition $L$ into $L'$ and $L''$ such that $|L'| = |L''|$.
 
@@ -176,13 +171,24 @@
     \end{labelclusterscorrectness}
 
     \medskip
+    \begin{labelclustersidbounds}
+        \label{lem:labelclustersidbounds}
+
+        After running \texttt{Label\_Clusters}$(\mathcal{S})$, for any tree $T \in \mathcal{S}$, for any node $u \in V(T)$, $id(u) \in [1, 2k |L|]$.
+
+        \begin{proof}
+            $|V(T)| < 2|L|$. Thus the total number of pairs is less than $2k|L|$. This also places an upper bound on the number of ids. Notice that $u$ cannot be labelled with $0$ since that is reserved for the special node.
+        \end{proof}
+    \end{labelclustersidbounds}
+
+    \medskip
     \begin{labelclustersruntime}
         \label{lem:labelclustersruntime}
 
         The algorithm \texttt{Label\_Clusters}$(\mathcal{S})$ runs in $O(kn\,log\,n)$ time.
 
         \begin{proof}
-            Let $T(m)$ be the runtime of \texttt{Label\_Clusters}$(\mathcal{T})$, where $m =$ size of leaf set of each tree in $\mathcal{T}$. By Lemma 5.2 of \cite{farach1995fast}, construction of $T'_i$ and $T''_i$ takes $O(m)$ time for each $T_i \in \mathcal{T}$, taking total $O(km)$ time over all the trees. For each $T_i \in \mathcal{T}$, $|V(T_i)| = O(m)$. Computing $assoc^{L'}(u)$ and $assoc^{L''}(u)$ for each node $u$ in some tree $T_i \in \mathcal{T}$ can be done by a bottom up traversal of $T_i$ along with $T'_i$ and $T''_i$, taking $O(km)$ time total. Also observe that the number of pairs obtained is $O(km)$. Further, each of the values in the pair are in the range [1, km/2]. Thus radix sorting these pairs and assigning labels back to the nodes takes $O(km)$ time. So $T(m) = 2T(m/2) + O(km)$, giving $T(n) = kn\,log\,n$.
+            Let $T(m)$ be the runtime of \texttt{Label\_Clusters}$(\mathcal{T})$, where $m =$ size of leaf set of each tree in $\mathcal{T}$. By Lemma 5.2 of \cite{farach1995fast}, construction of $T'_i$ and $T''_i$ takes $O(m)$ time for each $T_i \in \mathcal{T}$, taking total $O(km)$ time over all the trees. For each $T_i \in \mathcal{T}$, $|V(T_i)| < O(m)$. Computing $assoc^{L'}(u)$ and $assoc^{L''}(u)$ for each node $u$ in some tree $T_i \in \mathcal{T}$ can be done by a bottom up traversal of $T_i$ along with $T'_i$ and $T''_i$, taking $O(km)$ time total. Also observe that the number of pairs obtained is $O(km)$. Further, each of the values in the pair are in the range [0, km]. Thus radix sorting these pairs and assigning labels back to the nodes takes $O(km)$ time. So $T(m) = 2T(m/2) + O(km)$, giving $T(n) = kn\,log\,n$.
         \end{proof}
     \end{labelclustersruntime}
 
@@ -208,6 +214,7 @@
     For any cluster $C \subseteq L$, define any node $r \in V(T_B)$ to be the root of a \textit{maximal subtree compatible with $C$} if it satisfies the following property: $\leafset(T_B[r]) \subseteq C$ and there is no proper ancestor $r'$ of $r$ such that $\leafset(T_B[r']) \subseteq C$. We denote this as $rootsOfSubtrees(C)$.
 
     We now prove a stronger version of Lemma~\ref{lem:incompatibility} that takes $rootsOfSubtrees$ into account to compute the set $incompatible(u) = \{v : v \in V(T_B) \text{ and } \leafset(T_B[v]) \not\compatible \leafset(T_A[u])\}$ for any $u \in V(T_A)$.
+    \newline
 
     \begin{incompatibilityrootsofsubtrees}
         \label{lem:incompatibilityrootsofsubtrees}
