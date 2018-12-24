@@ -46,10 +46,11 @@
 \newtheorem{filterclustersruntime}[incompatibility]{Lemma}
 \newtheorem{freqdiffruntime}[incompatibility]{Theorem}
 
+% TODO:
 % Improvements:
-% 9. Figure out what's up with the RMQ structure
-% 11. Diagrams would be helpful!!
-% 12. Need a better introduction - what's the motivation behind this problem?
+% 1. Figure out what's up with the RMQ structure
+% 2. Need a better introduction - what's the motivation behind this problem?
+% 3. counter(v) = |rootsOfSubtrees(C) \cap children(v)|
 
 \begin{document}
     \maketitle
@@ -68,9 +69,14 @@
 
     Any two clusters $C_1, C_2 \in \mathcal{C}(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible}, denoted as $C_1 \not\compatible C_2$. Similarly given trees $T_1$ and $T_2$ with the same leaf sets, and nodes $u \in V(T_1)$, $v \in V(T_2)$, we say $u$ is compatible with $v$ if the clusters associated with $u$ and $v$ are compatible. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ iff for every $u \in V(T)$, $C \compatible \leafset(T[u])$. Further, two trees $T_1$ and $T_2$ satisfying $\leafset(T_1) = \leafset(T_2)$ are \textit{compatible} iff for every $u \in V(T_1)$, $\leafset(T_1[u]) \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$.
 
-    A \textit{frequency difference consensus tree} can then be defined as thus. Let $\mathcal{S}$ be a set of $k$ trees with identical leafs labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let $K_C = \{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}$ be the set of trees in $\mathcal{S}$ which $C$ occurs in. Let $T_{FD}$ be the frequency difference consensus tree of $\mathcal{S}$, with $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } |K_C| > max(\{|K_{C_1}| : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$.
+    A \textit{frequency difference consensus tree} can then be defined as thus. Let $\mathcal{S}$ be a set of $k$ trees with identical leafs labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let $K_C = \{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}$ be the set of trees in $\mathcal{S}$ which $C$ occurs in. Let $T_{FD}$ be the frequency difference consensus tree of $\mathcal{S}$, with $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } |K_C| > max(\{|K_{C_1}| : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$. An example is given in Figure~\ref{fig:freqdiff}. In this example we see that $w(\{a, b\}) = 2 \leq w(\{b, c\}) = 2$ and $\{a, b\} \not\compatible \{b, c\}$, hence $\{a, b\}$ is not in the final consensus tree. However $\{a, b, c\}$ and $\{d, e\}$ have weights larger than any cluster incompatible with them, hence they both exist in the consensus tree. Note that weights are not shown for the trivial clusters.
 
-    \includegraphics{freqdiff}
+    \begin{figure}[h]
+        \includegraphics[scale=0.5]{freqdiff}
+        \centering
+        \caption{Example of a frequency difference consensus tree}
+        \label{fig:freqdiff}
+    \end{figure}
 
     Henceforth, $\mathcal{S}$ is taken to be the input set of trees with identical leaf labels. This set of leaf labels is denoted by $L$. Let $|\mathcal{S}| = k$ and $|L| = n$.
 
@@ -100,6 +106,7 @@
     The algorithm \texttt{Frequency\_Difference} is laid out in \cite{jansson2018algorithms}. Before describing this, we first define the weight of a node $u$ to be the number of trees in $\mathcal{S}$ that the cluster associated with $u$ occurs in. Formally, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, let $C = \leafset(T[u])$, then $weight(u) = w(u) = |K_C|$ and $w(C) = w(u)$. Further, define a procedure \texttt{Filter\_Clusters} which takes in trees $T_A$ and $T_B$, with $\leafset(T_A) = \leafset(T_B) = L$ and $w(u)$ computed for any $u \in V(T_A) \cup V(T_B)$. It returns a tree $T$ which contains all clusters $C$ in $T_A$ for which $w(C) > $ weight of all clusters in $T_B$ that it is incompatible with. Formally, \texttt{Filter\_Clusters}$(T_A, T_B) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(T_A) \text{ and } w(C) > max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$.
 
     Then the algorithm \texttt{Frequency\_Difference} runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $w(u)$. We call this the \textit{labelling} step. In the second part, it utilises \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} (from \cite{jansson2016improved}) to compute the frequency difference consensus tree. Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
+    \newline
 
     \begin{freqdiffruntimecomponents}
         \label{cor:freqdiffruntimecomponents}
@@ -128,7 +135,7 @@
         \begin{algorithmic}[1]
             \Input A set $\mathcal{S}$ of trees $\{T_1, T_2, ..., T_k\}$ where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$
 
-            \Output Every node in the trees in $\mathcal{S}$ is labelled such that nodes associated with the same cluster have the same labels and for any $u$, $id(u) \in [1, 2k |L|]$
+            \Output Every node in the trees in $\mathcal{S}$ is labelled such that nodes associated with the same cluster have the same labels and for any node $u$, $id(u) \in [1, 2k |L|]$
 
             \State Partition $L$ into $L'$ and $L''$ such that $|L'| = |L''|$.
 
@@ -145,6 +152,15 @@
             \State For every tree $T \in \mathcal{S}$, for every node $u \in T$, set $id(u) = $ rank of the pair $(id(assoc^{L'}(u)), id(assoc^{L''}(u)))$.
         \end{algorithmic}
     \end{algorithm}
+
+    One iteration of this process is illustrated in Figure~\ref{fig:labelclusters}. Here $L' = \{a, b, c, d\}$ and $L'' = \{e, f, g, h\}$. It is assumed that the algorithm has correctly labelled the clusters for each of the restricted trees, and these labels are assigned as shown. $T_1$ and $T_2$ then show the pair associated with each internal node. For example, the cluster $\{a, b, e\}$ in $T_1$ is labelled by $5$ from $\{a, b\}$ in $T_1|L'$ and $1$ from $\{e\}$ in $T_1|L''$.
+
+    \begin{figure}[h]
+        \includegraphics[scale=0.5]{labelclusters}
+        \centering
+        \caption{Demonstration of \texttt{Label\_Clusters}}
+        \label{fig:labelclusters}
+    \end{figure}
 
     \bigskip
     \begin{assocnode}
@@ -211,7 +227,7 @@
 
     This lemma says that if the cluster associated with some node $v \in V(T_B)$ is a subset of the cluster associated with some node $u \in V(T_A)$, then $v$ is the root of a subtree of $T_B$ that is compatible with every node in $V(T_A) - V(T_A[u])$. The upshot of this is that if once we process $u$ we are known to have also processed the entirety of $T_A[u]$, then for the remaining nodes, no node in $V(T_B[v])$ needs to be considered for incompatibility again.
 
-    For any cluster $C \subseteq L$, define any node $r \in V(T_B)$ to be the root of a \textit{maximal subtree compatible with $C$} if it satisfies the following property: $\leafset(T_B[r]) \subseteq C$ and there is no proper ancestor $r'$ of $r$ such that $\leafset(T_B[r']) \subseteq C$. We denote this as $rootsOfSubtrees(C)$.
+    For any cluster $C \subseteq L$, define any node $r \in V(T_B)$ to be the root of a \textit{maximal subtree compatible with $C$} if it satisfies the following property: $\leafset(T_B[r]) \subseteq C$ and there is no proper ancestor $r'$ of $r$ such that $\leafset(T_B[r']) \subseteq C$. The set $rootsOfSubtrees(C)$ is composed of all nodes $r \in V(T_B)$ that are roots of maximal subtrees compatible with $C$.
 
     We now prove a stronger version of Lemma~\ref{lem:incompatibility} that takes $rootsOfSubtrees$ into account to compute the set $incompatible(u) = \{v : v \in V(T_B) \text{ and } \leafset(T_B[v]) \not\compatible \leafset(T_A[u])\}$ for any $u \in V(T_A)$.
     \newline
@@ -227,6 +243,15 @@
             \textit{Backward direction}: Given some $v \in V(T_B)$ such that $v$ is a proper descendant of $l_u$ and for some $r \in rootsOfSubtrees(u)$, $v$ is a proper ancestor of $r$. Since $v$ is a proper descendant of $l_u$, $\leafset(T_A[u]) \not\subseteq \leafset(T_B[v])$. Since $v$ is a proper ancestor of $r$, $\leafset(T_B[r]) \subset \leafset(T_B[v])$, so $\leafset(T_B[v]) \cap \leafset(T_A[u]) \neq \emptyset$. Finally, $\leafset(T_B[v]) \not\subseteq \leafset(T_A[u])$, otherwise $r \not\in rootsOfSubtrees(u)$.
         \end{proof}
     \end{incompatibilityrootsofsubtrees}
+
+    This is illustrated in Figure~\ref{fig:rootsofsubtrees}. Here, any node in $rootsOfSubtrees(\{a, b, c, f, g, h\})$ is circled and any node that is incompatible with this cluster has a rectangle around it.
+
+    \begin{figure}[h]
+        \includegraphics[scale=0.5]{rootsofsubtrees}
+        \centering
+        \caption{Illustration of Lemma~\ref{lem:incompatibilityrootsofsubtrees}}
+        \label{fig:rootsofsubtrees}
+    \end{figure}
 
     We now build a recursive definition of $incompatible(u)$, for any internal node $u \in V(T_A)$. To do so, we use $incompatible(c_1)$, for some $c_1 \in children(u)$.
     \newline
@@ -264,11 +289,20 @@
         \end{proof}
     \end{incompatibilityrecursive}
 
+    Figure~\ref{fig:incompatibilityrecursive} illustrates the above result. Here $rootsOfSubtrees(c_1) = \{r_1, r_2\}$ and $rootsOfSubtrees(u) = \{r_1, r_3, r_4, r_5\}$. The triangles under each of these nodes represent the subtrees rooted at them. The nodes on the dotted line between $r_1$ and $l_{c_1}$ are in $incompatible(c_1)$ and remain in $incompatible(u)$. The nodes on the dashed line between $r_2$ and $r_4$ are now known to be compatible with $u$, so they will be removed from $incompatible(c_1)$. The nodes on the bold lines from $r_3$, $r_4$ and $r_5$ are added to $incompatible(c_1)$ to get $incompatible(u)$. Notice that the nodes between $l_{c_1}$ and $l_u$ are added due to $r_3$ and $r_4$, but even if no root of a maximal subtree compatible with $\leafset(T_A[u])$ is in $V(T_B[l_{c_1}])$, these nodes would have been added due to $r_1$, which belongs to $oldRootsOfSubtrees(u, c_1)$.
+
+    \begin{figure}[h]
+        \includegraphics[scale=0.5]{incompatibilityrecursive}
+        \centering
+        \caption{Illustration of Lemma~\ref{lem:incompatibilityrecursive}}
+        \label{fig:incompatibilityrecursive}
+    \end{figure}
+
     We also define a property $counter(v)$ for any $v \in T_B$ (as in \cite{jansson2018algorithms}). $T_B$ satisfies the parent counter invariant for some cluster $C \subseteq L$, denoted as $pci(C)$, iff for all nodes $v \in \bigcup_{r \in rootsOfSubtrees(C)} parent^{T_B}(r)$, $counter(v) = \sum_{c \in children(v) \cap rootsOfSubtrees(C)} |\leafset(T[c])|$.
 
     We thus present Algorithm~\ref{alg:computerootsofsubtrees}, which, for some internal node $u \in V(T_A)$ and $c_1 \in children(u)$, takes in $rootsOfSubtrees(c_1)$, $lowerBoundary(u, c_1) = \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(\leafset(T_A[c]))$ and $T_B$ where $pci(\leafset(T_A[c_1]))$ holds and returns $newRootsOfSubtrees(u, c_1)$, $removedRootsOfSubtrees(u, c_1)$ and $oldRootsOfSubtrees(u, c_1)$. In addition $T_B$ is updated so that $pci^{T_B}(\leafset(T_A[u]))$.
 
-    The algorithm iterate upwards from each node in $lowerBoundary$, updating $counter$ values, and in doing so discovering which nodes are compatible with $\leafset(T_A[u])$. We prove the correctness of this algorithm below.
+    The algorithm iterates upwards from each node in $lowerBoundary$, updating $counter$ values, and in doing so discovering which nodes are compatible with $\leafset(T_A[u])$. We prove the correctness of this algorithm below.
 
     \begin{algorithm}
         \caption{Compute\_Roots\_Of\_Subtrees}

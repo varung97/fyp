@@ -3,3 +3,7 @@
 !*/
 !*.tex
 !*.bib
+filter_clusters_improvements/paper.bib
+filter_clusters_improvements/paper.tex
+filter_clusters_improvements/samplepaper.tex
+filter_clusters_improvements/paper-minted.tex
