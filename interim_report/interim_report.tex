@@ -34,6 +34,7 @@
 
 \newtheorem{incompatibility}{Lemma}
 \newtheorem{freqdiffruntimecomponents}[incompatibility]{Corollary}
+\newtheorem{rmqstructure}[incompatibility]{Theorem}
 \newtheorem{assocnode}[incompatibility]{Lemma}
 \newtheorem{labelclusterscorrectness}[incompatibility]{Lemma}
 \newtheorem{labelclustersidbounds}[incompatibility]{Lemma}
@@ -48,9 +49,11 @@
 
 % TODO:
 % Improvements:
-% 1. Figure out what's up with the RMQ structure
+% -1. Figure out what's up with the RMQ structure
+% -1.1 Fix path notation
 % 2. Need a better introduction - what's the motivation behind this problem?
-% 3. counter(v) = |rootsOfSubtrees(C) \cap children(v)|
+% -3. counter(v) = |rootsOfSubtrees(C) \cap children(v)|
+% 4. What I have contributed?
 
 \begin{document}
     \maketitle
@@ -62,7 +65,11 @@
     \section{Introduction}
     \label{sec:introduction}
 
-    A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. A \textit{rooted phylogenetic tree} is one that presents the evolutionary relationships between various taxa. Here, the root represents their common ancestor, and children of nodes split each group into smaller ones. A \textit{consensus tree} reconciles multiple phylogenetic trees, summarising the branching information contained in each into a single tree. This report studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} and arrives at a fast algorithm for constructing this.
+    A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. A \textit{rooted phylogenetic tree} is one that presents the evolutionary relationships between various taxa in a heirarchical manner. Here, the root represents their common ancestor, and children of nodes split each group into smaller ones. Multiple phylogenetic trees may be produced from say different data sets or from a single data set using techniques like maximum parsimony that yield a number of candidate trees \cite{bryant1997hunting}. This motivates the concept of a \textit{consensus tree}, which reconciles multiple phylogenetic trees by summarising the branching information contained in each into a single tree.
+
+    A variety of techniques of constructing a consensus tree from a set of phylogenetic trees have been developed over the last half century, starting with the Adams consensus tree \cite{adams1972consensus} in 1972. Many of these are summarised in \S 6.2 of \cite{bryant1997hunting} and a comparative analysis can be found in \cite{bryant2003classification}. We illustrate with some examples. The \textit{strict consensus tree} 
+
+    This report studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} and arrives at a fast algorithm for constructing this.
 
     \subsection{Definitions and Notation}
     We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label. Henceforth, we will simply refer to these as trees. For any tree $T$, let $V(T)$ be the vertex set of $T$ and $\leafset(T)$ be the leaf set of $T$. Non-empty subsets of $\leafset(T)$ are called \textit{clusters}. Clusters with cardinality $1$ or $|\leafset(T)|$ are \textit{trivial clusters}. For any $u \in V(T)$, $T[u]$ is the subtree of $T$ rooted at $u$. Then $\leafset(T[u])$ is the cluster \textit{associated} with $u$. The \textit{cluster collection} of $T$, $\mathcal{C}(T)$ is the set $\bigcup_{u \in V(T)} {\leafset(T[u])}$, i.e. a set containing all the clusters in $T$. Any cluster $C \subseteq \leafset(T)$ \textit{occurs} in $T$ iff $C \in \mathcal{C(T)}$. Also define, for any tree $T$, for any cluster $C \subseteq \leafset(T)$, $lca^T(C)$ to be the least common ancestor of $C$ in $T$.
@@ -78,6 +85,8 @@
         \label{fig:freqdiff}
     \end{figure}
 
+    Finally, for any tree $T$, define $path^{T}(v, w)$ for any nodes $v, w \in V(T)$ be the set of all nodes that are ancestors of $v$ and proper descendants of $w$. That is, $path^{T}(v, w)$ contains all nodes on the path from $v$ to $w$, excluding $w$. Notice that $path^{T}(v, w) \neq \emptyset$ exactly when $w$ is a proper ancestor of $v$.
+
     Henceforth, $\mathcal{S}$ is taken to be the input set of trees with identical leaf labels. This set of leaf labels is denoted by $L$. Let $|\mathcal{S}| = k$ and $|L| = n$.
 
     \subsection{Previous Work}
@@ -88,6 +97,10 @@
 
     \section{Preliminaries}
     \label{sec:preliminaries}
+
+    \subsection{Centroid Path Decomposition}
+
+    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from root to some leaf and a set of subtrees. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the child with the largest leaf set. The centroid path is denoted by $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$, where $p_{\alpha}$ is the root of $T$ and $p_1$ is a leaf. Removing all nodes in $\pi$ along with all associated edges from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi$. These trees are called the \textit{side trees} of $\pi$, denoted by $\sigma(\pi)$. Also let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$.
 
     \subsection{The \textit{delete} operation}
     As described in \cite{jansson2018algorithms}, the \textit{delete} operation deletes a cluster from a tree. To do so, we specify some internal node $u$ in a tree $T$, such that we wish $\leafset(T[u])$ to be deleted. Then the \textit{delete} operation makes $parent(u)$ the parent of all nodes in $children(u)$ and removes $u$, along with any associated edges from $T$. This has the effect of removing only $\leafset(T[u])$ from $T$, without affecting any other cluster.
@@ -115,6 +128,47 @@
     \end{freqdiffruntimecomponents}
 
     Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the labelling step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the labelling step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.
+
+    \section{RMQ (range minimum/maximum query) structure on trees}
+    \label{sec:rmqstructure}
+
+    This section presents a way to build an RMQ structure on a tree $T$. We assume that for every node $u \in V(T)$, some property $weight(u)$ is defined. Then we build a structure capable of answering the query, for any $v, w \in V(T)$, $max_{u \in path^{T}(v, w)}(weight(u))$ in constant time. Recall that $path^{T}(v, w)$ is the set of nodes on the path from $v$ to $w$, excluding $w$.
+
+    Lemma 8 of \cite{jansson2018algorithms} presents a way to build this RMQ structure where queries include the node $w$. These queries are represented by $rmq(v, w)$. We first elaborate on their solution to show how to implement a key step in their procedure. Then we give a way to find the child of $w$ which is also an ancestor of $v$, refererred to as $childForDescendant(w, v)$ in constant time. Then $max_{u \in path^{T}(v, w)}(weight(u)) = rmq(v, childForDescendant(w, v))$.
+
+    \subsection{Answering $rmq(v, w)$}
+    \label{subsec:answeringrmq}
+
+    Lemma 8 of \cite{jansson2018algorithms} first decomposes $T$ into a centroid path and a set of side trees, each of which is recursively partitioned, giving a set of centroid paths. Let this set be $P$. The linear RMQ structure of \cite{bender2000lca} is used to store each of these. Then for each $x \in \leafset(T)$, they denote the centroid \textit{subpaths} on the path from $x$ to the root of $T$ by $Q_1, Q_2, ..., Q_f$ and build the array $W_x[1 ... f]$ where $W_x[i] = max_{u \in Q_i}(weight(u))$. Each $W_x$ is stored in a linear RMQ structure.
+
+    Now to find $rmq(v, w)$, consider the path from $v$ to $w$. This can again be seen as a concatenation of subpaths of centroid paths, say $Q_1, Q_2, ..., Q_g$. Let $x \in \leafset(v)$. Then $Q_2, ..., Q_{g - 1}$ are contained fully on the path from $x$ to $root(T)$. $Q_1$ must be a subpath that starts at some node ($v$) in a centroid path $\in P$ and ends at the root of that centroid path. $Q_g$ is a subpath that starts at some node in some centroid path $\in P$ and ends at another node within the same path ($w$). We address each of these three divisions separately.
+
+    To find the maximum weight within $Q_1$, we augment each node with its depth within its centroid path. This is easy to do during the decomposition. Then we can retreive the maximum weight by querying the linear RMQ structure for this centroid path, from the root to $v$.
+
+    To find the maximum weight for the subpaths $Q_2, ..., Q_{g - 1}$, we augment each centroid path with its ``depth''. This is defined as the number of roots of centroid paths that are above the root of the given centroid path in the tree. Intuitively, if we build a tree from only the roots of the centroid paths while maintaining the same relative structure, then the depth of a centroid path would simply be the depth of its root in this new tree. Again, these depths are easy to obtain during the decomposition. Then the indices of $Q_2$ and $Q_{g-1}$ in $W_x$ can be found using the depths of $Q_1$ and $Q_{g - 1}$ respectively.
+
+    Finally, we need to find the maximum weight within $Q_g$. Observe that the key here is finding which node is at the end of $Q_g$. This is equivalent to finding which node in the centroid path of which $Q_g$ is a subpath has $x$ in one of its side trees. We first number the leaves of $T$ such that for any $P_i \in P$, for any nodes $r, s \in P_i$ where $depth(r) < depth(s)$, all leaves in the side trees associated with $r$ have a higher index than any leaf in the side trees associated with $s$. This can be done by traversing centroid paths from bottom to top, recursively indexing the side trees, and then starting the indexing for the next set of side trees where the previous set left off. Now for each $P_i \in P$, we do the following. For each node in $P_i$, we find the minimum index of all the leaves in its side trees and store these in the succinct data structure of \cite{jacobson1988succinct}. This data structure supports rank queries in constant time. Thus, we can find the desired ending node of $Q_g$ in constant time, by querying for the rank of $x$ in the succinct data structure for the centroid path containing $Q_g$. The linear RMQ structure for this centroid path can then give us the maximum weight within $Q_g$.
+
+    A succinct data structure takes $O(n)$ preprocessing time, where $n$ is the range of the numbers being stored in the structure. Thus, for a centroid path rooted at $p_{\alpha}$, the amount of time taken to construct the succinct structure is proportional to $|\leafset(p_{\alpha})|$ since leaves in the side trees are consecutively numbered. By the standard argument of heavy-path decomposition, each leaf belongs to $O(log\,n)$ centroid paths and so total time to construct all the succinct structures is $O(n\,log\,n)$. Further, the other operations outlined above also take $O(n\,log\,n)$ preprocessing time (including the work done in Lemma 8 of \cite{jansson2018algorithms}), and together allow answering $rmq(v, w)$ in constant time.
+
+    \subsection{Answering $childForDescendant(v, w)$}
+    \label{subsec:answeringcfd}
+
+    As in Subsection~\ref{subsec:answeringrmq}, we decompose $T$ into a set of centroid paths. A $childForDescendant(v, w)$ can now be divided into first checking if the heavist child of $w$ is an ancestor of $v$, and if not, then finding out which of the other children of $w$ is an ancestor of $v$.
+
+    To solve the first problem, we assign each leaf an index in left to right order and augment each node with the index of its leftmost and rightmost leaves. Then to check if a node $r$ is an ancestor of a node $s$, we simply need to verify that the leftmost leaf of $s$ is not to the left of the leftmost leaf of $r$, and similarly with their rightmost leaves. This takes constant time.
+
+    To solve the second problem, we index the leaves as in Subsection~\ref{subsec:answeringrmq}. Now for each node we create a succinct data structure storing the smallest leaf index for each of its children (excluding the heavist child). Then finding out which of the children is an ancestor of $v$ can be done by querying for the rank of any leaf $x \in \leafset(T[v])$ in the succint structure of $w$ (in constant time). Again, by a heavy-path decomposition argument, it can be seen that any leaf contributes to $O(log\,n)$ succint structures, and so total time to construct these is $O(n\,log\,n)$.
+    \newline
+
+    \begin{rmqstructure}
+        \label{theorem:rmqstructure}
+        A query of the form $max_{u \in path^{T}(v, w)}(weight(u))$ can be answered in $O(1)$ time with $O(n\,log\,n)$ preprocessing time.
+
+        \begin{proof}
+            Follows from the arguments above.
+        \end{proof}
+    \end{rmqstructure}
 
     \section{Constructing the Frequency Difference Consensus Tree}
     \label{sec:freqdiffconstruction}
@@ -298,7 +352,7 @@
         \label{fig:incompatibilityrecursive}
     \end{figure}
 
-    We also define a property $counter(v)$ for any $v \in T_B$ (as in \cite{jansson2018algorithms}). $T_B$ satisfies the parent counter invariant for some cluster $C \subseteq L$, denoted as $pci(C)$, iff for all nodes $v \in \bigcup_{r \in rootsOfSubtrees(C)} parent^{T_B}(r)$, $counter(v) = \sum_{c \in children(v) \cap rootsOfSubtrees(C)} |\leafset(T[c])|$.
+    We also define a property $counter(v)$ for any $v \in T_B$ (as in \cite{jansson2018algorithms}). $T_B$ satisfies the parent counter invariant for some cluster $C \subseteq L$, denoted as $pci(C)$, iff for all nodes $v \in \bigcup_{r \in rootsOfSubtrees(C)} parent^{T_B}(r)$, $counter(v) = |children(v) \cap rootsOfSubtrees(C)|$.
 
     We thus present Algorithm~\ref{alg:computerootsofsubtrees}, which, for some internal node $u \in V(T_A)$ and $c_1 \in children(u)$, takes in $rootsOfSubtrees(c_1)$, $lowerBoundary(u, c_1) = \bigcup_{c \in children(u) - \{c_1\}} rootsOfSubtrees(\leafset(T_A[c]))$ and $T_B$ where $pci(\leafset(T_A[c_1]))$ holds and returns $newRootsOfSubtrees(u, c_1)$, $removedRootsOfSubtrees(u, c_1)$ and $oldRootsOfSubtrees(u, c_1)$. In addition $T_B$ is updated so that $pci^{T_B}(\leafset(T_A[u]))$.
 
@@ -318,12 +372,12 @@
             \State $new, removed := \{\}$
 
             \ForAll{$v \in lowerBoundary(u, c_1)$}
-                \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + |\leafset(T_B[v])|$
+                \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + 1$
 
                 \State $v := parent^{T_B}(v)$
 
-                \While{$counter(v) = |\leafset(T_B[v])|$}
-                    \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + |\leafset(T_B[v])|$
+                \While{$counter(v) = |children(v)|$}
+                    \State $counter(parent^{T_B}(v)) := counter(parent^{T_B}(v)) + 1$
 
                     \State $new := (new \cup \{v\}) - children(v)$
 
@@ -362,7 +416,9 @@
 
             \textit{$removed_{i-1} - removed_i$.} Take any $r \in removed_{i-1} - removed_i$. Then $r \in (rootsOfSubtrees(D_0) \cap rootsOfSubtrees(D_i)) - rootsOfSubtrees(D_{i-1})$. Since $\leafset(T_B[r]) \subseteq D_0$, $\leafset(T_B[r]) \subseteq D_{i-1}$. Since $r \not\in rootsOfSubtrees(D_{i-1})$, there is some proper ancestor $r'$ of $r$ such that $\leafset(T_B[r']) \subseteq D_{i-1}$. But then $\leafset(T_B[r']) \subseteq D_i$ and so $r \not\in rootsOfSubtrees(D_i)$. Thus $removed_{i-1} - removed_i = \emptyset$.
 
-            The inner loop updates $new$ and $removed$ following these properties. We now need to show that it maintains the parent counter invariant. Note that for any $v \in V(T_B)$ that passes the while loop check, $v \not\in \bigcup_{r \in rootsOfSubtrees(D_i)} parent^{T_B}(r)$, so its counter is immaterial. Take the node $v$ when the loop terminates. Let the child of $v$ that was processed before this be $v'$. Then before its counter is updated in the last iteration of the loop, $counter(v) = \sum_{c \in children(v) \cap rootsOfSubtrees(D_{i-1})} |\leafset(T[c])|$. The only change to membership of $children(v)$ in $rootsOfSubtrees(D_i)$ is that $v'$ is also added to this set and hence the new $counter(v) := counter(v) + |\leafset(T_B[v'])|$. Also note that no other counter needs to be updated since this is the only node added to $rootsOfSubtrees(D_{i-1})$ to get $rootsOfSubtrees(D_i)$. Further, observe that the setup before the while loop ensures that the above holds even if the while loop terminates immediately, as seen by setting $v' = r_i$.
+            The inner loop updates $new$ and $removed$ following these properties. To see this, observe that the this loop is iterating upwards from $r_i$ while the node it is at has a leafset that is a subset of $D_i$. This is because if for some node $v$ it is true that $counter(v) = |children(v)|$, then for each child $v' \in children(v)$, it must be true that $\leafset(T_B[v']) \subseteq D_i$ and thus $\leafset(T_B[v]) \subseteq D_i$.
+
+            We now need to show that the inner loop maintains the parent counter invariant. Note that for any $v \in V(T_B)$ that passes the while loop check, $v \not\in \bigcup_{r \in rootsOfSubtrees(D_i)} parent^{T_B}(r)$, so its counter is immaterial. Take the node $v$ when the loop terminates. Let the child of $v$ that was processed before this be $v'$. Then before its counter is updated in the last iteration of the loop, $counter(v) = |children(v) \cap rootsOfSubtrees(D_{i-1})|$. The only change to membership of $children(v)$ in $rootsOfSubtrees(D_i)$ is that $v'$ is also added to this set and hence the new $counter(v) := counter(v) + 1$. Also note that no other counter needs to be updated since this is the only node added to $rootsOfSubtrees(D_{i-1})$ to get $rootsOfSubtrees(D_i)$. Further, observe that the setup before the while loop ensures that the above holds even if the while loop terminates immediately, as seen by setting $v' = r_i$.
 
             Thus our invariants hold. Since $D_{\beta} = \leafset(T_A[u])$, the output of \texttt{Compute\_Roots\_Of\_Subtrees}$(rootsOfSubtrees(c_1), lowerBoundary(u, c_1), T_B)$ is as expected.
         \end{proof}
@@ -397,7 +453,7 @@
 
             \State Preprocess $T_B$ for $lca$ queries
 
-            \State Do a bottom-up traversal of $T_B$ to compute $|\leafset(T_B[v])|$ for all $v \in V(T_B)$
+            \State Do a bottom-up traversal of $T_B$ to compute $|children(v)|$ for all $v \in V(T_B)$
 
             \State Construct an RMQ structure over $T_B$
 
@@ -411,7 +467,7 @@
         \end{algorithmic}
     \end{algorithm}
 
-    \texttt{Filter\_Clusters\_Helper} uses the \textit{centroid path decomposition technique} of \cite{cole2000n} to decompose $T_A$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). A \textit{centroid path} in $T_A$ is the path formed by starting at the root and at each point following the child with the largest leaf set. The centroid path is denoted by $\pi = \langle p_{\alpha}, p_{\alpha - 1}, ..., p_1 \rangle$, where $p_{\alpha}$ is the root of $T_A$ and $p_1$ is a leaf. Removing all nodes in $\pi$ along with all associated edges from $T_A$ results in a set of disjoint subtrees of $T_A$, where the root of each such subtree is a child of some node in $\pi$. These trees are called the \textit{side trees} of $\pi$, denoted by $\sigma(\pi)$. Also let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Observe that for any side tree $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq n/2$ and that $\{\leafset(\tau) : \tau \in \sigma(\pi)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any $i \geq 2$, $\leafset(T_A[p_{i - 1}]) \subset \leafset(T_A[p_i])$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind \texttt{Filter\_Clusters\_Helper} - recursively compute \texttt{Filter\_Clusters\_Helper} for side trees, then for the nested clusters rooted at nodes in the centroid path, use Algorithm~\ref{alg:computerootsofsubtrees} to find the maximal compatible subtrees and Lemma~\ref{lem:incompatibilityrecursive} to find incompatible nodes.
+    \texttt{Filter\_Clusters\_Helper} decomposes $T_A$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq n/2$ and that $\{\leafset(\tau) : \tau \in \sigma(\pi)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any $i \geq 2$, $\leafset(T_A[p_{i - 1}]) \subset \leafset(T_A[p_i])$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind \texttt{Filter\_Clusters\_Helper} - recursively compute \texttt{Filter\_Clusters\_Helper} for side trees, then for the nested clusters rooted at nodes in the centroid path, use Algorithm~\ref{alg:computerootsofsubtrees} to find the maximal compatible subtrees and Lemma~\ref{lem:incompatibilityrecursive} to find incompatible nodes.
 
     A crucial part of this algorithm is the usage of an RMQ structure on $T_B$ that allows us to query for the maximum weight of any node on the path between two given nodes. This is because we do not actually need the set of incompatible nodes, we just need to find the largest weight over all incompatible nodes. Thus, rather than inserting all the nodes in say $path(v, v')$ into a set, we just insert $v$ indexed by $maxWeight(path(v, v'))$ (as obtained from the RMQ structure) into a priority queue. Notice that this plays well with Lemma~\ref{lem:incompatibilityrecursive}, which formulates incompatible nodes solely in terms of paths (apart from the recursive portion).
 
@@ -439,7 +495,7 @@
 
             \State Let $l_1 :=$ leaf in $T_B$ labelled by $p_1$
 
-            \State $counter(l_1) := 1$ and $counter(parent^{T_B}(l_1)) := 1$
+            \State $counter(l_1) := 0$ and $counter(parent^{T_B}(l_1)) := 1$
 
             \State $roots := \{l_1\}$
 
@@ -489,7 +545,7 @@
         The algorithm \texttt{Filter\_Clusters}$(T_A, T_B)$ runs in $O(n\,log\,n)$ time.
 
         \begin{proof}
-            We preprocess $T_B$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time. $T_B$ is also preprocessed for RMQ queries using Lemma 8 of \cite{jansson2018algorithms}. This takes $O(n\,log\,n)$ preprocessing time and thereafter allows us to answer $maxWeight$ queries in $O(1)$ time. The bottom-up traversal of $T_B$ to compute $|leafset(T_B[v])|$ for all $v \in V(T_B)$ takes $O(n)$ time. Finally, copying $T_A$ takes $O(n)$ time.
+            We preprocess $T_B$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time. $T_B$ is also preprocessed for RMQ queries using Theorem~\ref{theorem:rmqstructure}. This takes $O(n\,log\,n)$ preprocessing time and thereafter allows us to answer $maxWeight$ queries in $O(1)$ time. The bottom-up traversal of $T_B$ to compute $|children(v)|$ for all $v \in V(T_B)$ takes $O(n)$ time. Finally, copying $T_A$ takes $O(n)$ time.
 
             As before, we use linked lists to implement sets of nodes, coupled with membership properties.
 
