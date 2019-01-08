@@ -65,23 +65,25 @@
     \section{Introduction}
     \label{sec:introduction}
 
-    A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. A \textit{rooted phylogenetic tree} is one that presents the evolutionary relationships between various taxa in a heirarchical manner. Here, the root represents their common ancestor, and children of nodes split each group into smaller ones. Multiple phylogenetic trees may be produced from say different data sets or from a single data set using techniques like maximum parsimony that yield a number of candidate trees \cite{bryant1997hunting}. This motivates the concept of a \textit{consensus tree}, which reconciles multiple phylogenetic trees by summarising the branching information contained in each into a single tree.
+    A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. These come together to give a \textit{rooted phylogenetic tree}, which presents the evolutionary relationships between various taxa in a heirarchical manner. Here, the root represents their common ancestor, and children of nodes split each group into smaller ones. Groups of all taxa that are descendants of any common ancestor are called \textit{clades}, i.e. a clade is the leafset of any node in a phylogenetic tree.
 
-    A variety of techniques of constructing a consensus tree from a set of phylogenetic trees have been developed over the last half century, starting with the Adams consensus tree \cite{adams1972consensus} in 1972. Many of these are summarised in \S 6.2 of \cite{bryant1997hunting} and a comparative analysis can be found in \cite{bryant2003classification}. We illustrate with some examples. The \textit{strict consensus tree} 
+    We often obtain multiple phylogenetic trees from biological datasets. For example these may be produced from different data sets or from a single data set using techniques like maximum parsimony that yield a number of candidate trees \cite{bryant1997hunting}. This motivates the concept of a \textit{consensus tree}, which reconciles many phylogenetic trees by summarising the branching information contained in each into a single tree. Consensus trees can also be used to determine which clades have strong suppport within the input trees \cite{felsenstein2004inferring}.
 
-    This report studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} and arrives at a fast algorithm for constructing this.
+    A variety of techniques of constructing a consensus tree from a set of phylogenetic trees have been developed over the last half century, starting with the Adams consensus tree \cite{adams1972consensus} in 1972. There is strong motivation for the development of different types of consensus trees since they each have their own benefits and drawbacks. Some of these techniques are summarised in \S 6.2 of \cite{bryant1997hunting} and a comparative analysis can be found in \cite{bryant2003classification}. We illustrate with some examples. The \textit{strict consensus tree} \cite{sokal1981taxonomic} only keeps those clades that occur in each of the input trees. While easily constructed and interpreted, it can discard a lot of potentially important information if there is a lot of disagreement between the various trees. The \textit{majority rule consensus tree} \cite{margush1981consensusn} is a generalisation of the previous, allowing all clades that occur in a majority of the trees. \cite{holder2008justification} shows that these trees are optimal given a certain context.
+
+    This article studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} \cite{goloboff2003improvements} and improves on the best known deterministic algorithm for constructing these.
 
     \subsection{Definitions and Notation}
-    We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label. Henceforth, we will simply refer to these as trees. For any tree $T$, let $V(T)$ be the vertex set of $T$ and $\leafset(T)$ be the leaf set of $T$. Non-empty subsets of $\leafset(T)$ are called \textit{clusters}. Clusters with cardinality $1$ or $|\leafset(T)|$ are \textit{trivial clusters}. For any $u \in V(T)$, $T[u]$ is the subtree of $T$ rooted at $u$. Then $\leafset(T[u])$ is the cluster \textit{associated} with $u$. The \textit{cluster collection} of $T$, $\mathcal{C}(T)$ is the set $\bigcup_{u \in V(T)} {\leafset(T[u])}$, i.e. a set containing all the clusters in $T$. Any cluster $C \subseteq \leafset(T)$ \textit{occurs} in $T$ iff $C \in \mathcal{C(T)}$. Also define, for any tree $T$, for any cluster $C \subseteq \leafset(T)$, $lca^T(C)$ to be the least common ancestor of $C$ in $T$.
+    We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label. Henceforth, we will simply refer to these as trees. For any tree $T$, let $V(T)$ be the vertex set of $T$ and $\leafset(T)$ be the leaf set of $T$. Non-empty subsets of $\leafset(T)$ are called \textit{clusters} (we use the term clusters instead of clades for consistency with recent literature). Clusters with cardinality $1$ or $|\leafset(T)|$ are \textit{trivial clusters}. For any $u \in V(T)$, $T[u]$ is the subtree of $T$ rooted at $u$. Then $\leafset(T[u])$ is the cluster \textit{associated} with $u$. The \textit{cluster collection} of $T$, $\mathcal{C}(T)$ is the set $\bigcup_{u \in V(T)} {\leafset(T[u])}$, i.e. a set containing all the clusters in $T$. Any cluster $C \subseteq \leafset(T)$ \textit{occurs} in $T$ iff $C \in \mathcal{C(T)}$. Also define, for any tree $T$, for any cluster $C \subseteq \leafset(T)$, $lca^T(C)$ to be the least common ancestor of $C$ in $T$.
 
     Any two clusters $C_1, C_2 \in \mathcal{C}(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible}, denoted as $C_1 \not\compatible C_2$. Similarly given trees $T_1$ and $T_2$ with the same leaf sets, and nodes $u \in V(T_1)$, $v \in V(T_2)$, we say $u$ is compatible with $v$ if the clusters associated with $u$ and $v$ are compatible. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ iff for every $u \in V(T)$, $C \compatible \leafset(T[u])$. Further, two trees $T_1$ and $T_2$ satisfying $\leafset(T_1) = \leafset(T_2)$ are \textit{compatible} iff for every $u \in V(T_1)$, $\leafset(T_1[u]) \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$.
 
-    A \textit{frequency difference consensus tree} can then be defined as thus. Let $\mathcal{S}$ be a set of $k$ trees with identical leafs labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let $K_C = \{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}$ be the set of trees in $\mathcal{S}$ which $C$ occurs in. Let $T_{FD}$ be the frequency difference consensus tree of $\mathcal{S}$, with $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } |K_C| > max(\{|K_{C_1}| : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$. An example is given in Figure~\ref{fig:freqdiff}. In this example we see that $w(\{a, b\}) = 2 \leq w(\{b, c\}) = 2$ and $\{a, b\} \not\compatible \{b, c\}$, hence $\{a, b\}$ is not in the final consensus tree. However $\{a, b, c\}$ and $\{d, e\}$ have weights larger than any cluster incompatible with them, hence they both exist in the consensus tree. Note that weights are not shown for the trivial clusters.
+    A \textit{frequency difference consensus tree} (abbreviated henceforth as FDCT) can then be defined as thus. Let $\mathcal{S}$ be a set of $k$ trees with identical leafs labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let $K_C = \{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}$ be the set of trees in $\mathcal{S}$ which $C$ occurs in. Let $T_{FD}$ be the FDCT of $\mathcal{S}$, with $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } |K_C| > max(\{|K_{C_1}| : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$. An example is given in Figure~\ref{fig:freqdiff}. In this example we see that $w(\{a, b\}) = 2 \leq w(\{b, c\}) = 2$ and $\{a, b\} \not\compatible \{b, c\}$, hence $\{a, b\}$ is not in the final consensus tree. However $\{a, b, c\}$ and $\{d, e\}$ have weights larger than any cluster incompatible with them, hence they both exist in the consensus tree. Note that weights are not shown for the trivial clusters.
 
     \begin{figure}[h]
         \includegraphics[scale=0.5]{freqdiff}
         \centering
-        \caption{Example of a frequency difference consensus tree}
+        \caption{Example of an FDCT}
         \label{fig:freqdiff}
     \end{figure}
 
@@ -90,7 +92,11 @@
     Henceforth, $\mathcal{S}$ is taken to be the input set of trees with identical leaf labels. This set of leaf labels is denoted by $L$. Let $|\mathcal{S}| = k$ and $|L| = n$.
 
     \subsection{Previous Work}
-    Jansson et al. \cite{jansson2018algorithms} gave a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the frequency difference tree. Gawrychowski et al. \cite{gawrychowski2017faster} improved this to a deterministic $O(kn\,log^2n)$ algorithm.
+    The FDCT is motivated by a desire to design an effective criterion for determining which clusters are strongly supported within a set of trees. As set out in \cite{goloboff2003improvements}, a shortcoming of the majority rule consensus tree is that it would include a cluster that is supported by 60\% of a set of trees and contradicted by 40\% of them (Recall that this consensus tree contains those clusters occuring in more than half the trees). Conversely, a cluster supported by 40\% of the trees but not contradicted by any of them would not appear in the consensus. A possible resolution to this is to define strongly supported clusters as those with greater frequency that the most frequent cluster incompatible with them. These are called frequency difference clusters and all of them are included in the FDCT.
+
+    \cite{dong2010majority} provides a comparison of the FDCT and a few other types of consensus trees. \cite{steel2014axiomatic} investigates a generalisation of the FDCT to \textit{supertrees}, i.e. consensus trees built from input trees that do not necessarily have the same leaf sets. They show that, unlike some other popular techniques, the FDCT definition easily generalises to a viable supertree definition and conclude that the FDCT is ``worthy of more widespread usage and serious study''.
+
+    An implementation of the FDCTs can be found in the free software package TNT \cite{goloboff2008tnt}; however the algorithm used within is unavailable and so its complexity is not known. \cite{jansson2018algorithms} gives a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the FDCT, implemented in the open source FACT package \cite{jansson2016improved}. \cite{gawrychowski2017faster} improves upon this to give a deterministic $O(kn\,log^2n)$ algorithm (not yet implemented).
 
     \subsection{Organisation of the Article and New Results}
     Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later. Section~\ref{sec:freqdiffconstruction} presents a new deterministic algorithm for constructing the frequency difference tree that runs in $O(kn\,log\,n)$ time. Section~\ref{sec:futurework} lays out plans for future work.
@@ -118,7 +124,7 @@
     \subsection{\texttt{Frequency\_Difference} algorithm}
     The algorithm \texttt{Frequency\_Difference} is laid out in \cite{jansson2018algorithms}. Before describing this, we first define the weight of a node $u$ to be the number of trees in $\mathcal{S}$ that the cluster associated with $u$ occurs in. Formally, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, let $C = \leafset(T[u])$, then $weight(u) = w(u) = |K_C|$ and $w(C) = w(u)$. Further, define a procedure \texttt{Filter\_Clusters} which takes in trees $T_A$ and $T_B$, with $\leafset(T_A) = \leafset(T_B) = L$ and $w(u)$ computed for any $u \in V(T_A) \cup V(T_B)$. It returns a tree $T$ which contains all clusters $C$ in $T_A$ for which $w(C) > $ weight of all clusters in $T_B$ that it is incompatible with. Formally, \texttt{Filter\_Clusters}$(T_A, T_B) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(T_A) \text{ and } w(C) > max(\{w(C_1) : C_1 \in \mathcal{C}(T_B) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$.
 
-    Then the algorithm \texttt{Frequency\_Difference} runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $w(u)$. We call this the \textit{labelling} step. In the second part, it utilises \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} (from \cite{jansson2016improved}) to compute the frequency difference consensus tree. Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
+    Then the algorithm \texttt{Frequency\_Difference} runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $w(u)$. We call this the \textit{labelling} step. In the second part, it utilises \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} (from \cite{jansson2016improved}) to compute the FDCT. Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
     \newline
 
     \begin{freqdiffruntimecomponents}
@@ -127,7 +133,7 @@
         The total runtime of \texttt{Frequency\_Difference} is given by $O(g(n, k) + k \cdot f(n))$ where $g(n, k)$ is the time taken by the labelling step and $f(n)$ is the runtime of \texttt{Filter\_Clusters}.
     \end{freqdiffruntimecomponents}
 
-    Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the labelling step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the labelling step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.
+    \cite{jansson2018algorithms} gives a $min(\{O(kn^2), O(k^2n)\})$ solution to the labelling step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. \cite{gawrychowski2017faster} improves the runtime of the labelling step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.
 
     \section{RMQ (range minimum/maximum query) structure on trees}
     \label{sec:rmqstructure}
@@ -170,7 +176,7 @@
         \end{proof}
     \end{rmqstructure}
 
-    \section{Constructing the Frequency Difference Consensus Tree}
+    \section{Constructing the FDCT}
     \label{sec:freqdiffconstruction}
 
     We present an $O(kn\,log\,n)$ solution for the labelling step in section 3.1 and an $O(n\,log\,n)$ solution for \texttt{Filter\_Clusters} in section 3.2. Taken together with Corollary 2, this allows us to solve \texttt{Frequency\_Difference} in $O(kn\,log\,n)$ time.
@@ -572,16 +578,6 @@
             By Corollary~\ref{cor:freqdiffruntimecomponents} and Lemmas~\ref{lem:labelclustersruntime} and~\ref{lem:filterclustersruntime}, \texttt{Frequency\_Difference} runs in $O(kn\,log\,n + k \cdot n\,log\,n) = O(kn\,log\,n)$ time.
         \end{proof}
     \end{freqdiffruntime}
-
-    \section{Future Work}
-    \label{sec:futurework}
-
-    I plan on looking into the following items over the coming semester:
-    \begin{itemize}
-        \item The writeup above is perhaps too verbose; it might be possible to make it more concise. It might also be possible to improve the presentation of the algorithm.
-        \item The algorithm presented above needs to be implemented and experimental results obtained.
-        \item There are further types of consensus trees that I can investigate. I will likely pick up greedy consensus trees next and attempt to improve on the best known time presented in \cite{gawrychowski2017faster}.
-    \end{itemize}
 
     \newpage
     \bibliographystyle{plain}
