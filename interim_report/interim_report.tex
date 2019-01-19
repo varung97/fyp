@@ -49,11 +49,7 @@
 
 % TODO:
 % Improvements:
-% -1. Figure out what's up with the RMQ structure
-% -1.1 Fix path notation
-% 2. Need a better introduction - what's the motivation behind this problem?
-% -3. counter(v) = |rootsOfSubtrees(C) \cap children(v)|
-% 4. What I have contributed?
+% 1. What I have contributed?
 
 \begin{document}
     \maketitle
@@ -87,7 +83,7 @@
         \label{fig:freqdiff}
     \end{figure}
 
-    Finally, for any tree $T$, define $path^{T}(v, w)$ for any nodes $v, w \in V(T)$ be the set of all nodes that are ancestors of $v$ and proper descendants of $w$. That is, $path^{T}(v, w)$ contains all nodes on the path from $v$ to $w$, excluding $w$. Notice that $path^{T}(v, w) \neq \emptyset$ exactly when $w$ is a proper ancestor of $v$.
+    Finally, for any tree $T$, for any nodes $v, w \in V(T)$ define $pathInc^{T}(v, w)$ to be the set of nodes that are ancestors of $v$ and descendants of $w$ and $path^{T}(v, w)$ to be the set of nodes that are ancestors of $v$ and \textit{proper} descendants of $w$. That is, $pathInc^{T}(v, w)$ contains all nodes on the path from $v$ to $w$, while $path^{T}(v, w)$ is the same set, but excludes $w$. Notice that $pathInc^{T}(v, w) \neq \emptyset$ exactly when $w$ is an ancestor of $v$ and $path^{T}(v, w) \neq \emptyset$ exactly when $w$ is a proper ancestor of $v$.
 
     Henceforth, $\mathcal{S}$ is taken to be the input set of trees with identical leaf labels. This set of leaf labels is denoted by $L$. Let $|\mathcal{S}| = k$ and $|L| = n$.
 
@@ -138,33 +134,35 @@
     \section{RMQ (range minimum/maximum query) structure on trees}
     \label{sec:rmqstructure}
 
-    This section presents a way to build an RMQ structure on a tree $T$. We assume that for every node $u \in V(T)$, some property $weight(u)$ is defined. Then we build a structure capable of answering the query, for any $v, w \in V(T)$, $max_{u \in path^{T}(v, w)}(weight(u))$ in constant time. Recall that $path^{T}(v, w)$ is the set of nodes on the path from $v$ to $w$, excluding $w$.
+    This section presents a way to build an RMQ structure on a tree $T$. We assume that for every node $u \in V(T)$, some property $weight(u)$ is defined. We then build a structure capable of answering the query, for any $v, w \in V(T)$, $maxWeight(v, w) = max_{u \in path^{T}(v, w)}(weight(u))$ in constant time. Recall that $path^{T}(v, w)$ is the set of nodes on the path from $v$ to $w$, excluding $w$.
 
-    Lemma 8 of \cite{jansson2018algorithms} presents a way to build this RMQ structure where queries include the node $w$. These queries are represented by $rmq(v, w)$. We first elaborate on their solution to show how to implement a key step in their procedure. Then we give a way to find the child of $w$ which is also an ancestor of $v$, refererred to as $childForDescendant(w, v)$ in constant time. Then $max_{u \in path^{T}(v, w)}(weight(u)) = rmq(v, childForDescendant(w, v))$.
+    Lemma 8 of \cite{jansson2018algorithms} presents a way to build an RMQ structure that can answer queries of the form $maxWeightInc(v, w) = max_{u \in pathInc^{T}(v, w)}(weight(u))$, i.e. where the node $w$ is included. We first elaborate on their solution to show how to implement a key step in their procedure. Then we give a way to find the child of $w$ which is also an ancestor of $v$, refererred to as $childForDescendant(w, v)$ in constant time. Then $maxWeight(v, w) = maxWeightInc(v, childForDescendant(w, v))$.
 
-    \subsection{Answering $rmq(v, w)$}
-    \label{subsec:answeringrmq}
+    \subsection{Answering $maxWeightInc(v, w)$}
+    \label{subsec:answeringmaxweightinc}
 
     Lemma 8 of \cite{jansson2018algorithms} first decomposes $T$ into a centroid path and a set of side trees, each of which is recursively partitioned, giving a set of centroid paths. Let this set be $P$. The linear RMQ structure of \cite{bender2000lca} is used to store each of these. Then for each $x \in \leafset(T)$, they denote the centroid \textit{subpaths} on the path from $x$ to the root of $T$ by $Q_1, Q_2, ..., Q_f$ and build the array $W_x[1 ... f]$ where $W_x[i] = max_{u \in Q_i}(weight(u))$. Each $W_x$ is stored in a linear RMQ structure.
 
-    Now to find $rmq(v, w)$, consider the path from $v$ to $w$. This can again be seen as a concatenation of subpaths of centroid paths, say $Q_1, Q_2, ..., Q_g$. Let $x \in \leafset(v)$. Then $Q_2, ..., Q_{g - 1}$ are contained fully on the path from $x$ to $root(T)$. $Q_1$ must be a subpath that starts at some node ($v$) in a centroid path $\in P$ and ends at the root of that centroid path. $Q_g$ is a subpath that starts at some node in some centroid path $\in P$ and ends at another node within the same path ($w$). We address each of these three divisions separately.
+    Now to find $maxWeightInc(v, w)$, consider the path from $v$ to $w$. This can again be seen as a concatenation of subpaths of centroid paths, say $Q_1, Q_2, ..., Q_g$. Let $x \in \leafset(T[v])$. Then $Q_2, ..., Q_{g - 1}$ are contained fully on the path from $x$ to $root(T)$. $Q_1$ must be a subpath that starts at some node ($v$) in a centroid path $\in P$ and ends at the root of that centroid path. $Q_g$ is a subpath that starts at some node in some centroid path $\in P$ and ends at another node within the same path ($w$). We address each of these three divisions separately.
 
-    To find the maximum weight within $Q_1$, we augment each node with its depth within its centroid path. This is easy to do during the decomposition. Then we can retreive the maximum weight by querying the linear RMQ structure for this centroid path, from the root to $v$.
+    To find the maximum weight within $Q_1$, we can find the depth of $v$ within $Q_1$ by subtracting the depth of the root of $Q_1$ from the depth of $v$. Then the maximum weight can be retrieved by querying the linear RMQ structure for this centroid path, from the root to $v$.
 
-    To find the maximum weight for the subpaths $Q_2, ..., Q_{g - 1}$, we augment each centroid path with its ``depth''. This is defined as the number of roots of centroid paths that are above the root of the given centroid path in the tree. Intuitively, if we build a tree from only the roots of the centroid paths while maintaining the same relative structure, then the depth of a centroid path would simply be the depth of its root in this new tree. Again, these depths are easy to obtain during the decomposition. Then the indices of $Q_2$ and $Q_{g-1}$ in $W_x$ can be found using the depths of $Q_1$ and $Q_{g - 1}$ respectively.
+    To find the maximum weight for the subpaths $Q_2, ..., Q_{g - 1}$, we augment each centroid path with its ``depth''. This is defined as the number of roots of centroid paths that are above the root of the given centroid path in the tree. Intuitively, if we build a tree from only the roots of the centroid paths while maintaining the same relative structure, then the depth of a centroid path would simply be the depth of its root in this new tree. Again, these depths are easy to obtain during the decomposition. Then the indices of $Q_2$ and $Q_{g-1}$ in $W_x$ can be found using the depths of $Q_1$ and $Q_g$ respectively.
 
-    Finally, we need to find the maximum weight within $Q_g$. Observe that the key here is finding which node is at the end of $Q_g$. This is equivalent to finding which node in the centroid path of which $Q_g$ is a subpath has $x$ in one of its side trees. We first number the leaves of $T$ such that for any $P_i \in P$, for any nodes $r, s \in P_i$ where $depth(r) < depth(s)$, all leaves in the side trees associated with $r$ have a higher index than any leaf in the side trees associated with $s$. This can be done by traversing centroid paths from bottom to top, recursively indexing the side trees, and then starting the indexing for the next set of side trees where the previous set left off. Now for each $P_i \in P$, we do the following. For each node in $P_i$, we find the minimum index of all the leaves in its side trees and store these in the succinct data structure of \cite{jacobson1988succinct}. This data structure supports rank queries in constant time. Thus, we can find the desired ending node of $Q_g$ in constant time, by querying for the rank of $x$ in the succinct data structure for the centroid path containing $Q_g$. The linear RMQ structure for this centroid path can then give us the maximum weight within $Q_g$.
+    Finally, we need to find the maximum weight within $Q_g$. Observe that the key here is finding which node is at the end of $Q_g$. Let $P_i$ be the centroid path of which $Q_g$ is a subpath. Then the previous question is equivalent to finding which node in $P_i$ has $v$ in one of its side trees. Let $y$ be the leaf at the bottom of $P_i$. Then the desired node is simply $lca(y, v)$. This can be obtained by preprocessing $T$ for \textit{lca} queries using the technique of \cite{bender2000lca}, allowing queries in constant time.
 
-    A succinct data structure takes $O(n)$ preprocessing time, where $n$ is the range of the numbers being stored in the structure. Thus, for a centroid path rooted at $p_{\alpha}$, the amount of time taken to construct the succinct structure is proportional to $|\leafset(p_{\alpha})|$ since leaves in the side trees are consecutively numbered. By the standard argument of heavy-path decomposition, each leaf belongs to $O(log\,n)$ centroid paths and so total time to construct all the succinct structures is $O(n\,log\,n)$. Further, the other operations outlined above also take $O(n\,log\,n)$ preprocessing time (including the work done in Lemma 8 of \cite{jansson2018algorithms}), and together allow answering $rmq(v, w)$ in constant time.
+    The preprocessing steps outlined above, together with those in Lemma 8 of \cite{jansson2018algorithms} cost $O(n\,log\,n)$ time. Each of the steps in the query cost constant time.
 
-    \subsection{Answering $childForDescendant(v, w)$}
+    \subsection{Answering $childForDescendant(w, v)$}
     \label{subsec:answeringcfd}
 
-    As in Subsection~\ref{subsec:answeringrmq}, we decompose $T$ into a set of centroid paths. A $childForDescendant(v, w)$ can now be divided into first checking if the heavist child of $w$ is an ancestor of $v$, and if not, then finding out which of the other children of $w$ is an ancestor of $v$.
+    A $childForDescendant(w, v)$ query can be divided into first checking if the heaviest child of $w$ is an ancestor of $v$, and if not, then finding out which of the other children of $w$ is an ancestor of $v$.
 
-    To solve the first problem, we assign each leaf an index in left to right order and augment each node with the index of its leftmost and rightmost leaves. Then to check if a node $r$ is an ancestor of a node $s$, we simply need to verify that the leftmost leaf of $s$ is not to the left of the leftmost leaf of $r$, and similarly with their rightmost leaves. This takes constant time.
+    For the first part, a node $r$ is an ancestor of a node $s$ if and only if $lca(r, s) = r$, which can be answered as in Subsection~\ref{subsec:answeringmaxweightinc}.
 
-    To solve the second problem, we index the leaves as in Subsection~\ref{subsec:answeringrmq}. Now for each node we create a succinct data structure storing the smallest leaf index for each of its children (excluding the heavist child). Then finding out which of the children is an ancestor of $v$ can be done by querying for the rank of any leaf $x \in \leafset(T[v])$ in the succint structure of $w$ (in constant time). Again, by a heavy-path decomposition argument, it can be seen that any leaf contributes to $O(log\,n)$ succint structures, and so total time to construct these is $O(n\,log\,n)$.
+    For the second, first rearrange the tree so that the heaviest child of each node is its leftmost child and then number the leaves left to right. These steps can be done in two $O(n)$ passes through $T$. Take any node $u \in V(T)$. Let $x$ be the leftmost leaf in its side trees and $y$ be the rightmost leaf in its side trees. Then build the array $childForLeaf_u[1 ... index(y) + 1]$, where for any leaf $z$ in the side trees of $u$ $childForLeaf_u[index(z) - index(x) + 1] = $ child of $u$ that $z$ is a descendant of. Now query for which (non-heaviest) child of $w$ is an ancestor of $v$ by retrieving the corresponding value from $childForLeaf_w$ for any leaf $x \in \leafset(T[v])$. By the standard argument of heavy-path decomposition, it can be seen that any leaf is in the side trees of $O(log\,n)$ nodes, and so total time to construct these is $O(n\,log\,n)$.
+
+    Thus $childForDescendant(w, v)$ can be answered with $O(n\,log\,n)$ preprocessing time and $O(1)$ query time.
     \newline
 
     \begin{rmqstructure}
@@ -475,7 +473,7 @@
 
     \texttt{Filter\_Clusters\_Helper} decomposes $T_A$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\pi)$, $|\leafset(\tau)| \leq n/2$ and that $\{\leafset(\tau) : \tau \in \sigma(\pi)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any $i \geq 2$, $\leafset(T_A[p_{i - 1}]) \subset \leafset(T_A[p_i])$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind \texttt{Filter\_Clusters\_Helper} - recursively compute \texttt{Filter\_Clusters\_Helper} for side trees, then for the nested clusters rooted at nodes in the centroid path, use Algorithm~\ref{alg:computerootsofsubtrees} to find the maximal compatible subtrees and Lemma~\ref{lem:incompatibilityrecursive} to find incompatible nodes.
 
-    A crucial part of this algorithm is the usage of an RMQ structure on $T_B$ that allows us to query for the maximum weight of any node on the path between two given nodes. This is because we do not actually need the set of incompatible nodes, we just need to find the largest weight over all incompatible nodes. Thus, rather than inserting all the nodes in say $path(v, v')$ into a set, we just insert $v$ indexed by $maxWeight(path(v, v'))$ (as obtained from the RMQ structure) into a priority queue. Notice that this plays well with Lemma~\ref{lem:incompatibilityrecursive}, which formulates incompatible nodes solely in terms of paths (apart from the recursive portion).
+    A crucial part of this algorithm is the usage of an RMQ structure on $T_B$ that allows us to query for the maximum weight of any node on the path between two given nodes. This is because we do not actually need the set of incompatible nodes, we just need to find the largest weight over all incompatible nodes. Thus, rather than inserting all the nodes in say $path(v, v')$ into a set, we just insert $v$ indexed by $maxWeight(v, v')$ (as obtained from the RMQ structure) into a priority queue. Notice that this plays well with Lemma~\ref{lem:incompatibilityrecursive}, which formulates incompatible nodes solely in terms of paths (apart from the recursive portion).
 
     The algorithm initialises $roots$ with $p_1$ and sets up $T_B$ to satisfy $pci(\{p_1\})$. It then uses Algorithm~\ref{alg:computerootsofsubtrees} and Lemma~\ref{lem:incompatibilityrecursive} to find the nodes incompatible with any $p_i \in \pi$. Thus it uses $incompatible(p_{i-1})$ and $rootsOfSubtrees(c)$ for each $c \in children(p_i) - \{p_{i-1}\}$ to compute $incompatible(p_i)$. To facilitate this process, \texttt{Filter\_Clusters\_Helper} returns $rootsOfSubtrees(\leafset(T_A))$ for the caller to use. Once $incompatible(p_i)$ is computed, we compare the largest weight in this set with the weight of $p_i$, and mark $p_i$ for deletion if its weight is not larger.
 
@@ -520,17 +518,17 @@
 
                 \State \algorithmicforall\ $r \in removed$, remove $r$ from $incompatible$
 
-                \State \algorithmicforall\ $r \in new$, add $r, maxWeight(path(parent^{T_B}(r), l_i))$ to $incompatible$
+                \State \algorithmicforall\ $r \in new$, add $r, maxWeight(parent^{T_B}(r), l_i)$ to $incompatible$
 
                 \If{$old \neq \emptyset$}
                     \State For any $r_1 \in old$, remove $r_1$ from $incompatible$
 
-                    \State For the same $r_1 \in old$, add $r_1, maxWeight(path(parent^{T_B}(r_1), l_i))$ to $incompatible$
+                    \State For the same $r_1 \in old$, add $r_1, maxWeight(parent^{T_B}(r_1), l_i)$ to $incompatible$
                 \EndIf
 
-                \IIEf{$candidates$ is empty}
+                \IIEf{$incompatible$ is empty}
                     {$M := 0$}
-                    $M :=$ maximum weight of a node in $candidates$
+                    $M :=$ maximum weight of a node in $incompatible$
 
                 \IIf{$w(\leafset(T_A[p_i])) \leq M$}
                     mark $p_i$ for deletion
