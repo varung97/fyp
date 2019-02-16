@@ -3,6 +3,8 @@
 !*/
 !*.tex
 !*.bib
+!*.png
+interim_report/presentation
 filter_clusters_improvements/paper.bib
 filter_clusters_improvements/paper.tex
 filter_clusters_improvements/samplepaper.tex
