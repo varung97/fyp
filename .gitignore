@@ -4,6 +4,7 @@
 !*.tex
 !*.bib
 !*.png
+!interim_report/images/graphs.pptx
 interim_report/presentation
 filter_clusters_improvements/paper.bib
 filter_clusters_improvements/paper.tex
