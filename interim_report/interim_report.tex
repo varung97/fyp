@@ -136,9 +136,9 @@
 
     \subsection{Centroid Path Decomposition}
 
-    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the child with the largest leaf set, with ties broken arbitrarily (this child is known as the heaviest child of its parent). The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $p_i \in \pi(T)$, let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree. Note that both the leftmost and rightmost children of the root have a 5 leaves in their subtrees; the leftmost child is arbitrarily chosen to be in the centroid path.
+    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the child with the largest leaf set, with ties broken arbitrarily (this child is known as the heaviest child of its parent). The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $p_i \in \pi(T)$, let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree.
 
-    We further define a \textit{complete centroid path decomposition} for any tree $T$. Here, the normal centroid path decomposition is applied on $T$, and then each side tree is recursively decomposed. This results in a set of disjoint paths in $T$, denoted by $\mathcal{P}(T)$. Figure~\ref{fig:centroid}(b) applies complete centroid path decomposition on the same tree as before. The bold paths, along with the isolated leaves, are each one centroid path, while the dashed edges are removed. As can be seen, the large side tree that remained intact in Figure~\ref{fig:centroid}(a) has now been recursively decomposed.
+    We further define a \textit{complete centroid path decomposition} for any tree $T$. Here, the normal centroid path decomposition is applied on $T$, and then each side tree is recursively decomposed. This results in a set of disjoint paths in $T$, denoted by $\mathcal{P}(T)$. Figure~\ref{fig:centroid}(b) applies complete centroid path decomposition on the same tree as before. The bold paths, along with the isolated leaves, are centroid paths. As can be seen, the large side tree that remained intact in Figure~\ref{fig:centroid}(a) has now been recursively decomposed.
 
     \begin{figure}[h]
         \includegraphics[scale=0.5]{centroid}
@@ -194,7 +194,7 @@
 
     The algorithm \texttt{Frequency\_Difference} \cite{jansson2018algorithms} computes the FDCT of a set of trees $\mathcal{S}$. It runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $\weight(u)$ in the \textit{weighting} step. In the second part, it utilises \texttt{Filter\_Clusters} (defined below) and \texttt{Merge\_Trees} (from Subsection~\ref{subsec:mergetrees}) to compute the FDCT.
 
-    As in \cite{jansson2018algorithms}, the subprocedure \texttt{Filter\_Clusters}, is defined to take as input trees $\TA$ and $\TB$, with $\leafset^{\TA} = \leafset^{\TB} = L$ and the values of $\weight(u)$ for all $u \in V(\TA) \cup V(\TB)$. It returns a tree $T$ which contains all clusters $C$ in $\TA$ for which $\weight(C) > $ weight of all clusters in $\TB$ that it is incompatible with. Formally, \texttt{Filter\_Clusters}$(\TA, \TB) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset^T = L$. For example, referring to Figure~\ref{fig:freqdiff}, \texttt{Filter\_Clusters}$(T_2, T_1) = T_{FD}$. Notice that there are three non-trivial clusters in $T_2$: $\{a, b, c\}, \{b, c\}$ and $\{d, e\}$. All of these have weight $2$. Now the only cluster in $T_1$ incompatible with $\{a, b, c\}$ is $\{c, d, e\}$, but this only has weight $1$ and so $\{a, b, c\}$ is kept. The cluster $\{d, e\}$ is compatible with $T_1$ so it is also kept. However, $\{b, c\}$ is incompatible with $\{a, b\}$ and they both have weight $2$, hence $\{b, c\} \not\in \mathcal{C}($\texttt{Filter\_Clusters}$(T_2, T_1))$.
+    As in \cite{jansson2018algorithms}, the subprocedure \texttt{Filter\_Clusters}, is defined to take as input trees $\TA$ and $\TB$, with $\leafset^{\TA} = \leafset^{\TB} = L$ and the values of $\weight(u)$ for all $u \in V(\TA) \cup V(\TB)$. It returns a tree $T$ which contains all clusters $C$ in $\TA$ for which $\weight(C) > $ weights of all clusters in $\TB$ that are incompatible with $C$. Formally, \texttt{Filter\_Clusters}$(\TA, \TB) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset^T = L$. For example, referring to Figure~\ref{fig:freqdiff}, \texttt{Filter\_Clusters}$(T_2, T_1) = T_{FD}$. Notice that there are three non-trivial clusters in $T_2$: $\{a, b, c\}, \{b, c\}$ and $\{d, e\}$. All of these have weight $2$. Now the only cluster in $T_1$ incompatible with $\{a, b, c\}$ is $\{c, d, e\}$, but this only has weight $1$ and so $\{a, b, c\}$ is kept. The cluster $\{d, e\}$ is compatible with $T_1$ so it is also kept. However, $\{b, c\}$ is incompatible with $\{a, b\}$ and they both have weight $2$, hence $\{b, c\} \not\in \mathcal{C}($\texttt{Filter\_Clusters}$(T_2, T_1))$.
 
     Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
     \newline
@@ -221,7 +221,7 @@
         Given a tree $T$ where $n = |V(T)|$, the $cFL$ data structure defined above can be constructed in $O(n\,log\,n)$ time.
 
         \begin{proof}
-            Rearranging $T$ and indexing the leaves can be done in two $O(n)$ passes. By the standard argument of heavy-path decomposition, we argue that any leaf is in the side trees of $O(log\,n)$ nodes, hence the total size of the $cFL$ arrays is $O(n\,log\,n)$. It is easy to see that these arrays can thus be constructed in $O(n\,log\,n)$ time.
+            Rearranging $T$ and indexing the leaves can be done in two $O(n)$ passes. By the standard argument of centroid-path decomposition, we argue that any leaf is in the side trees of $O(log\,n)$ nodes, hence the total size of the $cFL$ arrays is $O(n\,log\,n)$. It is easy to see that these arrays can thus be constructed in $O(n\,log\,n)$ time.
         \end{proof}
     \end{cfddatastructure}
 
@@ -263,7 +263,7 @@
         Given a tree $T$ and $\weight(u)$ for each $u \in V(T)$, the $rmqTree$ data structure can be built in $O(n\,log\,n)$ time.
 
         \begin{proof}
-            The decomposition step, along with computation of depths for nodes and for centroid paths can be done in $O(n)$ time. Storing the centroid paths in linear RMQ structures takes $O(n)$ time, by Lemma~\ref{lem:linearrmq} and since the total size of the centroid paths is $O(n)$. By the standard argument of heavy-path decomposition, it can be seen that for each leaf $x$, the number of centroid subpaths on the path from the leaf to the root of $T$ is $O(log\,n)$. Hence it takes $O(log\,n)$ time to build the linear RMQ structure for these subpaths. Since there are $n$ leaves, the total time taken to construct the linear RMQ structures for all leaves is $O(n\,log\,n)$.
+            The decomposition step, along with computation of depths for nodes and for centroid paths can be done in $O(n)$ time. Storing the centroid paths in linear RMQ structures takes $O(n)$ time, by Lemma~\ref{lem:linearrmq} and since the total size of the centroid paths is $O(n)$. By the standard argument of centroid-path decomposition, it can be seen that for each leaf $x$, the number of centroid subpaths on the path from the leaf to the root of $T$ is $O(log\,n)$. Hence it takes $O(log\,n)$ time to build the linear RMQ structure for these subpaths. Since there are $n$ leaves, the total time taken to construct the linear RMQ structures for all leaves is $O(n\,log\,n)$.
         \end{proof}
     \end{rmqdatastructure}
 
@@ -295,9 +295,13 @@
 
     Recall that the approach in \cite{gawrychowski2017faster} costs $O(kn\,log^2n)$ time. We develop a way to achieve $O(kn\,log\,n)$ time.
 
-    First, for any tree $T$ and any cluster $C \subseteq \leafset(T)$, define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leaves in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Figure~\ref{fig:labelclusters} demonstrates this process; the tree $T_1|L'$ is $T_1$ restricted to the cluster $\{a, b, c, d\}$. Notice that nodes which are not lcas of these leaves are removed, but the structure of the tree in relation to these leaves remains the same. Further, for every cluster $C \subseteq L$, and every node $u$ in $T$, define $assoc^C(u)$ to be the shallowest descendant of $u$ that is also in $T|C$. If no such node exists, i.e. if $\leafset(u) \cap C = \emptyset$, then for convenience let $assoc^{C}(u) = \Phi$, where $\Phi$ is a special node with $id(\Phi) = 0$ and $\leafset(\Phi) = \emptyset$. We refer to Figure~\ref{fig:labelclusters} to show examples of this concept. Let $u$ and $v$ be the nodes in $T_1$ labelled $5, 1$ and $5, 0$ respectively. Then $assoc^{\{a, b, c, d\}}(u) = v$, since this is its shallowest descendant in $T_1|\{a, b, c, d\}$. $assoc^{\{e, f, g, h\}}(v) = \Phi$, since no descendant of $v$ is in $T_1|\{e, f, g, h\}$.
+    The idea here will be to divide $L$ into two equal sized halves, $L'$ and $L''$. Then, we wish to build the sets $\{\leafset^T(u) \cap L' : T \in \mathcal{S}, u \in V(T)\}$ and $\{\leafset^T(u) \cap L'' : T \in \mathcal{S}, u \in V(T)\}$. If each of these sets could be labelled such that each cluster within them has a unique label, then for any tree $T \in \mathcal{S}$, for any node $u \in V(T)$, $\leafset^T(u)$ is uniquely identified by the pair $(id(\leafset^T(u) \cap L'), id(\leafset^T(u) \cap L''))$. To be able to achieve this, we introduce the definitions below.
 
-    The algorithm \texttt{Label\_Clusters} is laid out below.
+    First, for any tree $T$ and any cluster $C \subseteq \leafset(T)$, define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leaves in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Figure~\ref{fig:labelclusters} demonstrates this process; the tree $T_1|L'$ is $T_1$ restricted to the cluster $\{a, b, c, d\}$. Notice that nodes which are not $lca$'s of these leaves are removed, but the structure of the tree in relation to these leaves remains the same.
+
+    Further, for every cluster $C \subseteq L$, and every node $u$ in $T$, define the node $assoc^C(u) = lca^T(C \cap \leafset^T(u))$. Notice that if $C \cap \leafset^T(u) \neq \emptyset$, $assoc^C(u) \in V(T|C)$ since it is the $lca$ of some non-empty subset of $C$. However, if $C \cap \leafset^T(u) = \emptyset$, then for convenience let $assoc^{C}(u) = \Phi$, where $\Phi$ is a special node with $id(\Phi) = 0$ and $\leafset(\Phi) = \emptyset$. We refer to Figure~\ref{fig:labelclusters} to show examples of this concept. Let $u$ and $v$ be the nodes in $T_1$ labelled $(5, 1)$ and $(5, 0)$ respectively. Then $assoc^{\{a, b, c, d\}}(u) = v$, since $v = lca^{T_1}(\{a, b, c, d\} \cap \leafset^{T_1}(u)) = lca^{T_1}(\{a, b\})$. $assoc^{\{e, f, g, h\}}(v) = \Phi$, since $\leafset^{T_1}(v) \cap \{e, f, g, h\} = \emptyset$.
+
+    Using these observations, we can expand on the previous description of the algorithm. We divide $L$ into $L'$ and $L''$, then we construct and recursively label the sets $\{T|L' : T \in \mathcal{S}\}$ and $\{T|L'' : T \in \mathcal{S}\}$. Then for any tree $T \in \mathcal{S}$, for any node $u \in V(T)$, $\leafset^T(u)$ can be represented by the pair $(id(assoc^{L'}(u)), id(assoc^{L''}(u)))$. Once we obtain these pairs, we sort them and assign a rank to each unique pair; $id(u)$ is then the rank of the pair $(id(assoc^{L'}(u)), id(assoc^{L''}(u)))$. The resulting algorithm \texttt{Label\_Clusters} is laid out below.
 
     \begin{algorithm}
         \caption{Label\_Clusters}
@@ -312,9 +316,9 @@
 
             \State For all $i \in [1 ... k]$, let $T'_i = T_i|L'$ and $T''_i = T_i|L''$.
 
-            \State \texttt{Label\_Clusters}$(T'_1, T'_2, ..., T'_k)$.
+            \State \texttt{Label\_Clusters}$(\{T'_1, T'_2, ..., T'_k\})$.
 
-            \State \texttt{Label\_Clusters}$(T''_1, T''_2, ..., T''_k)$.
+            \State \texttt{Label\_Clusters}$(\{T''_1, T''_2, ..., T''_k\})$.
 
             \State For every tree $T \in \mathcal{S}$, for every node $u \in T$, represent $u$ by the pair $(id(assoc^{L'}(u)), id(assoc^{L''}(u)))$.
 
@@ -333,27 +337,18 @@
         \label{fig:labelclusters}
     \end{figure}
 
+    {\color{red} I removed the shallowest descendant part completely, under the assumption that the process by which $assoc^C(u)$ is obtained is not hard to come up with. Is this reasonable, or should I prove something like $assoc^C(u) = $ shallowest descendant of $u$ in $T|C$?}
+
+    The following Lemma proves the correctness of the given algorithm:
+
     \bigskip
-    \begin{assocnode}
-        \label{lem:assocnode}
-
-        For any tree $T$, for any node $u \in V(T)$ and any cluster $C \subseteq \leafset(T)$, $\leafset^{T|C}(assoc^C(u)) = \leafset^{T}(u)\, \cap\, C$.
-
-        \begin{proof}
-            First note that for any node $v \in V(T|C)$, $\leafset^{T|C}(v) = \leafset^{T}(v)\, \cap\, C$ due to the way $T|C$ is constructed. Also, $\leafset^{T}(assoc^C(u)) \subseteq \leafset^{T}(u)$ since $assoc^C(u)$ is a descendant of $u$. Thus $\leafset^{T}(assoc^C(u))\, \cap\, C \subseteq \leafset^{T}(u)\, \cap\, C$ and so $\leafset^{T|C}(assoc^C(u)) \subseteq \leafset^{T}(u)\, \cap\, C$.
-
-            This implies that if $\leafset^{T|C}(assoc^C(u)) \neq \leafset^{T}(u)\, \cap\, C$ then there is some leaf $x$ such that $x \in \leafset^{T}(u)\, \cap\, C$ and $x \not\in \leafset^{T|C}(assoc^C(u))$. Now, since $\leafset^{T|C}(assoc^C(u)) \subseteq \leafset^{T}(u)$ and $x \in \leafset^{T}(u)$, $\leafset^{T|C}(assoc^C(u)) \cup \{x\} \subseteq \leafset^{T}(u)$. Let $v = lca^T(\leafset^{T|C}(assoc^C(u)) \cup \{x\})$. Then $v$ is a descendant of $u$. Also, $v$ is a proper ancestor of $assoc^C(u)$. Finally, $v \in V(T|C)$. But then some ancestor of $v$ would be $assoc^C(u)$, and not the node that was initially obtained.
-        \end{proof}
-    \end{assocnode}
-
-    \medskip
     \begin{labelclusterscorrectness}
         \label{lem:labelclusterscorrectness}
 
         After running \texttt{Label\_Clusters}$(\mathcal{S})$, for any trees $T_i, T_j \in \mathcal{S}$, for any nodes $u \in V(T_i), v \in V(T_j)$, $id(u) = id(v)$ iff $\leafset^{T_i}(u) = \leafset^{T_j}(v)$.
 
         \begin{proof}
-            $id(u) = id(v)$ iff $id(assoc^{L'}(u)) = id(assoc^{L'}(v))$ and $id(assoc^{L''}(u)) = id(assoc^{L''}(v))$. Inductively, $id(assoc^{L'}(u)) = id(assoc^{L'}(v))$ iff $\leafset^{T_i|L'}(assoc^{L'}(u)) = \leafset^{T_j|L'}(assoc^{L'}(v))$. By Lemma~\ref{lem:assocnode}, $\leafset^{T_i}(u)\, \cap\, L' = \leafset^{T_j}(v)\, \cap\, L'$. Symmetrically, $id(assoc^{L''}(u)) = id(assoc^{L''}(v))$ iff $\leafset^{T_i}(u)\, \cap\, L'' = \leafset^{T_j}(v)\, \cap\, L''$. Since $L'$ and $L''$ partition $L$, both parts are true iff $\leafset^{T_i}(u) = \leafset^{T_j}(v)$.
+            $id(u) = id(v)$ iff $id(assoc^{L'}(u)) = id(assoc^{L'}(v))$ and $id(assoc^{L''}(u)) = id(assoc^{L''}(v))$. Inductively, $id(assoc^{L'}(u)) = id(assoc^{L'}(v))$ iff $\leafset^{T_i|L'}(assoc^{L'}(u)) = \leafset^{T_j|L'}(assoc^{L'}(v))$. By definition of the $assoc$ relation, $\leafset^{T_i}(u)\, \cap\, L' = \leafset^{T_j}(v)\, \cap\, L'$. Symmetrically, $id(assoc^{L''}(u)) = id(assoc^{L''}(v))$ iff $\leafset^{T_i}(u)\, \cap\, L'' = \leafset^{T_j}(v)\, \cap\, L''$. Since $L'$ and $L''$ partition $L$, both parts are true iff $\leafset^{T_i}(u) = \leafset^{T_j}(v)$.
         \end{proof}
     \end{labelclusterscorrectness}
 
