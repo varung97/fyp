@@ -55,11 +55,10 @@
 \newtheorem{labelclustersidbounds}[incompatibility]{Lemma}
 \newtheorem{labelclustersruntime}[incompatibility]{Lemma}
 \newtheorem{weightingruntime}[incompatibility]{Lemma}
-\newtheorem{reconsideringcompatiblesubsets}[incompatibility]{Lemma}
+\newtheorem{computerootsofsubtreesruntime}[incompatibility]{Lemma}
+\newtheorem{maintainingcounter}[incompatibility]{Lemma}
 \newtheorem{incompatibilityrootsofsubtrees}[incompatibility]{Lemma}
 \newtheorem{incompatibilityrecursive}[incompatibility]{Lemma}
-\newtheorem{computerootsofsubtreescorrectness}[incompatibility]{Lemma}
-\newtheorem{computerootsofsubtreesruntime}[incompatibility]{Lemma}
 \newtheorem{filterclustersruntime}[incompatibility]{Lemma}
 \newtheorem{freqdiffruntime}[incompatibility]{Theorem}
 
@@ -73,7 +72,7 @@
     \section{Introduction}
     \label{sec:introduction}
 
-    A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. These come together to give a \textit{rooted phylogenetic tree}, which presents the evolutionary relationships between various taxa in a hierarchical manner. Here, each leaf represents a taxon, each internal node represents the common ancestor of a subgroup of taxa and children of each node split the group into smaller ones. A subgroup of taxa that are descendants of some common ancestor is called a \textit{clade}, i.e. a clade is the leaf set of any node in a phylogenetic tree.
+    A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. These come together to give a \textit{rooted phylogenetic tree}, which presents the evolutionary relationships between various taxa in a hierarchical manner. Each leaf in this tree represents a taxon. An internal node then represents the common ancestor of a subgroup of the taxa shown in the entire tree. Children of each node split the group rooted at that node into smaller ones. A subgroup of taxa that are descendants of some common ancestor is called a \textit{clade}, i.e. a clade is the leaf set of any node in a phylogenetic tree.
 
     We often obtain multiple phylogenetic trees from biological datasets. These trees may be produced from different datasets or from a single dataset using techniques like maximum parsimony that yield a number of candidate trees \cite{bryant1997hunting}. This motivates the concept of a \textit{consensus tree}, which reconciles many phylogenetic trees by summarising the branching information contained in each into a single tree. Consensus trees are also useful in determining which clades have strong suppport within the input trees \cite{felsenstein2004inferring}.
 
@@ -392,102 +391,122 @@
 
     The key here is finding, for any node $u \in V(\TA)$, the set of nodes in $\TB$ that are incompatible with $u$, so that we can find the maximum weight of these. Then it is easy to figure out whether $u$ should be in $T$ or not.
 
-    In Subsection~\ref{subsec:rootsofsubtrees} we describe an insight into the structure of trees that later leads to an improvement in the time taken to find this set of incompatible nodes. Subsection~\ref{subsec:incompatibilityrecursive} uses this idea to give a stricter definition of incompatibility, and finally Subsection~\ref{subsec:filterclustersalgorithm} uses this definition to present our solution for \texttt{Filter\_Clusters}.
+    % In Subsection~\ref{subsec:rootsofsubtrees} we describe an insight into the structure of trees that later leads to an improvement in the time taken to find this set of incompatible nodes. Subsection~\ref{subsec:incompatibilityrecursive} uses this idea to give a stricter definition of incompatibility, and finally Subsection~\ref{subsec:filterclustersalgorithm} uses this definition to present our solution for \texttt{Filter\_Clusters}.
 
-    \subsection{Roots of Maximal Compatible Subtrees}
-    \label{subsec:rootsofsubtrees}
+    \subsection{Minimum Cover}
+    \label{subsec:minimumcover}
 
-    This section presents an insight into the structure of the trees under consideration, later shown to prove key to decreasing the runtime of the algorithm. We first prove an important lemma:
-    \newline
+    This section presents an insight into the structure of the trees under consideration, later shown to be the key to decreasing the runtime of the algorithm.
 
-    \begin{reconsideringcompatiblesubsets}
-        \label{lem:reconsideringcompatiblesubsets}
+    Given a tree $T$ and a cluster $C \subseteq L$, define a set $S \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in S} \leafset^{T}(u) = C$. Then we define the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, to be the smallest set $S$ such that $S$ is a cover of $C$. Note that this set is well defined for each cluster.
 
-        Given trees $\TA$ and $\TB$ and nodes $u \in V(\TA)$, $v \in V(\TB)$ such that $\leafset^{\TB}(v) \subseteq \leafset^{\TA}(u)$, for any $u' \in V(\TA) - V(\TA[u])$, and any $v' \in V(\TB[v])$, $\leafset^{\TA}(u') \compatible \leafset^{\TB}(v')$.
+    As will be shown in Subsection~\ref{subsec:incompatibilityrecursive}, the minimum cover of a cluster $C$ is crucial in finding the set of nodes incompatible with $C$. Thus we would like to build a means of obtaining the minimum cover of a cluster $C$. Observe that for any leaf $x \in \leafset^T$, $minCover^T(\{x\}) = \{x\}$. We now build a recursive definition for $minCover$.
 
-        \begin{proof}
-            Note that $\leafset^{\TB}(v') \subseteq \leafset^{\TB}(v)$ since $v'$ is in the subtree rooted at $v$. There are two cases for $u'$. \textit{Case 1}: $u'$ is an ancestor of $u$. Then $\leafset^{\TA}(u) \subseteq \leafset^{\TA}(u')$. Thus $\leafset^{\TB}(v') \subseteq \leafset^{\TA}(u')$, and so $\leafset^{\TB}(v') \compatible \leafset^{\TA}(u')$. \textit{Case 2}: $u'$ is not an ancestor of $u$. Since $u'$ is also not a descendant of $u$, $\leafset^{\TA}(u') \cap \leafset^{\TA}(u) = \emptyset$. Thus $\leafset^{\TA}(u') \cap \leafset^{\TB}(v') = \emptyset$ and so $\leafset^{\TB}(v') \compatible \leafset^{\TA}(u')$.
-        \end{proof}
-    \end{reconsideringcompatiblesubsets}
+    \begin{mincoverrecursive}
+        \label{lem:mincoverrecursive}
 
-    The above lemma says that if $\leafset^{\TB}(v) \subseteq \leafset^{\TA}(u)$ for some nodes $u \in V(\TA)$ and $v \in V(\TB)$, then $v$ is the root of a subtree of $\TB$ that is compatible with every node in $V(\TA) - V(\TA[u])$. As will be seen later, we will be processing $\TA$ recursively, thus when we are done with $u$, we will also have finished processing $\TA[u]$. Further, recall that, for any node $w \in V(\TA)$, we are looking to find the set of nodes in $\TB$ that are incompatible with $w$. Since we know that all the nodes in $\TB[v]$ are compatible with all the nodes in $V(\TA) - V(\TA[u])$, once we process $\TA[u]$, nodes in $\TB[v]$ do not need to be considered for inclusion in the set of incompatible nodes again.
+        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $S = minCover^{T}(C)$. Then $minCover^{T}(C \cup \leafset^{T}(u)) = \begin{cases}
+            a \\ b \\ c
+        \end{cases}$
+    \end{mincoverrecursive}
 
-    This idea is formalized as follows. Given a tree $T$, cluster $C \subseteq L$, for any node $r \in V(T)$, $r$ is defined as the root of a \textit{maximal subtree compatible with $C$} if (1) $\leafset^T(r) \subseteq C$ and (2) $\leafset^T(r') \not\subseteq(C)$ for all proper ancestors $r'$ of $r$. The set $RST^{T}(C)$ is composed of all nodes $r \in V(T)$ that are roots of maximal subtrees compatible with $C$. Extending this, given any node $u$, we denote $RST^{T}(\leafset(u))$ as $RST^{T}(u)$. For example, in the tree in Figure~\ref{fig:rootsofsubtrees}, the circled nodes are roots of maximal subtrees compatible with $C = \{a, b, c, f, g, h\}$, i.e. $RST^{T}(C)$.
+    Given a tree $T$, cluster $C \subseteq L$, for any node $r \in V(T)$, define $r$ to be the root of a \textit{maximal subtree compatible with $C$} if (1) $\leafset^T(r) \subseteq C$ and (2) $\leafset^T(r') \not\subseteq(C)$ for all proper ancestors $r'$ of $r$. The set $RST^{T}(C)$ is composed of all nodes $r \in V(T)$ that are roots of maximal subtrees compatible with $C$. Extending this, given any node $u$, we denote $RST^{T}(\leafset(u))$ as $RST^{T}(u)$. For example, in the tree in Figure~\ref{fig:rootsofsubtrees}, the circled nodes are roots of maximal subtrees compatible with $C = \{a, b, c, f, g, h\}$, i.e. $RST^{T}(C)$.
 
-    As will be shown in Subsection~\ref{subsec:incompatibilityrecursive}, the roots of subtrees are crucial in finding the set of incompatible nodes. Thus, for every node $u \in V(\TA)$, we would like to compute $RST^{\TB}(u)$. Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\TA}(u) : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any $i \geq 2$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Compute\_Roots\_Of\_Subtrees} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root. Here, for any non-leaf node $p_i \in \pi(\TA)$, we use the roots of subtrees computed from $p_{i-1}$ and $\sigma(p_i)$, to find those for $p_i$.
+    As will be shown in Subsection~\ref{subsec:incompatibilityrecursive}, the roots of subtrees are crucial in finding the set of incompatible nodes. Thus, for every node $u \in V(\TA)$, we would like to compute $RST^{\TB}(u)$. However, we will solve a related problem: for any internal node $p_i \in \pi(\TA)$, we will use $RST^{\TB}(p_{i-1})$ and the set $boundary^{\TB}(p_i) = \bigcup_{c \in children(p_i)\, \backslash\, p_{i-1}} RST^{\TB}(c)$ to compute $RST^{\TB}(p_i)$. Note that $boundary^{\TB}(p_i)$ is the set of all roots of subtrees for the side trees associated with $p_i$.
 
     \begin{figure}[h]
         \includegraphics[scale=0.4]{rootsofsubtreesrecursive}
         \centering
-        \caption{Demonstration of \texttt{Compute\_Roots\_Of\_Subtrees}. Here, $\leafset^{\TA}(p_{i-1}) = \{b, c, d, e, f, l, m, n\}$ and $\leafset^{\TA}(p_i) = \{a, b, c, d, e, f, g, j, k, l, m, n\}$. In (a), nodes belonging to $RST^{\TB}(p_{i-1})$ are marked with circles. The leafsets of the side trees associated with $p_i$ are $\{a, j\}$ and $\{g, k\}$. Thus (b) shows all nodes in $lowerBoundary^{\TB}(p_i)$ marked with squares, while nodes in $RST^{\TB}(p_{i-1})$ remain marked with circles. Finally, we see nodes in $RST^{\TB}(p_i)$ marked with circles in (c). The labels next to the nodes in (a) and (c) give the counter values at those nodes after $RST^{\TB}(p_{i-1})$ and $RST^{\TB}(p_i)$ respectively have been computed.}
+        \caption{Demonstration of \texttt{Compute\_Roots\_Of\_Subtrees}. Here, $\leafset^{\TA}(p_{i-1}) = \{b, c, d, e, f, l, m, n\}$ and $\leafset^{\TA}(p_i) = \{a, b, c, d, e, f, g, j, k, l, m, n\}$. In (a), nodes belonging to $RST^{\TB}(p_{i-1})$ are marked with circles. The leafsets of the side trees associated with $p_i$ are $\{a, j\}$ and $\{g, k\}$. Thus (b) shows all nodes in $boundary^{\TB}(p_i)$ marked with squares, while nodes in $RST^{\TB}(p_{i-1})$ remain marked with circles. Finally, we see nodes in $RST^{\TB}(p_i)$ marked with circles in (c). The labels next to the nodes in (a) and (c) give the counter values at those nodes before and after \texttt{Compute\_Roots\_Of\_Subtrees} is used for $p_i$ respectively.}
         \label{fig:rootsofsubtreesrecursive}
     \end{figure}
 
-    For any non-leaf node $p_i \in \pi(\TA)$, let $lowerBoundary^{\TB}(p_i) = \bigcup_{c \in children(p_i)\, \backslash\, p_{i-1}} RST^{\TB}(c)$. Thus,\\ % Overflows otherwise
-    $lowerBoundary^{\TB}(p_i)$ is the set of all roots of subtrees for the side trees associated with $p_i$. We illustrate with the example in Figure~\ref{fig:rootsofsubtreesrecursive}. For some non-leaf node $p_i \in \pi(\TA)$, we let $\leafset^{\TA}(p_{i-1}) = \{b, c, d, e, f, l, m, n\}$ and $\leafset^{\TA}(p_i) = \{a, b, c, d, e, f, g, j, k, l, m, n\}$. Figure~\ref{fig:rootsofsubtreesrecursive}(a) shows $\TB$ with all nodes in $RST^{\TB}(p_{i-1})$ marked with circles. Let the leafsets of the side trees associated with $p_i$ be $\{a, j\}$ and $\{g, k\}$. Figure~\ref{fig:rootsofsubtreesrecursive}(b) shows $\TB$ with all nodes in $lowerBoundary^{\TB}(p_i)$ marked with squares (the nodes from (a) remain marked with circles).
+    We illustrate with the example in Figure~\ref{fig:rootsofsubtreesrecursive}. For some non-leaf node $p_i \in \pi(\TA)$, we let $\leafset^{\TA}(p_{i-1}) = \{b, c, d, e, f, l, m, n\}$ and $\leafset^{\TA}(p_i) = \{a, b, c, d, e, f, g, j, k, l, m, n\}$. Figure~\ref{fig:rootsofsubtreesrecursive}(a) shows $\TB$ with all nodes in $RST^{\TB}(p_{i-1})$ marked with circles. Let the leafsets of the side trees associated with $p_i$ be $\{a, j\}$ and $\{g, k\}$. Figure~\ref{fig:rootsofsubtreesrecursive}(b) shows $\TB$ with all nodes in $boundary^{\TB}(p_i)$ marked with squares (the nodes from (a) remain marked with circles).
 
-    Now Figure~\ref{fig:rootsofsubtreesrecursive}(c) shows $\TB$ with nodes in $RST^{\TB}(p_i)$ marked with circles. Thus the problem to be solved is going from the marked nodes in (b) to the marked nodes in (c). Observe that the only nodes that are new candidates for $RST^{\TB}(p_i)$ (as compared to $RST^{\TB}(p_{i-1})$) are ancestors of nodes in $lowerBoundary^{\TB}(p_i)$. Further, if for some $v \in V(\TB)$, we find that $\leafset^{\TB}(v) \subseteq \leafset^{\TA}(p_i)$, then it must be true that none of the nodes in $children(v)$ are in $RST^{\TB}(p_i)$ (since they are not \textit{maximal} compatible subtrees).
+    Now Figure~\ref{fig:rootsofsubtreesrecursive}(c) shows $\TB$ with nodes in $RST^{\TB}(p_i)$ marked with circles. Thus the problem to be solved is going from the marked nodes in (b) to the marked nodes in (c). Observe that the only nodes that are new candidates for $RST^{\TB}(p_i)$ (as compared to $RST^{\TB}(p_{i-1})$) are ancestors of nodes in $boundary^{\TB}(p_i)$. Thus the idea here will be to initialise a set of candidate nodes with $RST^{\TB}(p_{i-1})$ and then iterate upwards from the nodes in $boundary^{\TB}(p_i)$, discovering nodes on the way that have leafsets which are subsets of $\leafset^{\TA}(p_i)$. In particular, if it turns out that for some node $v \in V(\TB)$, all the children of $v$ are in our set of candidates, then it must be true that for each node $c \in children(v)$, $\leafset^{\TB}(c) \subseteq \leafset^{\TA}(p_i)$, which implies that $\leafset^{\TB}(v) \subseteq \leafset^{\TA}(p_i)$. Thus at this point, we can add $v$ to our set of candidates and remove all children of $v$ from this set.
 
-    The idea here will be to iterate upwards from the nodes in $lowerBoundary^{\TB}(p_i)$, discovering nodes on the way that have leafsets which are subsets of $\leafset^{\TA}(p_i)$. To do so, we maintain a property $counter(v)$ for each node $v \in V(\TB)$. $counter(v)$ stores the number of children of $v$ whose leafsets are subsets of $\leafset^{\TA}(p_i)$. When $counter(v) = |children(v)|$, we know that $\leafset^{\TB}(v) \subseteq \leafset^{\TA}(p_i)$. At this point, we add $v$ to our set of candidates and remove all nodes in $children(v)$ from this set. Finally, we can also increment $counter(parent(v))$ to reflect this knowledge.
+    Notice that to implement this process, we need a quick way of checking whether all the children of $v$ are in the set of candidates. We leave this detail as a black box for now, with the claim that it can be done in constant time. The actual method of doing so is provided in Lemma~\ref{lem:maintainingcounter}.
 
-    Figure~\ref{fig:rootsofsubtreesrecursive} shows this process. The labels on nodes in (a) give the counter values after $RST^{\TB}(p_{i-1})$ has been computed. Note that only the important counter values are shown; the rest are either $0$ or inside the already discovered subtrees. Now since the leaf labelled with $a$ is part of $lowerBoundary^{\TB}(p_i)$, we iterate upwards from this. For any node $r \in lowerBoundary^{\TB}(p_i)$, it is true that $\leafset^{\TB}(r) \subseteq \leafset^{\TA}(p_i)$, thus we can increment $counter(parent(a))$. This counter now becomes $2$, thus we add this node to our set of candidates and remove the leaves $a$ and $b$ from the candidates. We can then go further upward twice more, ending up with the situation in (c), where the node with leafset $\{a, b, c, d\}$ is part of $RST^{\TB}(p_i)$ and the counter of the parent of this node is $1$. A similar procedure would discover each of the other roots.
+    Finally, it will be seen later that rather than simply computing $RST^{\TB}(p_i)$, it is desirable to compute three sets (in the following definitions, $u \in V(\TA)$ and $c \in children(u)$):
 
-    We thus present the algorithm \texttt{Compute\_Roots\_Of\_Subtrees} (Algorithm~\ref{alg:computerootsofsubtrees}) which takes in trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB}$, finds $RST^{\TB}(p_i)$ for each $p_i \in \pi(\TA)$ and returns $RST^{\TB}(\leafset^{\TA})$.
+    \begin{align*}
+        newRST^{\TB}(u, c) &= RST^{\TB}(u) - RST^{\TB}(c)\\[0.5em]
+        removedRST^{\TB}(u, c) &= RST^{\TB}(c) - RST^{\TB}(u)\\[0.5em]
+        oldRST^{\TB}(u, c) &= RST^{\TB}(u) \cap RST^{\TB}(c)
+    \end{align*}
+
+    In particular, we wish to find $newRST^{\TB}(p_i, p_{i-1})$, $removedRST^{\TB}(p_i, p_{i-1})$ and $oldRST^{\TB}(p_i, p_{i-1})$. We thus present the procedure \texttt{Compute\_Roots\_Of\_Subtrees} (Algorithm~\ref{alg:computerootsofsubtrees}) which, for some trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB}$ and some node $p_i \in \pi(\TA)$, takes as input $RST^{\TB}(p_{i-1})$, $boundary^{\TB}(p_i)$ and $\TB$. It returns the sets $newRST^{\TB}(p_i, p_{i-1})$, $removedRST^{\TB}(p_i, p_{i-1})$ and $oldRST^{\TB}(p_i, p_{i-1})$.
 
     \begin{algorithm}
         \caption{Compute\_Roots\_Of\_Subtrees}
         \label{alg:computerootsofsubtrees}
 
         \begin{algorithmic}[1]
-            \Input For some trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB} = L$.
+            \Input For some trees $\TA$ and $\TB$, where $\leafset^{\TA} \subseteq \leafset^{\TB}$, and some internal node $p_i \in \pi(\TA)$, $RST^{\TB}(p_{i-1})$, $boundary^{\TB}(p_i)$ and $\TB$.
 
-            \Output $RST^{\TB}(\leafset^{\TA})$.
+            \Output $newRST^{\TB}(p_i, p_{i-1})$, $removedRST^{\TB}(p_i, p_{i-1})$ and $oldRST^{\TB}(p_i, p_{i-1})$.
 
-            \State Compute a centroid path $\pi = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$ of $\TA$, where $p_{\gamma}$ is the root of $\TA$ and $p_1$ is a leaf.
+            \State $old := RST^{\TB}(p_{i-1})$
 
-            \State \algorithmicforall\ side trees $\tau \in \sigma(\TA)$, associate \texttt{Compute\_Roots\_Of\_Subtrees}$(\tau, \TB)$ with $\tau$
+            \State $new, removed := \{\}$
 
-            \State Let $l_1 :=$ leaf in $\TB$ labelled by $p_1$
+            \ForAll{$v \in boundary$}
+                \State $new := new \cup \{v\}$
 
-            \State $counter(parent(l_1)) := 1$
+                \State $v := parent(v)$
 
-            \State $roots := \{l_1\}$
+                \While{all children of $v$ are candidates}
+                    \State $new := (new \cup \{v\}) - children(v)$
 
-            \For{$i := 2$ \textbf{to} $\gamma$}
-                \State $lowerBoundary := \{\}$
+                    \State $removed := removed \cup (children(v) \cap old)$
 
-                \ForAll{side trees $\tau$ associated with $p_i$}
-                    \State $lowerBoundary := lowerBoundary\ \cup$ list of roots associated with $\tau$
-                \EndFor
-
-                \State $l_i := lca^{\TB}(l_{i-1} \cup lowerBoundary)$
-
-                \ForAll{$v \in lowerBoundary$}
-                    \State $counter(parent(v)) := counter(parent(v)) + 1$
-
-                    \State $roots := roots \cup \{v\}$
+                    \State $old := old - children(v)$
 
                     \State $v := parent(v)$
-
-                    \While{$counter(v) = |children(v)|$}
-                        \State $counter(parent(v)) := counter(parent(v)) + 1$
-
-                        \State $roots := (roots \cup \{v\}) - children(v)$
-
-                        \State $v := parent(v)$
-                    \EndWhile
-                \EndFor
+                \EndWhile
             \EndFor
 
-            \State \algorithmicforall\ $r \in roots$, $counter(parent(r)) := 0$
-
-            \State \Return $roots$
+            \State \Return $new, removed, old$
         \end{algorithmic}
     \end{algorithm}
 
-    Note that we need to erase the counter values set in a call to \texttt{Compute\_Roots\_Of\_Subtrees}, otherwise they will interfere with the processing of other calls. However, observe that we do not need to erase counters of any node in a compatible subtree, since those nodes will never be encountered again. Further, due to the way the algorithm is structured, the only other counters that are set are those of the parents of these subtrees, and erasing these is done at the end of a given call to the function.
+    \bigskip
+    \begin{computerootsofsubtreesruntime}
+        \label{lem:computerootsofsubtreesruntime}
 
-    Another important observation here is that any node $v \in V(\TB)$ is only removed from the set $roots$ once over all calls to $\texttt{Compute\_Roots\_Of\_Subtrees}$. This is due to the fact that a node is only deleted from $roots$ when its parent becomes a root. Then at no time can this node be encountered again when iterating upwards from roots, and so it will never be inserted into a $roots$ set again.
+        For any trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB}$, for any internal node $p_i \in \pi(\TA)$, the algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(RST^{\TB}(p_{i-1}), boundary^{\TB}(p_i), \TB)$ runs in\\ % Overflows otherwise
+        $O(|boundary^{\TB}(p_i)| + |removedRST^{\TB}(p_i, p_{i-1})|)$ time.
+
+        \begin{proof}
+            We implement each of the set of nodes using a linked list, while augmenting the nodes with a property that lets us know whether it belongs to the set or not. This allows us to perform operations like union, intersection and set difference in time proportional to the size of either of the sets.
+
+            The outer loop is entered $O(|boundary^{\TB}(p_i)|)$ times.
+
+            No node is added to $removed$ twice. This is because when a node $v$ is added to $removed$, $\leafset^{\TB}(parent(v)) \subseteq \leafset^{\TA}(p_i)$. Then $v$ can never be encountered again when iterating upwards any node in $boundary^{\TB}(p_i)$. Thus the total cost of the processing inside the inner loop is $O(|removedRST^{\TB}(p_i, p_{i-1})|)$.
+
+            Notice that we reuse the list $(RST^{\TB}(p_{i-1})$ for $old$ to ensure that extra time is not spent copying this.
+
+            Thus the total time taken is $O(|boundary^{\TB}(p_i)| + |removedRST^{\TB}(p_i, p_{i-1})|)$.
+        \end{proof}
+    \end{computerootsofsubtreesruntime}
+
+    \begin{maintainingcounter}
+        \label{lem:maintainingcounter}
+
+        For any trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB}$, for any internal node $p_i \in \pi(\TA)$, when running the algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(RST^{\TB}(p_{i-1}), boundary^{\TB}(p_i), \TB)$, it is possible to check whether all the children of $v$ are in the set of candidates for any node $v \in V(\TB)$ in constant time.
+
+        \begin{proof}
+            We maintain a property $counter(v)$ for each node $v \in V(\TB)$. This property maintains the number of children of $v$ that are in either $new$ or $old$. Thus we can check whether they are all candidates by simply comparing $counter(v)$ with $|children(v)|$.
+
+            To maintain this property correctly, when a node $v$ is added to $new$ during the procedure, $counter(parent(v))$ is incremented by one. Counters are never decremeneted because if some node $v$ is removed from the candidates, then $parent(v)$ is added to these candidates and since $parent(v)$ is never again encountered, there is no need to decrement $counter(parent(v))$.
+
+            Notice that we require counters to be correct with respect to the nodes in $RST^{\TB}(p_{i-1})$. Thus we need some counter values to be set before \texttt{Compute\_Roots\_Of\_Subtrees} is called, and we will see this done later when the procedure is used as part of a larger algorithm.
+
+            Observe that when the procedure terminates, the counter values are such that they are correct with respect to $RST^{\TB}(p_i)$, and thus these can be used for when calling the procedure on $p_{i+1}$.
+
+            Figure~\ref{fig:rootsofsubtreesrecursive} demonstrates this process. Figure~\ref{fig:rootsofsubtreesrecursive}(a) shows the counter values before the procedure is called. Thus we see that, for example, the node labelled $2$ has two circled nodes as children. Then, we we iterate upwards from say the leaf $a$, we update the counter values and our candidate set until we end up with the situation in Figure~\ref{fig:rootsofsubtreesrecursive}(c) where the parent of the subtree with leafset $\{a, b, c, d\}$ has a counter value of $1$.
+        \end{proof}
+    \end{maintainingcounter}
 
     \subsection{Recursively determining incompatible nodes}
     \label{subsec:incompatibilityrecursive}
@@ -540,15 +559,7 @@
         \item It remains to ensure that $path^{\TB}(l_{c_1}, l_u) \cup \{l_{c_1}\}$ is added to the set. Recall, this will only be necessary if there is some node $r \in RST^{\TB}(u)$ and $r \in RST^{\TB}(c_1)$. If so, then we can simply add $path(r, l_u)$ to the set.
     \end{itemize}
 
-    The three observations above motivate the definition of each of the following sets, given tree $\TB$ and nodes $u, c_1$ such that $c_1 \in children(u)$:
-
-    \begin{align*}
-        newRST^{\TB}(u, c_1) &= RST^{\TB}(u) - RST^{\TB}(c_1)\\[0.5em]
-        removedRST^{\TB}(u, c_1) &= RST^{\TB}(c_1) - RST^{\TB}(u)\\[0.5em]
-        oldRST^{\TB}(u, c_1) &= RST^{\TB}(u) \cap RST^{\TB}(c_1)
-    \end{align*}
-
-    With these in hand, we can go ahead and give a formal recursive formulation of $incompatible^{\TB}(u)$ in terms of $incompatible^{\TB}(c_1)$.
+    The three observations above motivated the definition of each of sets $newRST^{\TB}(u, c_1)$, $removedRST^{\TB}(u, c_1)$ and $oldRST^{\TB}(u, c_1)$ in Subsection~\ref{subsec:rootsofsubtrees}. With these in hand, we can go ahead and give a formal recursive formulation of $incompatible^{\TB}(u)$ in terms of $incompatible^{\TB}(c_1)$.
     \newline
 
     \begin{incompatibilityrecursive}
@@ -612,11 +623,17 @@
         \end{algorithmic}
     \end{algorithm}
 
-    \texttt{Filter\_Clusters\_Helper} decomposes $\TA$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). It follows the same structure as \texttt{Compute\_Roots\_Of\_Subtrees}; hence, we recursively call the algorithm on side trees, then use information from these to solve the problem for nodes on the centroid path. We will, in fact, rewrite \texttt{Compute\_Roots\_Of\_Subtrees} to support the finding of the incompatible nodes in $\TB$. Specifically, rather than having a single $roots$ set, we will construct the three sets $new$, $old$ and $removed$, corresponding to the three sets in Lemma~\ref{lem:incompatibilityrecursive}.
+     \texttt{Filter\_Clusters\_Helper} decomposes $\TA$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\TA}(u) : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters\_Helper} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root. Here, for any non-leaf node $p_i \in \pi(\TA)$, we use \texttt{Compute\_Roots\_Of\_Subtrees} and Lemma~\ref{lem:incompatibilityrecursive}, to find $incompatible^{\TB}(p_i)$.
 
     A crucial part of this algorithm is the usage of a cFL structure and an RMQ structure on $\TB$ that allow us to query for the maximum weight of any node on the path between two given nodes (described in Sections~\ref{sec:cfd} and~\ref{sec:rmqtree}). This is because we do not actually need the set of incompatible nodes, we just need to find the largest weight over all incompatible nodes. Thus, rather than inserting all the nodes in say $path^{\TB}(v, v')$ into a set, we just insert $v$ indexed by $rmqTree^{\TB}[parent(v), childD(v, v')]$ (as obtained from the RMQ structure) into a priority queue. Notice that this plays well with Lemma~\ref{lem:incompatibilityrecursive}, which formulates incompatible nodes solely in terms of $path$. Thus, for convenience define, for any tree $\TB$ and nodes $v, v' \in V(\TB)$ where $v'$ is a proper ancestor of $v$, $rmqTree^{\TB}(v, v') = max_{w \in path^{\TB}(v, v')} \weight(w) = rmqTree^{\TB}[parent(v), childD(v, v')]$.
 
-    The algorithm initialises $roots$ with $p_1$ and sets up $\TB$ to satisfy $pci^{\TB}(\{p_1\})$. It then uses $incompatible^{\TB}(p_{i-1})$ and $RST^{\TB}(c)$ for each $c \in children(p_i)\, \backslash\, p_{i-1}$ to compute $incompatible^{\TB}(p_i)$. To facilitate this process, \texttt{Filter\_Clusters\_Helper} returns $RST^{\TB}(\leafset^{\TA})$ for the caller to use. We use this in the same manner as in \texttt{Compute\_Roots\_Of\_Subtrees}, except we now create 3 sets - $old$, $new$ and $removed$. Thus roots that are newly found are added to $new$, and those which need to be deleted are taken out of $old$ and added to $removed$. Once these sets are determined, we can use Lemma~\ref{lem:incompatibilityrecursive} to find the incompatible nodes. Then we compare the largest weight in this set with the weight of $p_i$, and mark $p_i$ for deletion if its weight is not larger. This procedure is shown in Algorithm~\ref{alg:filterclustershelper}.
+    We let $l_1$ be the leaf in $\TB$ labelled by $p_1$. The algorithm then initialises $roots$ to be $\{l_1\}$ and sets $counter(parent(l_1)) = 1$. Observe that the counter values are now correct with respect to the nodes in $RST^{\TB}(p_1)$ (as described in Lemma~\ref{lem:maintainingcounter}).
+
+    It then uses Algorithm~\ref{alg:computerootsofsubtrees} and Lemma~\ref{lem:incompatibilityrecursive} to move up the centroid path, finding the nodes incompatible with $p_i \in \pi$. Thus, it first uses $RST^{\TB}(p_{i-1})$ and $boundary^{\TB}(p_i)$ to compute the sets $newRST^{\TB}(p_i, p_{i-1})$, $removedRST^{\TB}(p_i, p_{i-1})$ and $oldRST^{\TB}(p_i, p_{i-1})$. It is to facilitate this process that \texttt{Filter\_Clusters\_Helper} returns $RST^{\TB}(\leafset^{\TA})$ for the caller to use. These sets are used to compute $incompatible^{\TB}(p_i)$, after which we compare the largest weight in this set with the weight of $p_i$, and mark $p_i$ for deletion if its weight is not larger. Note that the counter values are inductively computed correctly since once we run \texttt{Compute\_Roots\_Of\_Subtrees} on $p_i$, the counter values are correct with respect to $RST^{\TB}(p_i)$, as laid out in Lemma~\ref{lem:maintainingcounter}.
+
+    Finally, observe that at the end, the algorithm erases some counter values. Specifically, it erases the counters of the parents of nodes in $RST^{\TB}(\leafset^{\TA})$. This is because we do not want calls made to \texttt{Compute\_Roots\_Of\_Subtrees} for some $\tau_1 \in \sigma(\TA)$ to affect those made for a different $\tau_2 \in \sigma(\TA)$. Note that we do not need to erase any other counter values because nodes inside a maximal compatible subtree will never be encountered again while iterating upwards from some $boundary$.
+
+    The procedure thus described is shown in Algorithm~\ref{alg:filterclustershelper}.
 
     \begin{algorithm}[H]
         \caption{Filter\_Clusters\_Helper}
@@ -643,37 +660,11 @@
             \State $incompatible :=$ empty Brodal queue
 
             \For{$i := 2$ \textbf{to} $\gamma$}
-                \State $lowerBoundary := \{\}$
+                \State $boundary := \{\text{list of roots associated with } \tau : \tau \in \sigma(p_i)\}$
 
-                \ForAll{side trees $\tau$ associated with $p_i$}
-                    \State $lowerBoundary := lowerBoundary\ \cup$ list of roots associated with $\tau$
-                \EndFor
+                \State $l_i := lca^{\TB}(l_{i-1} \cup boundary)$
 
-                \State $l_i := lca^{\TB}(l_{i-1} \cup lowerBoundary)$
-
-                \State $new, removed := \{\}$
-
-                \State $old := roots$
-
-                \ForAll{$v \in lowerBoundary$}
-                    \State $counter(parent(v)) := counter(parent(v)) + 1$
-
-                    \State $new := new \cup \{v\}$
-
-                    \State $v := parent(v)$
-
-                    \While{$counter(v) = |children(v)|$}
-                        \State $counter(parent(v)) := counter(parent(v)) + 1$
-
-                        \State $new := (new \cup \{v\}) - children(v)$
-
-                        \State $removed := removed \cup (old \cap children(v))$
-
-                        \State $old := old - children(v)$
-
-                        \State $v := parent(v)$
-                    \EndWhile
-                \EndFor
+                \State $new, removed, old :=$ \texttt{Compute\_Roots\_Of\_Subtrees}$(roots, boundary, \TB)$
 
                 \State \algorithmicforall\ $r \in removed$, remove $r$ from $incompatible$
                 \label{step:removedrootsremoval}
@@ -681,10 +672,12 @@
                 \State \algorithmicforall\ $r \in new$, add $r, rmqTree^{\TB}(r, l_i)$ to $incompatible$
 
                 \If{$old \neq \emptyset$}
-                    \State For any $r_1 \in old$, remove $r_1$ from $incompatible$
+                    \State Let $r \in old$
+
+                    \State Remove $r$ from $incompatible$
                     \label{step:oldrootremoval}
 
-                    \State For the same $r_1 \in old$, add $r_1, rmqTree^{\TB}(r_1, l_i)$ to $incompatible$
+                    \State Add $r, rmqTree^{\TB}(r, l_i)$ to $incompatible$
                 \EndIf
 
                 \IIEf{$incompatible$ is empty}
@@ -712,17 +705,17 @@
         \begin{proof}
             We preprocess $\TB$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time. $\TB$ is also preprocessed to create the cFL and RMQ data structures using Lemma~\ref{lem:rmqdatastructure} and~\ref{lem:cfddatastructure}. These take $O(n\,log\,n)$ preprocessing time and thereafter allow us to answer $rmqTree$ queries in $O(1)$ time. The bottom-up traversal of $\TB$ to compute $|children(v)|$ for all $v \in V(\TB)$ takes $O(n)$ time. Finally, copying $\TA$ takes $O(n)$ time.
 
-            We implement each of the set of nodes using a linked list, while augmenting the nodes with a property that lets us know whether it belongs to the set or not. This allows us to perform operations like union, intersection and set difference in time proportional to the size of either of the sets.
+            As before, we use linked lists to implement sets of nodes, coupled with membership properties.
 
             The data structure used for $incompatible$ is the Brodal queue of \cite{brodal1995fast}. This allows $insert$ and $findMax$ operations in $O(1)$ time and $delete$ in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $\TB$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time.
 
-            Let $m = |\leafset^{\TA}|$ for some call to \texttt{Filter\_Clusters\_Helper}$(\TA, \TB)$. Recall that $n = |\leafset^{\TB}|$. Observe that for any cluster $C$, $|RST^{\TB}(C)| \leq |C|$. Thus $|lowerBoundary^{\TB}(p_i)| \leq |\leafset^{\TA}(p_i) - \leafset^{\TA}(p_{i-1})|$. and $\sum_{i = 2}^{\gamma} |lowerBoundary^{\TB}(p_i)| \leq m$.
+            Let $m = |\leafset^{\TA}|$ for some call to \texttt{Filter\_Clusters\_Helper}$(\TA, \TB)$. Recall that $n = |\leafset^{\TB}|$. Observe that for any cluster $C$, $|RST^{\TB}(C)| \leq |C|$. Thus $|boundary^{\TB}(p_i)| \leq |\leafset^{\TA}(p_i) - \leafset^{\TA}(p_{i-1})|$ and $\sum_{i = 2}^{\gamma} |boundary^{\TB}(p_i)| \leq m$. It can also be seen that $\sum_{P_i \in \mathcal{P}(\TA), p_j \in P_i} removedRST(p_j, p_{j-1}) \leq |V(\TA)|$.
 
-            Computing the centroid path takes $O(m)$ time. Constructing the $lowerBoundary$ sets costs $O(m)$ time in total. Since $lca$ queries can be made in constant time and the total number of $lca$ queries is $O(m)$, this also costs $O(m)$ time.
+            Computing the centroid path takes $O(m)$ time. Constructing the $boundary$ sets costs $O(m)$ time in total. Since $lca$ queries can be made in constant time and the total number of $lca$ queries is $O(m)$, this also costs $O(m)$ time.
 
-            Now the total number of times the inner for-loop is entered is $\sum_{i = 2}^{\gamma} |lowerBoundary^{\TB}(p_i)| \leq m$. We observe that any node can be in $removed$ only once, since once it is removed, it is known to be part of a compatible subtree and will never be encountered again when iterating upwards from $lowerBoundary$. Thus the total time taken inside the while-loop, over all calls to \texttt{Filter\_Clusters\_Helper} is $O(n)$.
+            The runtime of \texttt{Compute\_Roots\_Of\_Subtrees} is $O(|boundary^{\TB}(p_i)| + |removedRST^{\TB}(p_i, p_{i-1})|)$. The cost due to the first half of this expression is $O(m)$. The cost due to the second half of this expression is $O(n)$ over all calls to \texttt{Filter\_Clusters\_Helper}.
 
-            $O(m)$ insertions are made into $incompatible$, costing $O(m)$ time. Since any node belongs to $removed$ only once, there are a total of $O(n)$ deletions from $incompatible$ over all calls due to Step~\ref{step:removedrootsremoval}. Step~\ref{step:oldrootremoval} also causes a total of $O(n)$ deletions over all calls as this step happens once for each node in the centroid path, and every node in $\TA$ belongs to exactly one centroid path. Thus deletions cost a total of $O(n\,log\,n)$ time.
+            $O(m)$ insertions are made into $incompatible$, costing $O(m)$ time. Since the total size of all the removed sets is $O(n)$, there are a total of $O(n)$ deletions from $incompatible$ over all calls due to Step~\ref{step:removedrootsremoval}. Step~\ref{step:oldrootremoval} also causes a total of $O(n)$ deletions over all calls as this step happens once for each node in the centroid path, and every node in $\TA$ belongs to exactly one centroid path. Thus deletions cost a total of $O(n\,log\,n)$ time.
 
             We can hence write a recurrence for \texttt{Filter\_Clusters\_Helper} (ignoring steps that are being analysed over the entire call to \texttt{Filter\_Clusters}) in the following manner: $T(m) = \sum_{\tau \in \sigma(T)}T(|\leafset^{\tau}|) + O(m)$. Since for any $\tau \in \sigma(T)$, $|\leafset^{\tau}| \leq m/2$, there are $log\,m$ recursion levels, we get $T(n) = O(n\,log\,n)$.
 
