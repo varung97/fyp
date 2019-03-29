@@ -13,6 +13,7 @@
 \usepackage{xcolor}
 \usepackage{caption}
 \usepackage{float}
+\usepackage{setspace}
 \graphicspath{{images/}}
 
 \usepackage[
@@ -55,12 +56,21 @@
 \newtheorem{labelclustersidbounds}[incompatibility]{Lemma}
 \newtheorem{labelclustersruntime}[incompatibility]{Lemma}
 \newtheorem{weightingruntime}[incompatibility]{Lemma}
-\newtheorem{computerootsofsubtreesruntime}[incompatibility]{Lemma}
-\newtheorem{maintainingcounter}[incompatibility]{Lemma}
-\newtheorem{incompatibilityrootsofsubtrees}[incompatibility]{Lemma}
+\newtheorem{mincoverrecursive}[incompatibility]{Lemma}
+\newtheorem{mincoverruntime}[incompatibility]{Lemma}
+\newtheorem{incompatibilitymincover}[incompatibility]{Lemma}
+\newtheorem{incompatibilityruntime}[incompatibility]{Lemma}
+\newtheorem{numremovednodes}[incompatibility]{Lemma}
 \newtheorem{incompatibilityrecursive}[incompatibility]{Lemma}
 \newtheorem{filterclustersruntime}[incompatibility]{Lemma}
 \newtheorem{freqdiffruntime}[incompatibility]{Theorem}
+
+% TODO:
+% 1. Caption for incompatibility recursive figure
+% 2. Restricted subtrees method!! - Maybe better to do the whole subtree? Makes analysis more readable also
+% 3. Path in update incompatible spoiled should only be added while not in incompatible
+% 4. Fix update incompatible proof
+% 5. Remove Update_Incompatible_Spoiled, just verbally explain spoiled stuff and not in incompatible stuff
 
 \begin{document}
     \maketitle
@@ -85,7 +95,9 @@
     \subsection{Definitions and Notation}
     \label{subsec:def}
 
-    We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label. Henceforth, we will simply refer to these as trees. Let $T$ be some tree. The set of nodes of $T$ is denoted by $V(T)$. For any node $u \in V(T)$, the \textit{parent} of $u$ (if it exists) is represented by $parent^T(u)$ and the set of its \textit{children} is represented by $children^T(u)$. The \textit{depth} of $u$, denoted by $depth^T(u)$ is the number of nodes that are its proper ancestors. A node that is \textit{shallower} than another has a smaller depth value. Let $\leafset^T$ be the set of leaf labels of $T$. Non-empty subsets of $\leafset^T$ are called \textit{clusters} (we use the term clusters instead of clades for consistency with recent literature). Clusters with cardinality $1$ or $|\leafset^T|$ are \textit{trivial clusters}. For any node $u \in V(T)$, $T[u]$ is the subtree of $T$ rooted at $u$ and $\leafset^T(u)$ is the leafset of $T[u]$, called the cluster \textit{associated} with $u$. For example, in Figure~\ref{fig:freqdiff}, the node labelled by $2$ in $T_1$ has the cluster $\{a, b\}$ associated with it. The \textit{cluster collection} of $T$, $\mathcal{C}(T)$ is the set $\bigcup_{u \in V(T) - \{root(T)\} - \leafset^T} {\leafset^T(u)}$, i.e. a set containing all non-trivial clusters in $T$. For example, the cluster collection of $T_2$ in Figure~\ref{fig:freqdiff} is $\{\{b, c\}, \{a, b, c\}, \{d, e\}\}$. Any cluster $C \subseteq \leafset(T)$ \textit{occurs} in $T$ iff $C \in \mathcal{C(T)}$. Also, for any nodes $u, v \in V(T)$, denote the lowest common ancestor of $u$ and $v$ in $T$ by $lca^T(u, v)$. Further, for any non-empty set of nodes $U \subseteq V(T)$, denote the lowest common ancestor of all these nodes in $T$ by $lca^T(U)$.
+    We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label. Henceforth, we will simply refer to these as trees. Let $T$ be some tree. The set of nodes of $T$ is denoted by $V(T)$. For any node $u \in V(T)$, the \textit{parent} of $u$ (if it exists) is represented by $parent^T(u)$ and the set of its \textit{children} is represented by $children^T(u)$. The \textit{depth} of $u$, denoted by $depth^T(u)$ is the number of nodes that are its proper ancestors. A node that is \textit{shallower} than another has a smaller depth value. We also define, for any nodes $u, v \in V(T)$ where $v$ is an ancestor of $u$, the sets $path^T(u, v), path^T(u, v], path^T[u, v)$ and $path^T[u, v]$. Here, the parentheses and square brackets obey the accepted notation for open and closed intervals, such that $path^T(u, v)$ is the set of nodes on the path from $u$ to $v$, excluding both these nodes, $path^T[u, v]$ includes both $u$ and $v$ and so on.
+
+    Let $\leafset^T$ be the set of leaf labels of $T$. Non-empty subsets of $\leafset^T$ are called \textit{clusters} (we use the term clusters instead of clades for consistency with recent literature). Clusters with cardinality $1$ or $|\leafset^T|$ are \textit{trivial clusters}. For any node $u \in V(T)$, $T[u]$ is the subtree of $T$ rooted at $u$ and $\leafset^T(u)$ is the leafset of $T[u]$, called the cluster \textit{associated} with $u$. For example, in Figure~\ref{fig:freqdiff}, the node labelled by $2$ in $T_1$ has the cluster $\{a, b\}$ associated with it. The \textit{cluster collection} of $T$, $\mathcal{C}(T)$ is the set $\bigcup_{u \in V(T) - \{root(T)\} - \leafset^T} {\leafset^T(u)}$, i.e. a set containing all non-trivial clusters in $T$. For example, the cluster collection of $T_2$ in Figure~\ref{fig:freqdiff} is $\{\{b, c\}, \{a, b, c\}, \{d, e\}\}$. Any cluster $C \subseteq \leafset(T)$ \textit{occurs} in $T$ iff $C \in \mathcal{C(T)}$. Also, for any nodes $u, v \in V(T)$, denote the lowest common ancestor of $u$ and $v$ in $T$ by $lca^T(u, v)$. Further, for any non-empty set of nodes $U \subseteq V(T)$, denote the lowest common ancestor of all these nodes in $T$ by $lca^T(U)$.
 
     Any two clusters $C_1, C_2 \subseteq \leafset(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible} (referred to as \textit{contradiction} in Section~\ref{sec:introduction}), denoted as $C_1 \not\compatible C_2$. Similarly, given trees $T_1$ and $T_2$ with identical leaf sets, and nodes $u \in V(T_1)$, $v \in V(T_2)$, we say $u$ is compatible with $v$, denoted as $u \compatible v$, if the clusters associated with $u$ and $v$ are compatible. For example (referring to Figure~\ref{fig:freqdiff}), let $u$ be the node in $T_1$ associated with the cluster $\{a, b\}$, $v$ the node in $T_2$ associated with $\{a, b, c\}$ and $w$ the node in $T_2$ associated with $\{b, c\}$. Then $u$ and $v$ are compatible since $\leafset^{T_1}(u) \subseteq \leafset^{T_2}(v)$. However, $u$ is incompatible with $w$ since they share $b$ but neither leafset is a subset of the other. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ (denoted as $C \compatible T$) iff for every $C_1 \in \mathcal{C}(T)$, $C \compatible C_1$. Further, two trees $T_1$ and $T_2$ with identical leafsets are \textit{compatible} (denoted as $T_1 \compatible T_2$) iff for every $C \in \mathcal{C}(T_1)$, $C \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$. Thus in Figure~\ref{fig:freqdiff}, $T_1$ is incompatible with $T_2$ since the former contains the cluster $\{a, b\}$ which is incompatible with $\{b, c\}$, contained in the latter tree (in fact, it can be checked that all the trees in this figure are incompatible).
 
@@ -135,14 +147,14 @@
 
     \subsection{Centroid Path Decomposition}
 
-    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the child with the largest leaf set, with ties broken arbitrarily (this child is known as the heaviest child of its parent). The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $p_i \in \pi(T)$, let $\sigma(p_i)$ be the set of side trees whose roots are children of $p_i$, called the side trees \textit{associated} with $p_i$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree.
+    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. For any $u \in V(T)$, we define the \textit{heaviest child} of $u$, denoted by $heavyChild(u)$, to be the one with the largest leafset, with ties broken arbitrarily. The remaining children are called the \textit{side children} of $u$, denoted by $sideChildren(u)$. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the heaviest child. The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $p_i \in \pi(T)$, let $\sigma(p_i)$ be the set of trees rooted at $sideChildren(p_i)$, called the side trees \textit{associated} with $p_i$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree.
 
-    We further define a \textit{complete centroid path decomposition} for any tree $T$. Here, the normal centroid path decomposition is applied on $T$, and then each side tree is recursively decomposed. This results in a set of disjoint paths in $T$, denoted by $\mathcal{P}(T)$. Figure~\ref{fig:centroid}(b) applies complete centroid path decomposition on the same tree as before. The bold paths, along with the isolated leaves, are centroid paths. As can be seen, the large side tree that remained intact in Figure~\ref{fig:centroid}(a) has now been recursively decomposed.
+    We further define a \textit{complete centroid path decomposition} for any tree $T$. Here, the normal centroid path decomposition is applied on $T$, and then each side tree is recursively decomposed. This results in a set of disjoint paths in $T$, denoted by $\mathcal{P}(T)$. We also assign each path $P_i \in \mathcal{P}(T)$ a depth, denoted as $depth^{T}(P_i)$, defined to be $1\, +$ depth of centroid path containing the parent of the root of $P_i$. Intuitively, if we build a tree from only the roots of the centroid paths while maintaining the same relative structure, then the depth of a centroid path would simply be the depth of its root in this new tree. Figure~\ref{fig:centroid}(b) applies complete centroid path decomposition on the same tree as before. The bold paths, along with the isolated leaves, are centroid paths. As can be seen, the large side tree that remained intact in Figure~\ref{fig:centroid}(a) has now been recursively decomposed. The depth of each centroid path is shown next to its root.
 
     \begin{figure}[h]
         \includegraphics[scale=0.5]{centroid}
         \centering
-        \caption{Demonstration of centroid path decomposition. Both (a) and (b) use the same tree. In (a), the tree has undergone a centroid path decomposition such that after the dashed edges are removed, leaving a centroid path and a set of side trees. In (b), the tree has undergone a complete centroid path decomposition, with the dashed edges being removed to leave only a set of paths.}
+        \caption{Demonstration of centroid path decomposition. Both (a) and (b) use the same tree. In (a), the tree has undergone a centroid path decomposition such that after the dashed edges are removed, leaving a centroid path and a set of side trees. In (b), the tree has undergone a complete centroid path decomposition, with the dashed edges being removed to leave only a set of paths. The depth of each centroid path is shown next to its root.}
         \label{fig:centroid}
     \end{figure}
 
@@ -195,6 +207,37 @@
 
     As in \cite{jansson2018algorithms}, the subprocedure \texttt{Filter\_Clusters}, is defined to take as input trees $\TA$ and $\TB$, with $\leafset^{\TA} = \leafset^{\TB} = L$ and the values of $\weight(u)$ for all $u \in V(\TA) \cup V(\TB)$. It returns a tree $T$ which contains all clusters $C$ in $\TA$ for which $\weight(C) > $ weights of all clusters in $\TB$ that are incompatible with $C$. Formally, \texttt{Filter\_Clusters}$(\TA, \TB) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset^T = L$. For example, referring to Figure~\ref{fig:freqdiff}, \texttt{Filter\_Clusters}$(T_2, T_1) = T_{FD}$. Notice that there are three non-trivial clusters in $T_2$: $\{a, b, c\}, \{b, c\}$ and $\{d, e\}$. All of these have weight $2$. Now the only cluster in $T_1$ incompatible with $\{a, b, c\}$ is $\{c, d, e\}$, but this only has weight $1$ and so $\{a, b, c\}$ is kept. The cluster $\{d, e\}$ is compatible with $T_1$ so it is also kept. However, $\{b, c\}$ is incompatible with $\{a, b\}$ and they both have weight $2$, hence $\{b, c\} \not\in \mathcal{C}($\texttt{Filter\_Clusters}$(T_2, T_1))$.
 
+    The \texttt{Frequency\_Difference} algorithm is given below.
+
+    \begin{algorithm}
+        \caption{Frequency\_Difference}
+        \label{alg:frequencydifference}
+
+        \begin{algorithmic}[1]
+            \Input A set $\mathcal{S}$ of trees $\{T_1, T_2, ..., T_k\}$ where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$
+
+            \Output A tree $T_{FD}$, where $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$ and $\leafset^{T_{FD}} = L$.
+
+            \State Compute $\weight(C)$ for every cluster $C$ that occurs in $S$.
+
+            \State $T := T_1$
+
+            \For{$j := 2$ to $k$}
+                \State $A :=$ \texttt{Filter\_Clusters}$(T, T_j)$
+
+                \State $B :=$ \texttt{Filter\_Clusters}$(T_j, T)$
+
+                \State $T :=$ \texttt{Filter\_Clusters}$(A, B)$
+            \EndFor
+
+            \For{$j := 1$ to $k$}
+                \State $T :=$ \texttt{Filter\_Clusters}$(T, T_j)$
+            \EndFor
+
+            \State \Return $T$
+        \end{algorithmic}
+    \end{algorithm}
+
     Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
     \newline
 
@@ -242,19 +285,17 @@
     \section{RMQ structure on trees}
     \label{sec:rmqtree}
 
-    Here, we generalise the linear RMQ data structure to trees. Given a tree $T$ and $\weight(u)$ for each $u \in V(T)$, for any nodes $v, w \in V(T)$ such that $w$ is an ancestor of $v$, let $rmqTree^T[v, w] = max_{u \in path^T[v, w]}\weight(u)$, where $path^T[v, w]$ is the set of all nodes on the path from $v$ to $w$, including both $v$ and $w$. Note that the square brackets are used to indicate inclusion of the two endpoints. We build a data structure for answering $rmqTree^T[v, w]$ queries in constant time, given $O(n\,log\,n)$ preprocessing time, where $n = |V(T)|$.
+    Here, we generalise the linear RMQ data structure to trees. Given a tree $T$ and $\weight(u)$ for each $u \in V(T)$, for any nodes $v, w \in V(T)$ such that $w$ is an ancestor of $v$, let $rmqTree^T[v, w] = max_{u \in path^T[v, w]}\weight(u)$. Note that the square brackets are again used to indicate inclusion of the two endpoints. We build a data structure for answering $rmqTree^T[v, w]$ queries in constant time, given $O(n\,log\,n)$ preprocessing time, where $n = |V(T)|$.
 
-    The data structure outlined here builds on the one presented in Lemma 8 of \cite{jansson2018algorithms}, while providing some further details of the implementation. Firstly, for each centroid path $P_i \in \mathcal{P}(T)$, the weights along $P_i$ are stored in a linear RMQ structure (as described in Lemma~\ref{lem:linearrmq}). Then for each leaf $x \in \leafset^T$, the path from $x$ to the root of $T$ can be seen as a concatenation of subpaths of the aforementioned centroid paths. An example of this can be seen in Figure~\ref{fig:rmq}. This figure shows part of a tree. The diagonal lines from right to left are centroid paths in the tree (elements of $\mathcal{P}(T)$). The dashed edges indicate that the child is not the heaviest child of its parent, hence starting a new centroid path. As can be seen, the path from the leaf $x$ to the root consists of subpaths of many centroid paths. We denote these subpaths by $Q_1, Q_2, ..., Q_f$, where $Q_1$ contains $root(T)$ and $Q_f$ contains $x$. For each $x$, we build the array $W_x[1 ... f]$, where $W_x[i] = max_{u \in Q_i}\weight(u)$ and store this array in a linear RMQ structure.
+    The data structure outlined here builds on the one presented in Lemma 8 of \cite{jansson2018algorithms}, while providing some further details of the implementation. We do a complete centroid path decomposition on $T$. Then for each leaf $x \in \leafset^T$, the path from $x$ to the root of $T$ can be seen as a concatenation of subpaths of centroid paths in $\mathcal{P}(T)$. An example of this can be seen in Figure~\ref{fig:rmq}. This figure shows part of a tree. The diagonal lines from right to left are centroid paths in the tree (elements of $\mathcal{P}(T)$). The dashed edges indicate that the child is not the heaviest child of its parent, hence starting a new centroid path. As can be seen, the path from the leaf $x$ to the root consists of subpaths of many centroid paths. The data structure we build consists of two parts. Firstly, for each centroid path $P_i \in \mathcal{P}(T)$, the weights along $P_i$ are stored in a linear RMQ structure (as described in Lemma~\ref{lem:linearrmq}). Secondly, for each $x$, we denote the subpaths of centroid paths on the leaf-root path by $Q_1, Q_2, ..., Q_f$, where $Q_1$ contains $root(T)$ and $Q_f$ contains $x$. Then we build the array $W_x[1 ... f]$, where $W_x[i] = max_{u \in Q_i} \weight(u)$ and store this array in a linear RMQ structure.
+    \newline
 
     \begin{figure}[h]
         \includegraphics[scale=0.5]{rmq}
         \centering
-        \caption{Demonstration of an $rmqTree[v, w]$ query. The diagonal lines from right to left are centroid paths of the tree. The parts in bold lie on the path between $v$ and $w$, while those that are dotted do not. Dashed lines connect the root of a centroid path to its parent. $y$ is the leaf at the bottom of the centroid path to which $w$ belongs. $x$ is some leaf in the subtree rooted at $v$. {\color{red} Has this been explained too many times?}}
+        \caption{Demonstration of an $rmqTree[v, w]$ query. The diagonal lines from right to left are centroid paths of the tree. The parts in bold lie on the path between $v$ and $w$, while those that are dotted do not. Dashed lines connect the root of a centroid path to its parent. $y$ is the leaf at the bottom of the centroid path to which $w$ belongs. $x$ is some leaf in the subtree rooted at $v$.}
         \label{fig:rmq}
     \end{figure}
-
-    We also compute the depth of each node as the distance from the root of $T$. Further, the concept of depth is generalised to the centroid paths, where for any centroid path $P_i \in \mathcal{P}(T)$, $depth(P_i) = 1\, +$ depth of centroid path containing the parent of the root of $P_i$. Intuitively, if we build a tree from only the roots of the centroid paths while maintaining the same relative structure, then the depth of a centroid path would simply be the depth of its root in this new tree.
-    \newline
 
     \begin{rmqdatastructure}
         \label{lem:rmqdatastructure}
@@ -279,7 +320,7 @@
 
             To find the maximum weight within $Q_1$, we obtain the depth of $v$ within $Q_1$ by subtracting the depth of the root of $Q_1$ from the depth of $v$. Then the maximum weight can be retrieved by querying the linear RMQ structure for this centroid path, from the root to $v$ (recall that the depths and linear RMQ structures were obtained while constructing the $rmqTree$ data structure). Querying the linear RMQ structure costs constant time, as set out in Lemma~\ref{lem:linearrmq}.
 
-            To find the maximum weight for the subpaths $Q_2, ..., Q_{g - 1}$, we obtain the indices of $Q_2$ and $Q_{g-1}$ in $W_x$ as $depth(Q_1) + 1$ and $depth(Q_g) - 1$ respectively. The maximum weight can then be found by querying $W_x$.
+            To find the maximum weight for the subpaths $Q_2, ..., Q_{g - 1}$, we obtain the indices of $Q_2$ and $Q_{g-1}$ in $W_x$ as $depth^{T}(Q_1) + 1$ and $depth^{T}(Q_g) - 1$ respectively. The maximum weight can then be found by querying $W_x$.
 
             Finally, we need to find the maximum weight within $Q_g$. Observe that the key here is finding which node is at the end of $Q_g$. Let $P_i \in \mathcal{P}(T)$ be the centroid path of which $Q_g$ is a subpath. Then the previous question is equivalent to finding which node in $P_i$ has $v$ in one of its side trees. Let $y$ be the leaf at the bottom of $P_i$. Then the desired node is simply $lca(y, v)$, querying for which takes $O(1)$ time as given by Lemma~\ref{lem:lca}. The maximum weight within $Q_g$ can now be easily found in constant time by querying the linear RMQ structure for $P_i$, from $w$ to $lca(y, v)$.
 
@@ -391,210 +432,387 @@
 
     The key here is finding, for any node $u \in V(\TA)$, the set of nodes in $\TB$ that are incompatible with $u$, so that we can find the maximum weight of these. Then it is easy to figure out whether $u$ should be in $T$ or not.
 
-    % In Subsection~\ref{subsec:rootsofsubtrees} we describe an insight into the structure of trees that later leads to an improvement in the time taken to find this set of incompatible nodes. Subsection~\ref{subsec:incompatibilityrecursive} uses this idea to give a stricter definition of incompatibility, and finally Subsection~\ref{subsec:filterclustersalgorithm} uses this definition to present our solution for \texttt{Filter\_Clusters}.
+    Subsection~\ref{subsec:mincover} presents an insight into the structure of the trees under consideration, later shown to be the key to decreasing the runtime of the algorithm. Subsection~\ref{subsec:redefiningincompatibility} uses this insight to give a stricter definition of incompatibility. We then use these in Subsection~\ref{subsec:filterclusters} to create the algorithm \texttt{Filter\_Clusters}. Finally, Subsections~\ref{subsec:addtocover} and~\ref{subsec:updateincompatible} prove two claims we make when analysing the runtime of \texttt{Filter\_Clusters}.
 
-    \subsection{Minimum Cover}
-    \label{subsec:minimumcover}
+    \subsection{The concept of a \textit{minimum cover}}
+    \label{subsec:mincover}
 
-    This section presents an insight into the structure of the trees under consideration, later shown to be the key to decreasing the runtime of the algorithm.
+    Given a tree $T$ and a cluster $C \subseteq L$, define a set $S \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in S} \leafset^{T}(u) = C$. Then we define the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, to be the smallest set $S$ such that $S$ is a cover of $C$. Note that this set is well defined for each cluster. For example, in the tree in Figure~\ref{fig:mincover}, the circled nodes give the minimum cover of $C = \{a, b, c, f, g, h\}$.
 
-    Given a tree $T$ and a cluster $C \subseteq L$, define a set $S \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in S} \leafset^{T}(u) = C$. Then we define the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, to be the smallest set $S$ such that $S$ is a cover of $C$. Note that this set is well defined for each cluster.
+    \begin{figure}[h]
+        \includegraphics[scale=0.48]{mincover}
+        \centering
+        \caption{Illustration of a minimum cover and of Lemma~\ref{lem:mincoverrecursive}. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Let $u$ be the leaf labelled with $e$, marked with a square in (a). We wish to execute $addToCover^{T}(minCover^{T}(C), u)$. (b) shows the state after one recursive call, where the circled nodes give the new minimum cover and the node marked with a square is the new $u$. (c) shows the state after the next (and last) recursive call, where the minimum cover of $C \cup \leafset^{T}(u)$ has been found to be the circled nodes.}
+        \label{fig:mincover}
+    \end{figure}
 
-    As will be shown in Subsection~\ref{subsec:incompatibilityrecursive}, the minimum cover of a cluster $C$ is crucial in finding the set of nodes incompatible with $C$. Thus we would like to build a means of obtaining the minimum cover of a cluster $C$. Observe that for any leaf $x \in \leafset^T$, $minCover^T(\{x\}) = \{x\}$. We now build a recursive definition for $minCover$.
+    \subsection{Redefining incompatibility}
+    \label{subsec:redefiningincompatibility}
+
+    With the concept of a minimum cover in hand, we can proceed to give a stricter definition of incompatibility. Given tree $T$ and cluster $C \subseteq L$, let the set $incompatible^{T}(C) = \{v : v \in V(\TB) \text{ and } \leafset^{\TB}(v) \not\compatible C\}$.
+    \newline
+
+    \begin{incompatibilitymincover}
+        \label{lem:incompatibilitymincover}
+
+        Given tree $T$ and cluster $C \subseteq L$, let $l_C = lca^{T}(C)$. Then for any node $u \in V(\TB)$, $u \in incompatible^{T}(C)$ iff $u$ is a proper ancestor of some node $c \in minCover^{T}(C)$ and $u$ is a proper descendant of $l_C$. In other words, $incompatible^{T}(C) = \bigcup_{c \in minCover^{T}(C)} path(c, l_C)$.
+
+        \begin{proof}
+            $\longrightarrow$. Given any $u \in V(T)$ such that $u \in incompatible^{T}(C)$, $u$ is a proper descendant of $l_C$ as a direct consequence of Lemma~\ref{lem:incompatibility}. Further, there is some leaf $x \in C$ such that $u$ is a proper ancestor of $x$ by Lemma~\ref{lem:incompatibility}. Then there must be some node $c \in V(T)$ such that $c$ is an ancestor of $x$ and $c \in minCover^{T}(C)$, otherwise $x$ would not be covered. If $c$ is an ancestor of $u$, then $\leafset^{T}(u) \subseteq \leafset^{T}(c) \subseteq C$, thus $\leafset^{T}(u) \compatible C$, which leads to a contradiction. Hence, $u$ is a proper ancestor of $c$.
+
+            $\longleftarrow$. Given any $u \in V(T)$ such that $u$ is a proper ancestor of some node $c \in minCover^{T}(C)$ and $u$ is a proper descendant of $l_C$, $C \not\subseteq \leafset^{T}(u)$, since $u$ is a proper descendant of $l_C$. As $u$ is a proper ancestor of $c$, $\leafset^{T}(c) \subset \leafset^{T}(u)$. Also, $\leafset^{T}(c) \subset C$ by the definition of minimum cover. Thus $\leafset^{T}(u) \cap C \neq \emptyset$. Also, if $\leafset^{T}(u) \subseteq C$, we could create a smaller cover for $C$ by removing all proper descendants of $u$ from $minCover^{T}(C)$ and adding $u$. Note that this would give a smaller cover as there must be more than one such proper descendant of $u$, since $c$ is a proper descendant of $u$ and $\leafset^{T}(c) \subset C$. Hence, $u \in incompatible^{T}(C)$.
+        \end{proof}
+    \end{incompatibilitymincover}
+
+    \begin{figure}[h]
+        \includegraphics[scale=0.5]{incompatibility}
+        \centering
+        \caption{Illustration of Lemma~\ref{lem:incompatibilitymincover}. Let $C = \{a, b, c, f, g, h\}$. Then $l_C = lca^T(C)$, the circled nodes give $minCover^{T}(C)$ and the nodes marked with squared give $incompatible^T(C)$. Notice that all nodes in $incompatible^T(C)$ are proper descendants of $l_C$ are proper ancestors of some $c \in minCover^{T}(C)$.}
+        \label{fig:incompatibility}
+    \end{figure}
+
+    The above result is illustrated in Figure~\ref{fig:incompatibility}.
+
+    \subsection{The \texttt{Filter\_Clusters} algorithm}
+    \label{subsec:filterclusters}
+
+    Before going on to present \texttt{Filter\_Clusters} and analyse it, we make claims about the running time of an algorithm that finds the minimum cover and an algorithm that find incompatible nodes below. These are proved in Subsections~\ref{subsec:addtocover} and~\ref{subsec:updateincompatible} respectively.
+    \newline
+
+    \begin{mincoverruntime}
+        \label{lem:mincoverruntime}
+
+        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$ let $S = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then the operation $addToCover^{T}(S, u)$, which returns $minCover^{T}(Cu)$ and some node $v \in minCover^{T}(Cu)$ such that $v$ is an ancestor of $u$, can be performed in amortized $O(1)$ time.
+
+        \begin{proof}
+            Proved in Subsection~\ref{subsec:addtocover}.
+        \end{proof}
+    \end{mincoverruntime}
+
+    \medskip
+    \begin{incompatibilityruntime}
+        \label{lem:incompatibilityruntime}
+
+        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $S = minCover^{T}(C)$, $I = incompatible^{T}(C)$, $l_C = lca^{T}(C)$, $l_{Cu} = lca^{T}(C \cup \{u\})$ and $Cu = C \cup \leafset^{T}(u)$. Then the operation $updateIncompatible^{T}(S, I, u, l_C)$, which returns $(minCover^{T}(Cu), incompatible^{T}(Cu), l_{Cu})$, can be performed in amortized $O(1 + |incompatible^{T}(C) - incompatible^{T}(Cu)|\,\times\,log\,n)$, where $n = |\leafset^{T}|$.
+
+        \begin{proof}
+            Proved in Subsection~\ref{subsec:updateincompatible}.
+        \end{proof}
+    \end{incompatibilityruntime}
+
+    With these operations in hand, we now develop the solution for \texttt{Filter\_Clusters}. Recall that this method takes trees $\TA$ and $\TB$ as input. First, for any node $u \in V(\TA)$, define $incompatible^{\TB}(u)$ to be $incompatible^{\TB}(\leafset^{\TA}(u))$. As discussed earlier, the idea is to find $incompatible^{\TB}(u)$ for each node $u \in V(\TA)$.
+
+    \texttt{Filter\_Clusters} decomposes $\TA$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\TA}(u) : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root. Here, for any non-leaf node $p_i \in \pi(\TA)$, we use
+    the $addToCover$ and $updateIncompatible$ operations to find $incompatible^{\TB}(p_i)$.
+
+    A key optimisation here is ensuring that when we call the function recursively on a side tree $\tau \in \sigma(\TA)$, the $\TB$ is restricted such that its leafset is the same as the leafset of $\tau$. Let $\tau$ be some side tree in $\sigma(\TA)$. We reuse the technique described in \cite{jansson2018algorithms} to construct a tree $\TB||\leafset^{\tau}$ such that $\leafset^{\TB||\leafset^{\tau}} = \leafset^{\tau}$, but at the same time does not lose important weight information. To do so, we first construct $\TB|\leafset^{\tau}$ and let the weight of each node in this tree be the same as its weight in $\TB$. For each non-root node $u \in V(\TB|\leafset^{\tau})$, let $v = parent^{\TB|\leafset^{\tau}}(u)$, then if $path^{\TB}(u, v) \neq \emptyset$, we create a new node $z$ in $\TB|\leafset^{\tau}$, set $parent(u) = z$ and $parent(z) = v$. Also, we set $\weight(z) = max_{w \in path^{\TB}(u, v)} \weight(w)$. Note that this value can be obtained with an $rmqTree^{\TB}[parent(u), cFD(v)]$ query, which we denote by $rmqTree^{\TB}(u, v)$. This gives us the tree $\TB||\leafset^{\tau}$.
+
+    Further, for any node $u \in V(\TB||\leafset^{\tau})$, if $\leafset^{\TB||\leafset^{\tau}}(u) \neq \leafset^{\TB}(u)$, then $u$ is marked as $spoiled$. This concept is introduced since it will be important later to determine, for any node $u \in V(\TB||\leafset^{\tau})$, whether $\leafset^{\TB||\leafset^{\tau}}(u) \subseteq C$ for some cluster $C$. Special nodes are all marked as $spoiled$, since it is certain that the nodes they represent do not have their full leafset in $\TB||\leafset^{\tau}$. Observe that the ancestor of any spoiled node is also spoiled. Figure~\ref{fig:specialnodes} illustrates this entire process.
+
+    \begin{figure}[h]
+        \includegraphics[scale=0.5]{specialnodes}
+        \centering
+        \caption{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||\{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are special nodes. Observe that the special node that is a parent of the leaf $j$ has weight $7$ since the nodes on the path from $j$ to the root of $T$ had weights $4, 7$ and $2$. Also note that all internal nodes in (b) are spoiled.}
+        \label{fig:specialnodes}
+    \end{figure}
+
+    In order to facilitate the $rmqTree$ queries, we preprocess $\TB$ to construct an RMQ and a cFD structure before \texttt{Filter\_Clusters} is called. Also note that we present a slightly modified version of \texttt{Filter\_Clusters} - rather than returning a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$, it returns the set of nodes $\{u : u \in V(\TA) \text{ and } \weight(u) \leq max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible \leafset^{\TA}(u)\})\}$. This is functionally equivalent, since we can then make a copy of $\TA$ and traverse this in a top-down manner, performing the $delete$ operation on the relevant nodes. Observe that this process takes $O(n)$ time. The procedure \texttt{Filter\_Clusters} is presented below.
+    \newline
+
+    \begin{algorithm}
+        \caption{Filter\_Clusters}
+        \label{alg:filterclusters}
+
+        \begin{algorithmic}[1]
+            \Input Trees $\TA$ and $\TB$ with $\leafset^{\TA} = \leafset^{\TB} = L$ where every cluster has a known $weight$.
+
+            \Output The set of nodes $\{u : u \in V(\TA) \text{ and } \weight(u) \leq max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible \leafset^{\TA}(u)\})\}$
+
+            \State Compute a centroid path $\pi = \langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$ of $\TA$, where $p_{\gamma}$ is the root of $\TA$ and $p_1$ is a leaf.
+
+            \State $toDelete := \bigcup_{\tau \in \sigma(\TA)}$ \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$
+
+            \State Let $l :=$ leaf in $\TB$ labelled by $p_1$
+
+            \State $cover := \{l_1\}$
+
+            \State $incompatible :=$ empty Brodal queue
+
+            \For{$i := 2$ \textbf{to} $\gamma$}
+                \State $sideCover := \emptyset$
+
+                \ForAll{$x \in \bigcup_{\tau \in \sigma(p_i)} \leafset^{\TA}(p_i)$}
+                    \State $sideCover, \_ :=$ \texttt{Add\_To\_Cover}$(sideCover, x)$
+                \EndFor
+
+                \ForAll{$c \in sideCover$}
+                    \State $cover, incompatible, l :=$ \texttt{Update\_Incompatible}$(cover, incompatible, c, l)$
+                \EndFor
+
+                \IIf{$\weight(p_i) \leq$ maximum weight of a node in $incompatible$}
+                    $toDelete := toDelete \cup \{p_i\}$
+            \EndFor
+
+            \State \Return $toDelete$
+        \end{algorithmic}
+    \end{algorithm}
+
+    \medskip
+    \begin{numremovednodes}
+        \label{lem:numremovednodes}
+
+        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$ and $|L| = n$. For each internal node $u \in V(\TA)$, let $sideCover^{\TB}(u) = minCover^{\TB}(\bigcup_{c \in sideChildren(u)} \leafset^{\TA}(c))$. Let $\eta_u = |sideCover^{\TB}(u)|$ such that $sideCover^{\TB}(u) = \{c_1, c_2, \dots, c_{\eta_u}\}$. Define $D_u^0 = \leafset^{\TA}(heavyChild(u))$ and for $1 \leq i \leq \eta_u$, $D_u^i = D_u^{i-1} \leafset^{\TB}(c_i)$. Then $\sum_{u \in V(\TA)} \sum_{1 \leq i \leq eta_u} |incompatible^{\TB}(D_u^i) - incompatible^{\TB}(D_u^{i-1})| \leq |V(\TB)|$.
+
+        \begin{proof}
+            Take some node $v \in V(\TB)$ such that for some nodes $p, q \in V(\TA)$, and integers $i, j$ where $1 \leq i \leq \eta_p$ and $1 \leq j \leq \eta_q$, $v \in incompatible^{\TB}(D_p^{i-1}) - incompatible^{\TB}(D_p^{i})$ and $v \in incompatible^{\TB}(D_q^{j-1}) - incompatible^{\TB}(D_q^{j})$.
+
+            Since $D_p^{i-1} \subset D_p^i$ and $v \in incompatible^{\TB}(D_p^{i-1}) - incompatible^{\TB}(D_p^{i})$, $\leafset^{\TB}(v) \subseteq D_p^i \subseteq \leafset^{\TA}(p)$. Similarly, $\leafset^{\TB}(v) \subseteq D_q^j \subseteq \leafset^{\TA}(q)$. But then $p$ and $q$ are on the same leaf-root path. Without loss of generality, assume $p$ is an ancestor of $q$. Further, assume $p \neq q$, such that $p$ is a proper ancestor of $q$.
+
+            If $q \in V(\TA[heavyChild(p)])$, then $\leafset^{\TA}(q) \subseteq \leafset^{\TA}(heavyChild(p)) = D_p^0 \subset \leafset^{\TA}(p)$, so $D_q^j \subseteq D_p^{i-1}$. But $\leafset^{\TB}(v) \subseteq D_q^j$, so $\leafset^{\TB}(v) \compatible D_p^{i-1}$, giving a contradiction.
+
+            Thus, there is some $c \in sideChildren(p)$ such that $q \in V(\TA[c])$. Then $\leafset^{\TA}(q) \subseteq \bigcup_{c \in sideChildren(p)} \leafset^{\TA}(c)$ and since $\leafset^{\TB}(v) \subseteq D_q^j$, $\leafset^{\TB}(v) \subseteq \bigcup_{c \in sideChildren(p)} \leafset^{\TA}(c)$. Then some ancestor of $v$ is in $sideCover^{\TB}(p)$. Let this ancestor be $c_k \in sideCover^{\TB}(p)$, where $1 \leq k \leq \eta_{p}$. Now $v \in incompatible^{\TB}(D_p^{i-1})$. If $k \leq i - 1$, then $\leafset^{\TB}(c_k) \subseteq D_p^{i-1}$, so $\leafset^{\TB}(v) \compatible D_p^{i-1}$. Otherwise, if $k > i - 1$, then $\leafset^{\TB}(c_k) \cap D_p^{i-1} = \emptyset$, so $\leafset^{\TB}(v) \compatible D_p^{i-1}$, giving a contradiction.
+
+            Then $p$ must be equal to $q$. Assume $i \neq j$ and further, without loss of generality, that $j < i$. Hence $D_p^{j-1} \subset D_p^{j} \subseteq D_p^{i-1} \subset D_p^{i}$. But $\leafset^{\TB}(v) \subseteq D_p^j$, so $\leafset^{\TB}(v) \compatible D_p^{i-1}$, giving a contradiction. Hence $i = j$.
+
+            The above reasoning shows that any node $v \in V(\TB)$ can contribute only once to the summation in the Lemma. Thus, $\sum_{u \in V(\TA)} \sum_{1 \leq i \leq eta_u} |incompatible^{\TB}(D_u^i) - incompatible^{\TB}(D_u^{i-1})| \leq |V(\TB)|$.
+        \end{proof}
+    \end{numremovednodes}
+
+    \medskip
+    \begin{filterclustersruntime}
+        \label{lem:filterclustersruntime}
+
+        For some trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ runs in $O(n\,log\,n)$ time, if RMQ and cFD structures on $\TB$ are given.
+
+        \begin{proof}
+            The centroid path can be computed in $O(n)$ time. Since the side trees $\sigma(\TA)$ give a partition of $L$, the trees $\TB|\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time total using Lemma 5.2 of \cite{farach1995fast}. From these, $\TB||\leafset^{\tau}$ can be constructed in further $O(n)$ time since we can carry out $rmqTree$ queries in constant time.
+
+            We use the Brodal queue of \cite{brodal1995fast} to store incompatible nodes. This data structure allows $insert$ and $findMax$ operations in $O(1)$ time and $delete$ in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $\TB$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time (this leads to the $log\,n$ factor seen in Lemma~\ref{lem:incompatibilityruntime}).
+
+            The total size of the leafsets of the side trees of $\TA$ is $O(n)$, thus there are a total of $O(n)$ \texttt{Add\_To\_Cover} operations, each costing $O(1)$ amortized time.
+
+            We separate the cost of \texttt{Update\_Incompatible} into the $O(1)$ and $O(|incompatible^{T}(C) - incompatible^{T}(Cu)|\,\times\,log\,n)$ terms. Again, there are a total of $O(n)$ calls to \texttt{Update\_Incompatible}, so the first term contributes $O(n)$ time due to these calls. However, the other term must be analysed over all calls to \texttt{Update\_Incompatible}, including those in the recursive calls to \texttt{Filter\_Clusters}. By Lemma~\ref{lem:numremovednodes}, which adds up the size differences over all these calls, the total cost due to this term over every call to \texttt{Filter\_Clusters} is $\leq |V(\TB)| \times log\,n = O(n\,log\,n)$.
+
+            Merging the $toDelete$ lists and inserting into it costs $O(1)$ time if we implement them as linked lists. Thus for a single call to \texttt{Filter\_Clusters}, $T(n) = O(n) + \sum_{\tau \in \sigma(\TA) T(|\leafset^{\tau}|)}$. Since for any $\tau \in \sigma(\TA)$, $|\leafset^{\tau}| \leq n/2$, there are $log\,n$ recursion levels, and we get $T(n) = O(n\,log\,n)$.
+        \end{proof}
+    \end{filterclustersruntime}
+
+    \subsection{The $addToCover$ operation}
+    \label{subsec:addtocover}
+
+    We first prove a recursive definition of $addToCover$.
+    \newline
 
     \begin{mincoverrecursive}
         \label{lem:mincoverrecursive}
 
-        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $S = minCover^{T}(C)$. Then $minCover^{T}(C \cup \leafset^{T}(u)) = \begin{cases}
-            a \\ b \\ c
-        \end{cases}$
+        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$ let $S = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then the operation $addToCover^{T}(S, u)$, which returns $minCover^{T}(Cu)$ and some node $v \in minCover^{T}(Cu)$ such that $v$ is an ancestor of $u$ can be defined as follows \[addToCover^{T}(S, u) =
+        \begin{cases}
+            S \cup \{u\}, u & \leafset^{T}(v) \not\subseteq Cu\\
+            addToCover^{T}(S - children(v), v) & otherwise
+        \end{cases}\]
+
+        \begin{proof}
+            \textit{Base Case.} If $\leafset^{T}(v) \not\subseteq Cu$, there is some leaf $x \in \leafset^{T}(v)$ such that $x \not\in C$. Thus for any proper ancestor $w$ of $u$, $\leafset^{T}(w) \not\subseteq C$, so $w \not\in minCover^{T}(Cu)$. But we need to cover $\leafset^{T}(u)$. The minimal solution for this is to cover it with the node $u$, hence $minCover^{T}(Cu) = S \cup \{u\}$.
+
+            \textit{Inductive Case.} If $\leafset^{T}(v) \subseteq Cu$, then $minCover^{T}(C - \leafset^{T}(v)) = S - children(v)$. This is because $children(v) - \{u\} \subseteq S$ and no proper descendant $u'$ of $u$ is such that $u' \in S$ since $\leafset^{T}(u) \cap C = \emptyset$. Thus we see that $S - children(v)$ covers $C - \leafset^{T}(v)$. Also, if there were a smaller cover for $C - \leafset^{T}(v)$, we could cut and paste this into $S$, giving us a smaller cover for $C$. Hence, inductively, $addToCover^{T}(S, u) = addToCover^{T}(S - children(v), v) = minCover^{T}(C - \leafset^{T}(v) \cup \leafset^{T}(v)) = minCover^{T}(Cu)$. Note that the recursion has to terminate since in each recursive call we go one node further up the tree.
+        \end{proof}
     \end{mincoverrecursive}
 
-    Given a tree $T$, cluster $C \subseteq L$, for any node $r \in V(T)$, define $r$ to be the root of a \textit{maximal subtree compatible with $C$} if (1) $\leafset^T(r) \subseteq C$ and (2) $\leafset^T(r') \not\subseteq(C)$ for all proper ancestors $r'$ of $r$. The set $RST^{T}(C)$ is composed of all nodes $r \in V(T)$ that are roots of maximal subtrees compatible with $C$. Extending this, given any node $u$, we denote $RST^{T}(\leafset(u))$ as $RST^{T}(u)$. For example, in the tree in Figure~\ref{fig:rootsofsubtrees}, the circled nodes are roots of maximal subtrees compatible with $C = \{a, b, c, f, g, h\}$, i.e. $RST^{T}(C)$.
-
-    As will be shown in Subsection~\ref{subsec:incompatibilityrecursive}, the roots of subtrees are crucial in finding the set of incompatible nodes. Thus, for every node $u \in V(\TA)$, we would like to compute $RST^{\TB}(u)$. However, we will solve a related problem: for any internal node $p_i \in \pi(\TA)$, we will use $RST^{\TB}(p_{i-1})$ and the set $boundary^{\TB}(p_i) = \bigcup_{c \in children(p_i)\, \backslash\, p_{i-1}} RST^{\TB}(c)$ to compute $RST^{\TB}(p_i)$. Note that $boundary^{\TB}(p_i)$ is the set of all roots of subtrees for the side trees associated with $p_i$.
-
-    \begin{figure}[h]
-        \includegraphics[scale=0.4]{rootsofsubtreesrecursive}
-        \centering
-        \caption{Demonstration of \texttt{Compute\_Roots\_Of\_Subtrees}. Here, $\leafset^{\TA}(p_{i-1}) = \{b, c, d, e, f, l, m, n\}$ and $\leafset^{\TA}(p_i) = \{a, b, c, d, e, f, g, j, k, l, m, n\}$. In (a), nodes belonging to $RST^{\TB}(p_{i-1})$ are marked with circles. The leafsets of the side trees associated with $p_i$ are $\{a, j\}$ and $\{g, k\}$. Thus (b) shows all nodes in $boundary^{\TB}(p_i)$ marked with squares, while nodes in $RST^{\TB}(p_{i-1})$ remain marked with circles. Finally, we see nodes in $RST^{\TB}(p_i)$ marked with circles in (c). The labels next to the nodes in (a) and (c) give the counter values at those nodes before and after \texttt{Compute\_Roots\_Of\_Subtrees} is used for $p_i$ respectively.}
-        \label{fig:rootsofsubtreesrecursive}
-    \end{figure}
-
-    We illustrate with the example in Figure~\ref{fig:rootsofsubtreesrecursive}. For some non-leaf node $p_i \in \pi(\TA)$, we let $\leafset^{\TA}(p_{i-1}) = \{b, c, d, e, f, l, m, n\}$ and $\leafset^{\TA}(p_i) = \{a, b, c, d, e, f, g, j, k, l, m, n\}$. Figure~\ref{fig:rootsofsubtreesrecursive}(a) shows $\TB$ with all nodes in $RST^{\TB}(p_{i-1})$ marked with circles. Let the leafsets of the side trees associated with $p_i$ be $\{a, j\}$ and $\{g, k\}$. Figure~\ref{fig:rootsofsubtreesrecursive}(b) shows $\TB$ with all nodes in $boundary^{\TB}(p_i)$ marked with squares (the nodes from (a) remain marked with circles).
-
-    Now Figure~\ref{fig:rootsofsubtreesrecursive}(c) shows $\TB$ with nodes in $RST^{\TB}(p_i)$ marked with circles. Thus the problem to be solved is going from the marked nodes in (b) to the marked nodes in (c). Observe that the only nodes that are new candidates for $RST^{\TB}(p_i)$ (as compared to $RST^{\TB}(p_{i-1})$) are ancestors of nodes in $boundary^{\TB}(p_i)$. Thus the idea here will be to initialise a set of candidate nodes with $RST^{\TB}(p_{i-1})$ and then iterate upwards from the nodes in $boundary^{\TB}(p_i)$, discovering nodes on the way that have leafsets which are subsets of $\leafset^{\TA}(p_i)$. In particular, if it turns out that for some node $v \in V(\TB)$, all the children of $v$ are in our set of candidates, then it must be true that for each node $c \in children(v)$, $\leafset^{\TB}(c) \subseteq \leafset^{\TA}(p_i)$, which implies that $\leafset^{\TB}(v) \subseteq \leafset^{\TA}(p_i)$. Thus at this point, we can add $v$ to our set of candidates and remove all children of $v$ from this set.
-
-    Notice that to implement this process, we need a quick way of checking whether all the children of $v$ are in the set of candidates. We leave this detail as a black box for now, with the claim that it can be done in constant time. The actual method of doing so is provided in Lemma~\ref{lem:maintainingcounter}.
-
-    Finally, it will be seen later that rather than simply computing $RST^{\TB}(p_i)$, it is desirable to compute three sets (in the following definitions, $u \in V(\TA)$ and $c \in children(u)$):
-
-    \begin{align*}
-        newRST^{\TB}(u, c) &= RST^{\TB}(u) - RST^{\TB}(c)\\[0.5em]
-        removedRST^{\TB}(u, c) &= RST^{\TB}(c) - RST^{\TB}(u)\\[0.5em]
-        oldRST^{\TB}(u, c) &= RST^{\TB}(u) \cap RST^{\TB}(c)
-    \end{align*}
-
-    In particular, we wish to find $newRST^{\TB}(p_i, p_{i-1})$, $removedRST^{\TB}(p_i, p_{i-1})$ and $oldRST^{\TB}(p_i, p_{i-1})$. We thus present the procedure \texttt{Compute\_Roots\_Of\_Subtrees} (Algorithm~\ref{alg:computerootsofsubtrees}) which, for some trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB}$ and some node $p_i \in \pi(\TA)$, takes as input $RST^{\TB}(p_{i-1})$, $boundary^{\TB}(p_i)$ and $\TB$. It returns the sets $newRST^{\TB}(p_i, p_{i-1})$, $removedRST^{\TB}(p_i, p_{i-1})$ and $oldRST^{\TB}(p_i, p_{i-1})$.
+    Note that, given the existence of spoiled nodes, simply checking if $\leafset^{T}(v) \not\subseteq Cu$ is not good enough, we actually need to check if $\leafset^{T}(v) \not\subseteq Cu$ or $v$ is spoiled. With this, we can present the algorithm \texttt{Add\_To\_Cover}.
 
     \begin{algorithm}
-        \caption{Compute\_Roots\_Of\_Subtrees}
-        \label{alg:computerootsofsubtrees}
+        \caption{Add\_To\_Cover}
+        \label{alg:addtocover}
 
         \begin{algorithmic}[1]
-            \Input For some trees $\TA$ and $\TB$, where $\leafset^{\TA} \subseteq \leafset^{\TB}$, and some internal node $p_i \in \pi(\TA)$, $RST^{\TB}(p_{i-1})$, $boundary^{\TB}(p_i)$ and $\TB$.
+            \Input For some tree $T$ and cluster $C \subseteq L$, takes in the set $S = minCover^{T}(C)$ and some node $u \in V(T)$.
 
-            \Output $newRST^{\TB}(p_i, p_{i-1})$, $removedRST^{\TB}(p_i, p_{i-1})$ and $oldRST^{\TB}(p_i, p_{i-1})$.
+            \Output $minCover^{T}(Cu)$ and some node $v \in minCover^{T}(Cu)$ such that $v$ is an ancestor of $u$.
 
-            \State $old := RST^{\TB}(p_{i-1})$
+            \State $v := parent(u)$
 
-            \State $new, removed := \{\}$
-
-            \ForAll{$v \in boundary$}
-                \State $new := new \cup \{v\}$
-
-                \State $v := parent(v)$
-
-                \While{all children of $v$ are candidates}
-                    \State $new := (new \cup \{v\}) - children(v)$
-
-                    \State $removed := removed \cup (children(v) \cap old)$
-
-                    \State $old := old - children(v)$
-
-                    \State $v := parent(v)$
-                \EndWhile
-            \EndFor
-
-            \State \Return $new, removed, old$
+            \If{$\leafset^{T}(v) \subseteq Cu$ and $v$ is not spoiled}
+                \State \Return \texttt{Add\_To\_Cover}$(S - children(v), v)$
+            \Else
+                \State \Return $S \cup \{u\}$, $u$
+            \EndIf
         \end{algorithmic}
     \end{algorithm}
 
-    \bigskip
-    \begin{computerootsofsubtreesruntime}
-        \label{lem:computerootsofsubtreesruntime}
+    \begin{proof}[Proof of Lemma~\ref{lem:mincoverruntime}]
+        We show that the algorithm \texttt{Add\_To\_Cover}$(S, u)$ runs in amortized $O(1)$ time.
 
-        For any trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB}$, for any internal node $p_i \in \pi(\TA)$, the algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(RST^{\TB}(p_{i-1}), boundary^{\TB}(p_i), \TB)$ runs in\\ % Overflows otherwise
-        $O(|boundary^{\TB}(p_i)| + |removedRST^{\TB}(p_i, p_{i-1})|)$ time.
+        First, we need to give a way to implement the check for $\leafset^{T}(v) \subseteq Cu$. To do so, we give every node $w \in T$ a property $counter(w)$. $counter(w)$ initially stores $|\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$. We update this to reflect the addition of $\leafset^{T}(u)$ to $C$ by incrementing $counter(v)$, and then check whether $counter(v) = |children(v)|$, which is equivalent to determining if $\leafset^{T}(v) \subseteq Cu$. This allows us to make the check in $O(1)$ time.
 
-        \begin{proof}
-            We implement each of the set of nodes using a linked list, while augmenting the nodes with a property that lets us know whether it belongs to the set or not. This allows us to perform operations like union, intersection and set difference in time proportional to the size of either of the sets.
+        When \texttt{Add\_To\_Cover} is called, we assign it two units of credit. If the base case is hit, then the two units are stored in $u$. If, however, we hit the recursive case, then we have to use stored credit. Note that in this case, $|S \cap children(v)| = |children(v)| - 1$, as all children other than $u$ will be in $S$. Then the amount of stored credit we have in these children is $2 * |children| - 2 \geq |children|$, since $|children| \geq 2$ (this holds because if $v$ is spoiled then we can never enter the recursive case and all other nodes have at least $2$ children). Implementing $S$ allows us to carry out $delete$ operations in constant time, and so this credit is sufficient to delete $children(v)$ from $S$. The credit assigned to original call to \texttt{Add\_To\_Cover} is then assigned to the recursive call. Thus, it clear that the operation costs amortized $O(1)$ time.
+    \end{proof}
 
-            The outer loop is entered $O(|boundary^{\TB}(p_i)|)$ times.
+    \subsection{The $updateIncompatible$ operation}
+    \label{subsec:updateincompatible}
 
-            No node is added to $removed$ twice. This is because when a node $v$ is added to $removed$, $\leafset^{\TB}(parent(v)) \subseteq \leafset^{\TA}(p_i)$. Then $v$ can never be encountered again when iterating upwards any node in $boundary^{\TB}(p_i)$. Thus the total cost of the processing inside the inner loop is $O(|removedRST^{\TB}(p_i, p_{i-1})|)$.
+    
 
-            Notice that we reuse the list $(RST^{\TB}(p_{i-1})$ for $old$ to ensure that extra time is not spent copying this.
 
-            Thus the total time taken is $O(|boundary^{\TB}(p_i)| + |removedRST^{\TB}(p_i, p_{i-1})|)$.
-        \end{proof}
-    \end{computerootsofsubtreesruntime}
 
-    \begin{maintainingcounter}
-        \label{lem:maintainingcounter}
 
-        For any trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB}$, for any internal node $p_i \in \pi(\TA)$, when running the algorithm \texttt{Compute\_Roots\_Of\_Subtrees}$(RST^{\TB}(p_{i-1}), boundary^{\TB}(p_i), \TB)$, it is possible to check whether all the children of $v$ are in the set of candidates for any node $v \in V(\TB)$ in constant time.
 
-        \begin{proof}
-            We maintain a property $counter(v)$ for each node $v \in V(\TB)$. This property maintains the number of children of $v$ that are in either $new$ or $old$. Thus we can check whether they are all candidates by simply comparing $counter(v)$ with $|children(v)|$.
 
-            To maintain this property correctly, when a node $v$ is added to $new$ during the procedure, $counter(parent(v))$ is incremented by one. Counters are never decremeneted because if some node $v$ is removed from the candidates, then $parent(v)$ is added to these candidates and since $parent(v)$ is never again encountered, there is no need to decrement $counter(parent(v))$.
+    Since we now have spoiled nodes, this means that when running \texttt{Add\_To\_Cover} or \texttt{Update\_Incompatible}, our $counter$ check is not good enough, as for some node $u \in V(\TB||\leafset^{\tau})$, even if $\leafset^{\TB||\leafset^{\tau}}(u) \subseteq C$, where $C$ is some cluster under consideration, that does not guarantee that $\leafset^{\TB}(u) \subseteq C$. Thus we need to expand our check to include the condition that $u$ must not be spoiled.
 
-            Notice that we require counters to be correct with respect to the nodes in $RST^{\TB}(p_{i-1})$. Thus we need some counter values to be set before \texttt{Compute\_Roots\_Of\_Subtrees} is called, and we will see this done later when the procedure is used as part of a larger algorithm.
+    This leads to defining the helper function \texttt{Filter\_Clusters\_Helper}, which takes as input $u \in V(\TA)$ and $\TB$ and returns $incompatible^{\TB}(\leafset^{\TA}(u))$, $minCover^{\TB}(\leafset^{TA}(u))$, a copy of $\TA[u]$ where for any node $w \in \TA[u]$, $w$ is marked for deletion iff $\weight(w) \leq \weight(v)$ for any $v \in V(\TB)$ with $u \not\compatible v$ and $\TB$ where for each $v \in V(\TA)$, $counter(v) = |\{\leafset^{\TB}(c) \subseteq \leafset^{\TA}(u) : c \in children(v)\}|$. The third item is used to keep track of which nodes in $\TA$ need to be deleted. The last item is $\TB$ with counter values updated, so that we can use it while updating the set of incompatible nodes.
 
-            Observe that when the procedure terminates, the counter values are such that they are correct with respect to $RST^{\TB}(p_i)$, and thus these can be used for when calling the procedure on $p_{i+1}$.
+    Then \texttt{Filter\_Clusters} can simply take the copy of $\TA$ output by \texttt{Filter\_Clusters\_Helper}$(root(\TA), \TB)$ and delete the marked nodes in a top-down traversal. The resulting algorithm is shown below. Note that it also does some preprocessing on $\TB$, which is explained in more detail below.
 
-            Figure~\ref{fig:rootsofsubtreesrecursive} demonstrates this process. Figure~\ref{fig:rootsofsubtreesrecursive}(a) shows the counter values before the procedure is called. Thus we see that, for example, the node labelled $2$ has two circled nodes as children. Then, we we iterate upwards from say the leaf $a$, we update the counter values and our candidate set until we end up with the situation in Figure~\ref{fig:rootsofsubtreesrecursive}(c) where the parent of the subtree with leafset $\{a, b, c, d\}$ has a counter value of $1$.
-        \end{proof}
-    \end{maintainingcounter}
-
-    \subsection{Recursively determining incompatible nodes}
-    \label{subsec:incompatibilityrecursive}
-
-    Here we discuss how the concept of maximal compatible subtrees leads to a stricter definition of incompatibility and its implications for our algorithm.
-
-    For any node $u \in V(\TA)$ and tree $\TB$, let the set $incompatible^{\TB}(u) = \{v : v \in V(\TB) \text{ and } \leafset^{\TB}(v) \not\compatible \leafset^{\TA}(u)\}$. Further, for any tree $T$ and nodes $v, w \in V(T)$ where $w$ is a proper ancestor of $v$, let $path^T(v, w)$ be the set of all nodes on the path from $v$ to $w$, excluding both these nodes. Note that $path^T(v, w) = path^T[parent^T(v), childD^T(v, w)]$.
-
-    We now prove a stronger version of Lemma~\ref{lem:incompatibility} that takes the aforementioned maximal compatible subtrees into account to compute $incompatible^{\TB}(u)$ for any $u \in V(\TA)$.
+    As will be shown in Lemma~\ref{lem:incompatibilitymincover}, the minimum cover of a cluster $C$ is crucial in finding the set of nodes incompatible with $C$. Thus we would like to build a means of obtaining the minimum cover of a cluster $C$. We do this in a recursive manner, where we take the minimum cover of some cluster $C$ and we take a node $u \in V(T)$ where $\leafset^{T}(u) \cap C = \emptyset$ and we find the minimum cover of the cluster $C \cup \leafset^{T}(u)$. For an illustration, take the example of Figure~\ref{fig:mincover}. Here, $C = \{a, b, c, f, g, h\}$ and $u =$ leaf labelled with $e$. The circled nodes in Figure~\ref{fig:mincover}(a) give $minCover^{T}(C)$. Then we wish to compute the minimum cover of $C \cup \leafset^{T}(u)$. Observe that since $\leafset^{T}(parent(u)) \subseteq C \cup \leafset^{T}(u)$, finding this set is equivalent to taking $C = \{a, b, c, g, h\}$ and $u$ such that $\leafset^{T}(u) = \{e, f\}$, as indicated in Figure~\ref{fig:mincover}(b). Similarly, this is now equivalent to taking $C = \{a, b, c\}$ and $u$ such that $\leafset^{T}(u) = \{e, f, g, h\}$. However, we cannot recurse any further, since $\leafset^{T}(parent(u)) \not\subseteq C \cup \leafset^{T}(u)$, hence we can stop and return the minimum cover found at this point. This is marked with the circled nodes in Figure~\ref{fig:mincover}.
     \newline
 
-    \begin{incompatibilityrootsofsubtrees}
-        \label{lem:incompatibilityrootsofsubtrees}
+    \begin{mincoverrecursive}
+        \label{lem:mincoverrecursive}
 
-        Given trees $\TA, \TB$ and node $u \in V(\TA)$, $incompatible^{\TB}(u) = \bigcup_{r \in RST^{\TB}(u)} path^{\TB}(r, l_u)$, where $l_u = lca^{\TB}(\leafset^{\TA}(u))$.
+        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $S = minCover^{T}(C)$ and $v = parent(u)$. Define the operation \[addToCover^{T}(S, u) =
+        \begin{cases}
+            S \cup \{u\} & \leafset^{T}(v) \not\subseteq C \cup \leafset^{T}(u)\\
+            addToCover^{T}(S - children(v), v) & \leafset^{T}(v) \subseteq C \cup \leafset^{T}(u)\\
+        \end{cases}\]
+        Then $addToCover^{T}(S, u) = minCover^{T}(C \cup \leafset^{T}(u))$.
 
         \begin{proof}
-            $\longrightarrow$. For any $v \in V(\TB)$ such that $\leafset^{\TB}(v) \not\compatible \leafset^{\TA}(u)$, $v$ must be a proper descendant of $l_u$ by Lemma~\ref{lem:incompatibility}. Further, for some $x \in \leafset^{\TA}(u)$, $v$ is a proper ancestor of $x$ by Lemma~\ref{lem:incompatibility}. Then there must be some $r \in RST^{\TB}(u)$ such that $r$ is an ancestor of $x$. $v \not\in V(\TB[r])$, otherwise $\leafset^{\TB}(v) \subseteq \leafset^{\TA}(u)$. Thus $v$ is a proper ancestor of $r$ and $v \in path^{\TB}(r, l_u)$.
+            \textit{Base Case.} If $\leafset^{T}(v) \not\subseteq C \cup \leafset^{T}(u)$, there is some leaf $x \in \leafset^{T}(v)$ such that $x \not\in C$. Thus for any proper ancestor $w$ of $u$, $\leafset^{T}(w) \not\subseteq C$, so $w \not\in minCover^{T}(C \cup \leafset^{T}(u))$. But we need to cover $\leafset^{T}(u)$. The minimal solution for this is to cover it with the node $u$, hence $minCover^{T}(C \cup \leafset^{T}(u)) = S \cup \{u\}$.
 
-            $\longleftarrow$. Given some $v \in V(\TB)$ and $r \in RST^{\TB}(u)$ such that $v \in path^{\TB}(r, l_u)$, $\leafset^{\TA}(u) \not\subseteq \leafset^{\TB}(v)$, since $v$ is a proper descendant of $l_u$. Since $v$ is a proper ancestor of $r$, $\leafset^{\TB}(r) \subset \leafset^{\TB}(v)$, so $\leafset^{\TB}(v) \cap \leafset^{\TA}(u) \neq \emptyset$. Finally, $\leafset^{\TB}(v) \not\subseteq \leafset^{\TA}(u)$, otherwise $r \not\in RST^{\TB}(u)$. Thus $\leafset^{\TB}(v) \not\compatible \leafset^{\TA}(u)$.
+            \textit{Inductive Case.} If $\leafset^{T}(v) \subseteq C \cup \leafset^{T}(u)$, then $minCover^{T}(C - \leafset^{T}(v)) = S - children(v)$. This is because $children(v) - \{u\} \subseteq S$ and no proper descendant $u'$ of $u$ is such that $u' \in S$ since $\leafset^{T}(u) \cap C = \emptyset$. Thus we see that $S - children(v)$ covers $C - \leafset^{T}(v)$. Also, if there were a smaller cover for $C - \leafset^{T}(v)$, we could cut and paste this into $S$, giving us a smaller cover for $C$. Hence, inductively, $addToCover^{T}(S, u) = addToCover^{T}(S - children(v), v) = minCover^{T}(C - \leafset^{T}(v) \cup \leafset^{T}(v)) = minCover^{T}(C \cup \leafset^{T}(u))$. Note that the recursion is well defined since in each recursive call, we go one node further up the tree.
         \end{proof}
-    \end{incompatibilityrootsofsubtrees}
+    \end{mincoverrecursive}
 
-    This is illustrated in Figure~\ref{fig:rootsofsubtrees}. Here, any node in $RST^{\TB}(\{a, b, c, f, g, h\})$ is circled and any node that is incompatible with this cluster has a square around it. The node $l_u = lca^{\TB}(\{a, b, c, f, g, h\})$. As can be seen, all nodes on the path from roots of maximal subtrees to $l_u$ are incompatible with the given cluster.
+    To actually implement the check for whether $\leafset^{T}(v) \subseteq C \cup \leafset^{T}(u)$, we use the property $counter(w)$ for each node $w \in V(T)$. $counter(w)$ stores $|\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$. We first update this to reflect the addition of $\leafset^{T}(u)$ to $C$, and then check whether $counter(v) = |children(v)|$, which is equivalent to determining if $\leafset^{T}(v) \subseteq C \cup \leafset^{T}(u)$.
+
+    This leads to the algorithm \texttt{Add\_To\_Cover} which, for some tree $T$ and cluster $C \subseteq L$, takes in $minCover^{T}(C)$, some node $u \in V(T)$, where $\leafset^{T}(u) \cap C = \emptyset$, and $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$. It returns $minCover^{T}(C \cup \leafset^{T}(u))$, the last node $w \in V(T)$ added to the minimum cover and $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C \cup \leafset^{T}(u) : c \in children(w)\}|$. The last node added to the cover is returned to facilitate a later algorithm.
+
+    \begin{algorithm}
+        \caption{Add\_To\_Cover}
+        \label{alg:addtocover}
+
+        \begin{algorithmic}[1]
+            \Input For some tree $T$ and cluster $C \subseteq L$, takes in the set $S = minCover^{T}(C)$, some node $u \in V(T)$ and $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$.
+
+            \Output $minCover^{T}(C \cup \leafset^{T}(u))$, the last node $w \in V(T)$ added to the minimum cover and $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C \cup \leafset^{T}(u) : c \in children(w)\}|$.
+
+            \State $v := parent(u)$
+
+            \State $counter(v) := counter(v) + 1$
+
+            \If{$counter(v) = |children(v)|$}
+                \State \Return \texttt{Add\_To\_Cover}$(S - children(v), v, T)$
+            \Else
+                \State \Return $S \cup \{u\}$, $u$, $T$
+            \EndIf
+        \end{algorithmic}
+    \end{algorithm}
+
+    We now use this result to give a way to update the set of incompatible nodes when the cluster under consideration grows. As with minimum cover, we take $incompatible^{T}(C)$ for some cluster $C$ and a node $u \in V(T)$ where $\leafset^{T}(u) \cap C = \emptyset$ and we find the $incompatible^{T}(C \cup \leafset^{T}(u))$.
 
     \begin{figure}[h]
-        \includegraphics[scale=0.5]{rootsofsubtrees}
+        \includegraphics[scale=0.6]{incompatibilityrecursive}
         \centering
-        \caption{Illustration of Lemma~\ref{lem:incompatibilityrootsofsubtrees}. Let $C = \{a, b, c, f, g, h\}$. Then $l_u = lca^{\TB}(C)$. All circled nodes belong to $RST^{\TB}(C)$ and all nodes with a square around them belong to $incompatible^{\TB}(C)$.}
-        \label{fig:rootsofsubtrees}
-    \end{figure}
-
-    We can now build, for any trees $\TA$ and $\TB$ and internal node $u \in V(\TA)$, a recursive definition of $incompatible^{\TB}(u)$, in terms of $incompatible^{\TB}(c_1)$, where $c_1 \in children(u)$.
-
-    \begin{figure}[h]
-        \includegraphics[scale=0.5]{incompatibilityrecursive}
-        \centering
-        \caption{Illustration of the recursive definition of $incompatible^{\TB}(u)$ using $incompatible^{\TB}(c_1)$, where $c_1 \in children(u)$. Note that $l_{c_1} = lca^{\TB}(\leafset(c_1))$ and $l_u = lca^{\TB}(\leafset(u))$. (a) shows only the portion of $\TB$ relevant to $c_1$. Here $RST^{\TB}(\leafset(c_1)) = \{r_1, r_2\}$. The triangles under these nodes represent the subtrees rooted at them. (b) shows a case where $l_{c_1} \in incompatible^{\TB}(u)$ and (c) shows a case where $l_{c_1} \not\in incompatible^{\TB}(u)$. In (b), $RST^{\TB}(\leafset(u)) = \{r_1, r_3, r_4, r_5\}$ while in (c), $RST^{\TB}(\leafset(u)) = \{r_6, r_7\}$. Nodes incompatible with $c_1$ are indicated by empty circles, while nodes incompatible with $u$ are indicated by squares.}
+        \caption{}
         \label{fig:incompatibilityrecursive}
     \end{figure}
 
-    We demonstrate this result (proved below) in Figure~\ref{fig:incompatibilityrecursive}. Figure~\ref{fig:incompatibilityrecursive}(a) illustrates $incompatible^{\TB}(c_1)$. Here, $RST^{\TB}(c_1) = \{r_1, r_2\}$. The triangles under these nodes represent the subtrees rooted at them. The node $l_{c_1} = lca^{\TB}(\leafset^{\TA}(c_1))$. Then the nodes on the paths from $r_1$ and $r_2$ to $l_{c_1}$, indicated by empty circles, are incompatible with $c_1$, by Lemma~\ref{lem:incompatibilityrecursive}. Figure~\ref{fig:incompatibilityrecursive}(b) illustrates $incompatible^{\TB}(u)$. The node $l_u = lca^{\TB}(\leafset^{\TA}(u))$ and $RST^{\TB}(u) = \{r_1, r_3, r_4, r_5\}$. Observe that $r_4$ is a proper ancestor of $r_2$, $r_3$ is a proper descendant of $l_{c_1}$ and $r_5$ is not a descendant of $l_{c_1}$. Nodes in $incompatible^{\TB}(u)$ are indicated with squares, while nodes incompatible with $c_1$ remain marked with circles. Now nodes between $r_2$ and $r_4$, which were previously incompatible with $c_1$ are known to be compatible with $u$. Thus these must be removed from our set of candidates. However nodes between $r_4$ and $l_{c_1}$ should be kept. Further, all nodes between $r_3$ and $l_{c_1}$ were compatible with $c_1$, but are now known to be incompatible with $u$, by Lemma~\ref{lem:incompatibilityrecursive}. Nodes on the path from $r_1$ to $l_{c_1}$ were incompatible with $c_1$ and remain incompatible with $u$. We must also add nodes on the path from $r_5$ to $l_u$ to the set of incompatible nodes. Finally, we must also add nodes on the path from $l_{c_1}$ to $l_u$. However, this is not as clear cut as before. This is seen in Figure~\ref{fig:incompatibilityrecursive}(c), where $RST^{\TB}(u) = \{r_6, r_7\}$. Here, $r_6$ is an ancestor of $l_{c_1}$, in which case not all nodes between $l_{c_1}$ and $l_u$ are in $incompatible^{\TB}(u)$. Hence, we should only add nodes between $l_{c_1}$ and $l_u$ if there is some node $r \in RST^{\TB}(u)$ and $r \in RST^{\TB}(c_1)$.
+    Figure~\ref{fig:incompatibilityrecursive} illustrates two of of the interesting base cases for this process. Firstly, note that $minCover^{T}(C) = \{c_1, c_2\}$ and $minCover^{T}(C \cup \leafset^{T}(u)) = \{c_1, c_2, c_3\}$. The circled nodes belong to $incompatible^{T}(C)$, while nodes marked with a square belong to $incompatible^{T}(C \cup \leafset^{T}(u))$. Figure~\ref{fig:incompatibilityrecursive}(b) gives a case where $c_3$ is a descendant of $l_C$. In this case, we simply need to add the nodes in $path^{T}(c_3, l_C)$ to $incompatible^{T}(C)$ to give us $incompatible^{T}(C \cup \leafset^{T}(u))$. Figure~\ref{fig:incompatibilityrecursive}(b) gives a case where $c_3$ is not a descendant of $l_C$. In this case, we need add $path^{T}[l_C, l_{Cu})$ and $path^{T}(c_3, l_{Cu})$ to $incompatible^{T}(C)$.
 
-    These observations are encapsulated as thus:
-    \begin{itemize}
-        \item For any node $r \in V(\TB)$, where $r \in RST^{\TB}(u)$ and $r \not\in RST^{\TB}(c_1)$, $path^{\TB}(r, l_u)$ needs to be added to our set of incompatible nodes.
-
-        \item For any nodes $r, r' \in V(\TB)$, such that $r'$ is a proper ancestor of $r$, $r' \in RST^{\TB}(u)$ and $r \in RST^{\TB}(c_1)$, $path^{\TB}(r, r') \cup \{r'\}$ needs to be removed from our set of incompatible nodes. Note that this can be achieved by first removing $path^{\TB}(r, l_{c_1})$ and then adding back $path^{\TB}(r', l_{c_1})$. Further, the adding back part of this process is covered by the previous observation.
-
-        \item It remains to ensure that $path^{\TB}(l_{c_1}, l_u) \cup \{l_{c_1}\}$ is added to the set. Recall, this will only be necessary if there is some node $r \in RST^{\TB}(u)$ and $r \in RST^{\TB}(c_1)$. If so, then we can simply add $path(r, l_u)$ to the set.
-    \end{itemize}
-
-    The three observations above motivated the definition of each of sets $newRST^{\TB}(u, c_1)$, $removedRST^{\TB}(u, c_1)$ and $oldRST^{\TB}(u, c_1)$ in Subsection~\ref{subsec:rootsofsubtrees}. With these in hand, we can go ahead and give a formal recursive formulation of $incompatible^{\TB}(u)$ in terms of $incompatible^{\TB}(c_1)$.
+    Observe that we also need to arrive at these base cases, we need to find the node $c_3 \in minCover^{T}(C \cup \leafset^{T}(u))$. This is done by falling the same recursive mechanism as in $addToCover$.
     \newline
 
     \begin{incompatibilityrecursive}
         \label{lem:incompatibilityrecursive}
 
-        Given any trees $\TA$ and $\TB$, some internal node $u \in V(\TA)$ and $c_1 \in children(u)$, let $l_u = lca^{\TB}(\leafset(u))$ and $l_{c_1} = lca^{\TB}(\leafset(c_1))$, for any $r_1 \in oldRST^{\TB}(u, c_1)$ (if this does not exist then the relevant term below is empty),
-        \begin{align*}
-            incompatible^{\TB}(u) = &\left(incompatible^{\TB}(c_1)\ -\ \bigcup_{r \in removedRST^{\TB}(u, c_1)} path^{\TB}(r, l_{c_1})\right)\\
-            &\cup\ \bigcup_{r \in newRST^{\TB}(u, c_1)} path^{\TB}(r, l_u)\\
-            &\cup\ path^{\TB}(r_1, l_u)
-        \end{align*}
+        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $S = minCover^{T}(C)$, $I = incompatible^{T}(C)$, $l_C = lca^{T}(C)$ and $l_{Cu} = lca^{T}(C \cup \{u\})$. Let $v \in minCover^{T}(C \cup \leafset^{T}(u))$ such that $v$ is an ancestor of $u$. Define the operation \[updateIncompatible^{T}(I, u) = (I - path^{T}(u, v]) \cup path^{T}(v, l_{Cu}) \cup path^{T}(l_C, l_{Cu}) \cup
+        \begin{cases}
+            \{l_C\} & \leafset^{T}(l_C) \neq C \wedge l_C \neq l_{Cu}\\
+            \emptyset & otherwise
+        \end{cases}\]
+        Then $updateIncompatible^{T}(I, u) = incompatible^{T}(C \cup \leafset^{T}(u))$.
 
         \begin{proof}
-            First, it must be true that for any $r \in removedRST^{\TB}(u, c_1)$, there is some $r' \in newRST^{\TB}(u, c_1)$ such that $r'$ is a proper ancestor of $r$. If not, then since $\leafset^{\TB}(r) \subseteq \leafset^{\TB}(c_1) \subseteq \leafset^{\TA}(u)$ and there is no proper ancestor $r''$ of $r$ such that $\leafset^{\TB}(r'') \subseteq \leafset^{\TA}(u)$, $r \in RST^{\TB}(u)$. But then $r \not\in removedRST^{\TB}(u, c_1)$.
+            Let the cluster $Cu$ be $C \cup \leafset^{T}(u)$. It can be seen from the structure of the $addToCover$ operation that $minCover^{T}(Cu) - minCover^{T}(C) = \{v\}$ and $minCover(C) - minCover^{T}(Cu) \subseteq V(T[v])$.
 
-            $\longrightarrow$. Let $v \in incompatible^{\TB}(u)$. Then by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, $v$ is a proper descendant of $l_u$. If there is some $r \in newRST^{\TB}(u, c_1)$ such that $v$ is a proper ancestor of $r$ then $v \in path^{\TB}(r, l_u)$. Otherwise, by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, there must be some $r \in oldRST^{\TB}(u, c_1)$ such that $v$ is a proper ancestor of $r$. Then for all $r' \in removedRST^{\TB}(u, c_1)$, it cannot be that $v$ is a proper ancestor of $r'$. To see why, assume this is not true, i.e. there is some $r' \in removedRST^{\TB}(u, c_1)$ such that $v$ is a proper ancestor of $r'$. Then there is some $r'' \in newRST^{\TB}(u, c_1)$ such that $r''$ is a proper ancestor of $r'$. If $v$ is a descendant of $r''$, then $\leafset^{\TB}(v) \subseteq \leafset^{\TB}(r'') \subseteq \leafset^{\TA}(u)$. But then $v \not\in incompatible^{\TB}(u)$. Otherwise, if $v$ is a proper ancestor of $r''$, then there is some $r'' \in newRST^{\TB}(u, c_1)$ such that $v$ is a proper ancestor of $r''$, which contradicts our earlier assumption. Thus, if $v$ is a proper descendant of $l_{c_1}$, then $v \in incompatible^{\TB}(c_1)\ -\ \bigcup_{r \in removedRST^{\TB}(u, c_1)} path^{\TB}(r, l_{c_1})$. Otherwise, for any $r_1 \in oldRST^{\TB}(u, c_1)$, $v \in path^{\TB}(r_1, l_u)$ since $l_{c_1}$ is a proper ancestor of $r_1$ and a descendant of $l_u$.
+            $\longrightarrow$. Take any node $w \in updateIncompatible^{T}(I, u)$.
 
-            $\longleftarrow$. Let $v \in RHS$ of equation above.
+            Take the case where $w \in I - path^{T}(u, v]$. Since $w \in I$, there is some $c \in minCover^{T}(C)$ such that $w \in path^{T}(c, l_{C})$, by Lemma~\ref{lem:incompatibilitymincover}. If $c \not\in V(T[v])$, then $c \in minCover^{T}(Cu)$ and so $w \in incompatible^{T}(Cu)$. Otherwise, $c \in V(T[v])$. If $w$ is a proper ancestor of $v$, then $w \in incompatible^{T}(Cu)$. Otherwise, $w \in V(T[v])$. Since $w \in I - path^{T}(u, v]$, $w \not\in path^{T}(u, v]$, so $w$ is not an ancestor of $u$. Since $w \in incompatible^{T}(C)$, there is some leaf $x \in \leafset^{T}(w)$ such that $x \not\in C$. But also $x \not\in \leafset^{T}(u)$. Then $v \not\in minCover^{T}(Cu)$ because $x \in \leafset^{T}(v)$, which gives a contradiction, hence $w \not\in V(T[v])$.
 
-            \textit{Case 1.} $v \in \bigcup_{r \in newRST^{\TB}(u, c_1)} path^{\TB}(r, l_u)$. Then by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, $v \in incompatible^{\TB}(u)$.
+            Otherwise, if $w \in path^{T}(v, l_{Cu})$, then $w \in incompatible^{T}(Cu)$ by Lemma~\ref{lem:incompatibilitymincover}.
 
-            \textit{Case 2.} $v \in path^{\TB}(r_1, l_u)$. Since $r_1 \in RST^{\TB}(u)$, by Lemma~\ref{lem:incompatibilityrootsofsubtrees}, $v \in incompatible^{\TB}(u)$.
+            Otherwise, suppose $w \in path^{T}(l_C, l_{Cu})$. Then $C \subset \leafset^{T}(w)$. Also, $v$ is not a descendant of $w$, otherwise $w = l_{Cu}$. So $Cu - \leafset^{T}(w) \neq \emptyset$. Since $C \subset \leafset^{T}(w)$, there is some leaf $x \in \leafset^{T}(w)$ such that $x \not\in C$. Also, $x \not\in \leafset^{T}(u)$ since $v$ is not a descendant of $w$, so $x \not\in Cu$. Finally, $\leafset^{T}(w) \cap Cu \neq \emptyset$ because $C \subset \leafset^{T}(w)$ and $C \subset Cu$, thus $w \in incompatible^{T}(Cu)$.
 
-            \textit{Case 3.} $v \in incompatible^{\TB}(c_1)\ -\ \bigcup_{r \in removedRST^{\TB}(u, c_1)} path^{\TB}(r, l_{c_1})$ and\\[0.25em] % Overflows otherwise
-            $v \not\in \bigcup_{r \in newRST^{\TB}(u, c_1)} path^{\TB}(r, l_u)$.\\[0.25em]
-            Since $v \in incompatible^{\TB}(c_1)$, it is easy to see that $\leafset^{\TB}(v) \cap \leafset^{\TA}(u) \neq \emptyset$ and $\leafset^{\TA}(u) \not\subseteq \leafset^{\TB}(v)$. Also, there is some leaf $x \in \leafset^{\TB}(v)$ such that $x \not\in \leafset^{\TA}(c_1)$. If $x \in \leafset^{\TA}(u)$, then there is some $r \in RST^{\TB}(u)$ such that $r$ is an ancestor of $x$. Then $r \in newRST^{\TB}(u, c_1)$ since $x \in \leafset^{\TB}(r)$ and $x \not\in \leafset^{\TA}(c_1)$. We also note that $v$ is an ancestor of $x$. If $v$ is a proper ancestor of $r$, then $v \in path^{\TB}(r, l_u)$, which contradicts the definition of $v$. Thus $v$ is a descendant of $r$. Since $v \in incompatible^{\TB}(c_1)$, there is some $r' \in RST^{\TB}(c_1)$ such that $v$ is a proper ancestor of $r'$ (by Lemma 10). Then $r$ is a proper ancestor of $r'$, so $r' \not\in RST^{\TB}(u)$. Thus $r' \in removedRST^{\TB}(u, c_1)$. But then $v \in \bigcup_{r \in removedRST^{\TB}(u, c_1)} path^{\TB}(r, l_{c_1})$, which contradicts the definition of $v$. Thus $x \not\in \leafset^{\TA}(u)$ and so $v \in incompatible^{\TB}(u)$.
+            If none of the above are true, $w = l_C$ and $\leafset^{T}(l_C) \neq C$. Then
+
+            If $w \not\in incompatible^{T}(Cu)$, then there is some node $c \in minCover^{T}(C)$ such that $c \not\in minCover^{T}(Cu)$ and $w \in path^{T}(c, l_{Cu})$. But then $c \in V(T[v])$. Also, $w$ is not a proper ancestor of $v$, otherwise $w \in incompatible^{T}(Cu)$, so $w \in V(T[v])$. Since $w \in incompatible^{T}(C)$, $w \not\in incompatible^{T}(Cu)$ and $C \subseteq Cu$, there is some leaf $x \in leafset^{T}(w)$ such that $x \not\in C$ and $x \in Cu$. Thus $x \in \leafset^{T}(u)$, and so $w$ is an ancestor of $u$. Further, $w \neq u$ since $\leafset^{T}(u) \cap C = \emptyset$ and so $w \not\in incompatible^{T}(C)$. Thus $w \in path^{T}(u, v]$, which leads to a contradiction.
+
+            \textit{Case 1.} If $l_{Cu} = l_C$, then $u$ is a proper descendant of $l_C$.  We need to then show that $I - path^{T}(u, v] \cup path^{T}(v, l_{Cu}) = incompatible^{T}(Cu)$.
+
+            $\longrightarrow$. Take any node $w \in I - path^{T}(u, v] \cup path^{T}(v, l_{Cu})$. If $w \in path^{T}(v, l_{Cu})$ then $w$ trivially belongs to $incompatible^{T}(Cu)$. Otherwise, $w \in I - path^{T}(u, v]$. If $w \not\in incompatible^{T}(Cu)$, then there is some node $c \in minCover^{T}(C)$ such that $c \not\in minCover^{T}(Cu)$ and $w \in path^{T}(c, l_{Cu})$. But then $c \in V(T[v])$. Also, $w$ is not a proper ancestor of $v$, otherwise $w \in incompatible^{T}(Cu)$, so $w \in V(T[v])$. Since $w \in incompatible^{T}(C)$, $w \not\in incompatible^{T}(Cu)$ and $C \subseteq Cu$, there is some leaf $x \in leafset^{T}(w)$ such that $x \not\in C$ and $x \in Cu$. Thus $x \in \leafset^{T}(u)$, and so $w$ is an ancestor of $u$. Further, $w \neq u$ since $\leafset^{T}(u) \cap C = \emptyset$ and so $w \not\in incompatible^{T}(C)$. Thus $w \in path^{T}(u, v]$, which leads to a contradiction.
+
+            $\longleftarrow$. Take any node $w \in incompatible^{T}(Cu)$. If $w \in path^{T}(v, l_{Cu})$, then we are done. Otherwise, $w \in path^{T}(c, l_{Cu})$ for some $c \in minCover^{T}(Cu) - \{v\}$. Then $w \in I$, since $minCover^{T}(Cu) - \{v\} \subseteq minCover^{T}(C)$. Also, $w \not\in V(T[v])$ since $\leafset^{T}(v) \subseteq Cu$. Thus $w \in I - path^{T}(u, v]$.
+
+            \textit{Case 2.}
+
+            \textit{Case 3.} If $l_{Cu} = l_C$ and $\leafset^{T}(l_C) \neq C$, $minCover^{T}(Cu) = S \cup \{u\}$, since
+
+
+            For the three base cases, $\leafset^{T}(v) \not\subseteq C \cup \leafset^{T}(u)$. By the same argument as in Lemma~\ref{lem:mincoverrecursive}, $minCover^{T}(C \cup \leafset^{T}(u)) = minCover^{T}(C) \cup \{u\}$. Note that $path(u, l_C) \subseteq path(u, l_{Cu})$, thus $I \cup path^{T}(u, l_{Cu}) = incompatible^{T}(C) \cup path^{T}(u, l_{Cu})$.
+
+            \textit{Base Case 1.} $l_{Cu} = l_C$.
+
+            We first show that $incompatible^{T}(C \cup \leafset^{T}(u)) \subseteq incompatible^{T}(C) \cup path^{T}(u, l_{Cu})$. Take any node $w \in incompatible^{T}(C \cup \leafset^{T}(u))$. If $w \in path^T(u, l_{Cu})$, then we are done. Otherwise, by Lemma~\ref{lem:incompatibilitymincover}, $w \in path^{T}(c, l_{Cu})$ for some node $c \in minCover^{T}(C \cup \leafset^{T}(u))$. But since $l_{Cu} = l_{C}$, $w \in incompatible^{T}(C)$.
+
+            Now we show that $incompatible^{T}(C) \cup path^{T}(u, l_{Cu}) \subseteq incompatible^{T}(C \cup \leafset^{T}(u))$. Take any node $w \in incompatible^{T}(C) \cup path^{T}(u, l_{Cu})$. If $w \in path^{T}(u, l_{Cu})$, then $w \in incompatible^{T}(C \cup \leafset^{T}(u))$ by Lemma~\ref{lem:incompatibilitymincover} since $u \in minCover^{T}(C \cup \leafset^{T}(u))$. Otherwise, $w \in path^{T}(c, l_C)$ for some node $c \in minCover^{T}(C)$, by Lemma~\ref{lem:incompatibilitymincover}. Since $minCover^{T}(C) \subseteq minCover^{T}(C \cup \leafset^{T}(u))$ and $l_C = l_{Cu}$, $w \in incompatible^{T}(C \cup \leafset^{T}(u))$.
+
+            \textit{Base Case 2.} $l_{Cu} \neq l_C \wedge\, \leafset^{T}(l_C) = C$. Note that since $\leafset^{T}(l_C) = C$, $minCover^{T}(C) = \{l_C\}$. Then by Lemma~\ref{lem:incompatibilitymincover}, $incompatible^{T}(C \cup \leafset^{T}(u)) = path^T(u, l_{Cu}) \cup path^{T}(l_C, l_{Cu})$. Since $incompatible^T(C) = \emptyset$, we are done.
+
+            \textit{Base Case 3.} $l_{Cu} \neq l_C \wedge\, \leafset^{T}(l_C) \neq C$.
+
+            We first show that $incompatible^{T}(C \cup \leafset^{T}(u)) \subseteq incompatible^{T}(C) \cup path^{T}(u, l_{Cu}) \cup path^{T}[l_C, l_{Cu})$. Take any node $w \in incompatible^{T}(C \cup \leafset^{T}(u))$. If $w \in path^T(u, l_{Cu})$, then we are done. Otherwise, by Lemma~\ref{lem:incompatibilitymincover}, $w \in path^{T}(c, l_{Cu})$ for some node $c \in minCover^{T}(C \cup \leafset^{T}(u))$. If $w$ is an ancestor of $l_C$, then $w \in path^{T}[l_C, l_{Cu})$, so we are done. Otherwise, if $w$ is a proper descendant of $l_C$, then $w \in path^{T}(c, l_C)$, so $w \in incompatible^{T}(C)$.
+
+            Now we show that $incompatible^{T}(C) \cup path^{T}(u, l_{Cu}) \cup path^{T}[l_C, l_{Cu}) \subseteq incompatible^{T}(C \cup \leafset^{T}(u))$. Take any node $w \in incompatible^{T}(C) \cup path^{T}(u, l_{Cu}) \cup path^{T}[l_C, l_{Cu})$. By the same argument as in the first case, if $w \in incompatible^{T}(C) \cup path^{T}(u, l_{Cu})$, then $w \in incompatible^{T}(C \cup \leafset^{T}(u))$. Otherwise, $w \in path^{T}[l_C, l_{Cu})$. Then, since $\leafset^{T}(l_C) \neq C$, there is some node $c$ which is a proper descendant of $l_C$ such that $c \in minCover^T(C)$. Thus $w \in path^{T}(c, l_{Cu})$, so $w \in incompatible^{T}(C \cup \leafset^{T}(u))$.
+
+            \textit{Inductive Case.} $\leafset^{T}(v) \subseteq C \cup \leafset^{T}(u)$. By the same argument as in Lemma~\ref{lem:mincoverrecursive}, $minCover^{T}(C - \leafset^{T}(v)) = minCover^{T}(C) - children(v)$. Then, it is clear that $incompatible^{T}(C - \leafset^{T}(v)) \subseteq I - \{v\} \subseteq incompatible^{T}(C - \leafset^{T}(v)) \cup path(v, l_{Cu})$. Thus, inductively, $updateIncompatible^{T}(I, u) = updateIncompatible^{T}(I - \{v\}, v) = incompatible^{T}(C - \leafset^{T}(v) \cup \leafset^{T}(v)) = incompatible^{T}(C \cup \leafset^{T}(u))$. Note that the recursion is well defined since in each recursive call, we go one node further up the tree.
         \end{proof}
     \end{incompatibilityrecursive}
 
-%    The above idea is the key insight that leads to an improvement in the runtime of \texttt{Filter\_Clusters}. As will be seen later, this property allows us to reduce the number of times we delete from a queue that maintains a subset of $V(\TB)$ from $O(n\,log\,n)$ to $O(n)$, thus decreasing total runtime from $O(n\,log^2n)$ to $O(n\,log\,n)$.
+    As done when computing the minimum cover, we implement the check for whether $\leafset^{T}(v) \subseteq C \cup \leafset^{T}(u)$ and $\leafset^{T}(l_C) = C$ using a counter property.
 
-    \subsection{\texttt{Filter\_Clusters} algorithm}
-    \label{subsec:filterclustersalgorithm}
+    This gives us the algorithm \texttt{Update\_Incompatible} which, for some tree $T$ and cluster $C \subseteq L$, takes in some node $u \in V(T)$, where $\leafset^{T}(u) \cap C = \emptyset$, a node $l_C = lca^{T}(C)$, a set $I \subseteq V(T)$ where $incompatible^{T}(C) \subseteq I \subseteq incompatible^{T}(C) \cup path(u, lca^T(C))$ and the tree $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$. It returns $incompatible^{T}(C \cup \leafset^{T}(u))$, the node $l_{Cu} = lca^{T}(C \cup \{u\})$ and $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C \cup \leafset^{T}(u) : c \in children(w)\}|$.
 
-    With this stricter definition of incompatibility in hand, we can work on a solution for \texttt{Filter\_Clusters}. We define a subroutine \texttt{Filter\_Clusters\_Helper} which, for some trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB}$, takes as input a subtree of $\TA$ (say $\TA[u]$) and $\TB$ and returns $RST^{\TB}(u)$. As a side effect, any node $u' \in V(\TA[u])$ is marked for deletion if $\weight(u') \leq max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible \leafset^{\TA}(u')\})$. This means that any node in $\TA$ which is not more frequent that every cluster it is incompatible with in $\TB$ is marked for deletion. Then \texttt{Filter\_Clusters} uses \texttt{Filter\_Clusters\_Helper} as shown in Algorithm~\ref{alg:filterclusters}.
+    \begin{algorithm}
+        \caption{Update\_Incompatible}
+        \label{alg:updateincompatible}
+
+        \begin{algorithmic}[1]
+            \Input For some tree $T$ and cluster $C \subseteq L$, takes in some node $u \in V(T)$, where $\leafset^{T}(u) \cap C = \emptyset$, the set $S = minCover^{T}(C)$, the set $I = incompatible^{T}(C)$, the node $l_C = lca^{T}(C)$ and the tree $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$.
+
+            \Output $minCover^{T}(C \cup \leafset^{T}(u))$, $incompatible^{T}(C \cup \leafset^{T}(u))$, the node $l_{Cu} = lca^{T}(C \cup \{u\})$ and $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C \cup \leafset^{T}(u) : c \in children(w)\}|$.
+
+            \State $S, v :=$ \texttt{Add\_To\_Cover}$(S, u, T)$
+
+            \State $l_{Cu} := lca^T(l_C, u)$
+
+            \State $I := (I - path^{T}(u, v]) \cup path^{T}(v, l_{Cu}) \cup path^{T}(l_C, l_{Cu})$
+
+            \If{$counter(l_C) = |children(l_C)|$}
+                \State \Return $S,\, I,\, l_{Cu},\, T$
+            \Else
+                \State \Return $S,\, I \cup \{l_C\},\, l_{Cu},\, T$
+            \EndIf
+        \end{algorithmic}
+    \end{algorithm}
+
+    We now develop the solution for \texttt{Filter\_Clusters}. Recall that this method takes trees $\TA$ and $\TB$ as input. First, for any node $u \in V(\TA)$, define $incompatible^{\TB}(u)$ to be $incompatible^{\TB}(\leafset^{\TA}(u))$. As discussed earlier, the idea is to find $incompatible^{\TB}(u)$ for each node $u \in V(\TA)$. To do so, we recursively obtain $incompatible^{\TB}(c)$, where $c$ is the heavy child of $u$. We also get $minCover^{\TB}(c')$ for each $c' \in$ side children of $u$. Then for $v \in \bigcup_{c' \in \text{side children of } u} minCover^{\TB}(c')$ we use $updateIncompatible$ to insert $v$ into $incompatible^{\TB}(c)$, giving us $incompatible^{\TB}(u)$. Thus, it would be helpful if \texttt{Filter\_Clusters} returned $incompatible^{\TB}(u)$ and $minCover^{\TB}(u)$.
+
+    {\color{red} Should I give the \texttt{Filter\_Clusters} algorithm first?}
+
+    This leads to defining the helper function \texttt{Filter\_Clusters\_Helper}, which takes as input $u \in V(\TA)$ and $\TB$ and returns $incompatible^{\TB}(\leafset^{\TA}(u))$, $minCover^{\TB}(\leafset^{TA}(u))$, a copy of $\TA[u]$ where for any node $w \in \TA[u]$, $w$ is marked for deletion iff $\weight(w) \leq \weight(v)$ for any $v \in V(\TB)$ with $u \not\compatible v$ and $\TB$ where for each $v \in V(\TA)$, $counter(v) = |\{\leafset^{\TB}(c) \subseteq \leafset^{\TA}(u) : c \in children(v)\}|$. The third item is used to keep track of which nodes in $\TA$ need to be deleted. The last item is $\TB$ with counter values updated, so that we can use it while updating the set of incompatible nodes.
+
+    Then \texttt{Filter\_Clusters} can simply take the copy of $\TA$ output by \texttt{Filter\_Clusters\_Helper}$(root(\TA), \TB)$ and delete the marked nodes in a top-down traversal. The resulting algorithm is shown below. Note that it also does some preprocessing on $\TB$, which is explained in more detail below.
 
     \begin{algorithm}
         \caption{Filter\_Clusters}
@@ -605,123 +823,119 @@
 
             \Output A tree $T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset^T = L$
 
-            \State Preprocess $\TB$ for $lca$ queries
+            \State Preprocess $\TB$ for lca, $cFD$ and $rmqTree$ queries and compute $|children(w)|$ for each node $w \in V(\TB)$
 
-            \State Do a bottom-up traversal of $\TB$ to compute $|children(v)|$ for all $v \in V(\TB)$
+            \State $\_, \_, \TA, \_ :=$ \texttt{Filter\_Clusters\_Helper}$(root(\TA), \TB)$
 
-            \State Construct a cFL structure over $\TB$
+            \State Do a top-down traversal of $\TA$, deleting all marked nodes
 
-            \State Construct an RMQ structure over $\TB$
-
-            \State Let $T_{\alpha'} :=$ copy of $\TA$
-
-            \State \texttt{Filter\_Clusters\_Helper}$(T_{\alpha'}, \TB)$
-
-            \State Do a top-down traversal of $T_{\alpha'}$, deleting all marked nodes
-
-            \State \Return $T_{\alpha'}$
+            \State \Return $\TA$
         \end{algorithmic}
     \end{algorithm}
 
-     \texttt{Filter\_Clusters\_Helper} decomposes $\TA$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\TA}(u) : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters\_Helper} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root. Here, for any non-leaf node $p_i \in \pi(\TA)$, we use \texttt{Compute\_Roots\_Of\_Subtrees} and Lemma~\ref{lem:incompatibilityrecursive}, to find $incompatible^{\TB}(p_i)$.
+    Now we need to develop \texttt{Filter\_Clusters\_Helper}. The key to this running fast is ensuring that when we recursively call the function on a side child $c'$ of some node $u \in V(\TA)$, we restrict $\TB$ such $\leafset^{\TB} = \leafset^{\TA}(c')$. Let $\tau = \TA[c']$. We reuse the technique described in \cite{jansson2018algorithms}. We wish to construct a tree $\TB||\leafset^{\tau}$ such that $\leafset^{\TB||\leafset^{\tau}} = \leafset^{\tau}$, but at the same time does not lose important weight information. To do so, we first construct $\TB|\leafset^{\tau}$ and let weight of each node in this tree be the same as its weight in $\TB$. For each non-root node $u \in V(\TB|\leafset^{\tau})$, let $v = parent^{\TB|\leafset^{\tau}}(u)$, then if $path^{\TB}(u, v) \neq \emptyset$, we create a new node $z$ in $\TB|\leafset^{\tau}$, set $parent(u) = z$ and $parent(z) = v$. Also, we set $\weight(z) = max_{w \in path^{\TB}(u, v)} \weight(w)$. Note that this value can be obtained with an $rmqTree^{\TB}[parent(u), cFD(v)]$ query, which we denote by $rmqTree^{\TB}(u, v)$. This gives us the tree $\TB||\leafset^{\tau}$.
 
-    A crucial part of this algorithm is the usage of a cFL structure and an RMQ structure on $\TB$ that allow us to query for the maximum weight of any node on the path between two given nodes (described in Sections~\ref{sec:cfd} and~\ref{sec:rmqtree}). This is because we do not actually need the set of incompatible nodes, we just need to find the largest weight over all incompatible nodes. Thus, rather than inserting all the nodes in say $path^{\TB}(v, v')$ into a set, we just insert $v$ indexed by $rmqTree^{\TB}[parent(v), childD(v, v')]$ (as obtained from the RMQ structure) into a priority queue. Notice that this plays well with Lemma~\ref{lem:incompatibilityrecursive}, which formulates incompatible nodes solely in terms of $path$. Thus, for convenience define, for any tree $\TB$ and nodes $v, v' \in V(\TB)$ where $v'$ is a proper ancestor of $v$, $rmqTree^{\TB}(v, v') = max_{w \in path^{\TB}(v, v')} \weight(w) = rmqTree^{\TB}[parent(v), childD(v, v')]$.
+    Further, for any node $u \in V(\TB||\leafset^{\tau})$, if $\leafset^{\TB||\leafset^{\tau}}(u) \neq \leafset^{\TB}(u)$, then $u$ is marked as $spoiled$. Special nodes are all marked as $spoiled$, since it is certain that the nodes they represent do not have their full leafset in $\TB||\leafset^{\tau}$. Observe that the ancestor of any spoiled node is also spoiled. Figure~\ref{fig:specialnodes} illustrates this entire process.
 
-    We let $l_1$ be the leaf in $\TB$ labelled by $p_1$. The algorithm then initialises $roots$ to be $\{l_1\}$ and sets $counter(parent(l_1)) = 1$. Observe that the counter values are now correct with respect to the nodes in $RST^{\TB}(p_1)$ (as described in Lemma~\ref{lem:maintainingcounter}).
+    \begin{figure}[h]
+        \includegraphics[scale=0.5]{specialnodes}
+        \centering
+        \caption{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||\{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are special nodes. Observe that the special node that is a parent of the leaf $j$ has weight $7$ since the nodes on the path from $j$ to the root of $T$ had weights $4, 7$ and $2$. Also note that all internal nodes in (b) are spoiled.}
+        \label{fig:specialnodes}
+    \end{figure}
 
-    It then uses Algorithm~\ref{alg:computerootsofsubtrees} and Lemma~\ref{lem:incompatibilityrecursive} to move up the centroid path, finding the nodes incompatible with $p_i \in \pi$. Thus, it first uses $RST^{\TB}(p_{i-1})$ and $boundary^{\TB}(p_i)$ to compute the sets $newRST^{\TB}(p_i, p_{i-1})$, $removedRST^{\TB}(p_i, p_{i-1})$ and $oldRST^{\TB}(p_i, p_{i-1})$. It is to facilitate this process that \texttt{Filter\_Clusters\_Helper} returns $RST^{\TB}(\leafset^{\TA})$ for the caller to use. These sets are used to compute $incompatible^{\TB}(p_i)$, after which we compare the largest weight in this set with the weight of $p_i$, and mark $p_i$ for deletion if its weight is not larger. Note that the counter values are inductively computed correctly since once we run \texttt{Compute\_Roots\_Of\_Subtrees} on $p_i$, the counter values are correct with respect to $RST^{\TB}(p_i)$, as laid out in Lemma~\ref{lem:maintainingcounter}.
+    Since we now have spoiled nodes, this means that when running \texttt{Add\_To\_Cover} or \texttt{Update\_Incompatible}, our $counter$ check is not good enough, as for some node $u \in V(\TB||\leafset^{\tau})$, even if $\leafset^{\TB||\leafset^{\tau}}(u) \subseteq C$, where $C$ is some cluster under consideration, that does not guarantee that $\leafset^{\TB}(u) \subseteq C$. Thus we need to expand our check to include the condition that $u$ must not be spoiled.
 
-    Finally, observe that at the end, the algorithm erases some counter values. Specifically, it erases the counters of the parents of nodes in $RST^{\TB}(\leafset^{\TA})$. This is because we do not want calls made to \texttt{Compute\_Roots\_Of\_Subtrees} for some $\tau_1 \in \sigma(\TA)$ to affect those made for a different $\tau_2 \in \sigma(\TA)$. Note that we do not need to erase any other counter values because nodes inside a maximal compatible subtree will never be encountered again while iterating upwards from some $boundary$.
+    This leads to the algorithm \texttt{Update\_Incompatible\_Spoiled}. This algorithm combines \texttt{Add\_To\_Cover} and \texttt{Update\_Incompatible} along with the concept of spoiled nodes. For some tree $T$ and cluster $C \subseteq L$, the algorithm takes in a node $u \in V(T)$, where $\leafset^{T}(u) \cap C = \emptyset$, a node $l_C = lca^{T}(C)$, the set $S = minCover^{T}(C)$, a set $I \subseteq V(T)$ where $incompatible^{T}(C) \subseteq I \subseteq incompatible^{T}(C) \cup path(u, lca^T(C))$ and the tree $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$. It returns $minCover^{T}(C \cup \leafset^{T}(u))$, $incompatible^{T}(C \cup \leafset^{T}(u))$, the node $l_{Cu} = lca^{T}(C \cup \{u\})$ and $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C \cup \leafset^{T}(u) : c \in children(w)\}|$.
 
-    The procedure thus described is shown in Algorithm~\ref{alg:filterclustershelper}.
+    \begin{algorithm}
+        \caption{Update\_Incompatible\_Spoiled}
+        \label{alg:updateincompatiblespoiled}
 
-    \begin{algorithm}[H]
+        \begin{algorithmic}[1]
+            \Input For some tree $T$ and cluster $C \subseteq L$, takes in some node $u \in V(T)$, where $\leafset^{T}(u) \cap C = \emptyset$, a node $l_C = lca^{T}(C)$, the set $S = minCover^{T}(C)$, a set $I \subseteq V(T)$ where $incompatible^{T}(C) \subseteq I \subseteq incompatible^{T}(C) \cup path(u, lca^T(C))$ and the tree $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$.
+
+            \Output $minCover^{T}(C \cup \leafset^{T}(u))$, $incompatible^{T}(C \cup \leafset^{T}(u))$, the node $l_{Cu} = lca^{T}(C \cup \{u\})$ and $T$, where for each $w \in V(T)$, $counter(w) = |\{\leafset^{T}(c) \subseteq C \cup \leafset^{T}(u) : c \in children(w)\}|$.
+
+            \State $v := parent(u)$
+
+            \State $counter(v) := counter(v) + 1$
+
+            \State $l_{Cu} := lca^T(l_C, u)$
+
+            \If{$counter(v) = |children(v)|$ and $v$ is not spoiled}
+                \State \Return \texttt{Update\_Incompatible\_Spoiled}$(v, l_{Cu}, S - children(v), I - v, T)$
+            \ElsIf{$l_{Cu} = l_C$}
+                \State \Return $S \cup \{u\}, I \cup path^{T}(u, l_{Cu}), l_{Cu}, T$
+            \ElsIf{$counter(l_C) = |children(l_C)|$}
+                \State \Return $S \cup \{u\}, I \cup path^{T}(u, l_{Cu}) \cup path^{T}(l_C, l_{Cu}), l_{Cu}, T$
+            \Else
+                \State \Return $S \cup \{u\}, I \cup path^{T}(u, l_{Cu}) \cup path^{T}[l_C, l_{Cu}), l_{Cu}, T$
+            \EndIf
+        \end{algorithmic}
+    \end{algorithm}
+
+    Also note we now have an explanation for the preprocessing done on $\TB$ in \texttt{Filter\_Clusters}. $lca$ queries are needed in \texttt{Update\_Incompatible\_Spoiled}, while $cFD$ and $rmqTree$ queries are needed to construct the trees $\TB||\leafset^{\tau}$.
+
+    With the procedure \texttt{Update\_Incompatible\_Spoiled} in hand, we can now write \texttt{Filter\_Clusters\_Helper}, presented in Algorithm~\ref{alg:filterclustershelper}.
+
+    \begin{algorithm}
         \caption{Filter\_Clusters\_Helper}
         \label{alg:filterclustershelper}
 
         \begin{algorithmic}[1]
-            \Input Trees $\TA$ and $\TB$ with $\leafset^{\TA} \subseteq \leafset^{\TB} = L$ where every cluster has a known $weight$.
+            \Input For some trees $\TA$ and $\TB$, takes in some node $u \in V(\TA)$ and $\TB$, where $\leafset^{\TA}(u) \subseteq \leafset^{\TB}$.
 
-            \Output $RST^{\TB}(\leafset^{\TA})$
+            \Output $incompatible^{\TB}(\leafset^{\TA}(u))$, $minCover^{\TB}(\leafset^{TA}(u))$, a copy of $\TA[u]$ where for any node $w \in \TA[u]$, $w$ is marked for deletion iff $\weight(w) \leq \weight(v)$ for any $v \in V(\TB)$ with $u \not\compatible v$ and $\TB$ where for each $v \in V(\TA)$, $counter(v) = |\{\leafset^{\TB}(c) \subseteq \leafset^{\TA}(u) : c \in children(v)\}|$.
 
-            \SideEffect Marks any node $u \in V(\TA)$ for deletion iff $\weight(u) \leq \weight(v)$ for any $v \in V(\TB)$ with $u \not\compatible v$.
+            \State $c := $ heavy child of $u$
 
-            \State Compute a centroid path $\pi = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$ of $\TA$, where $p_{\gamma}$ is the root of $\TA$ and $p_1$ is a leaf.
+            \State $T_u :=$ tree consisting of only a root
 
-            \State \algorithmicforall\ side trees $\tau \in \sigma(\TA)$,
-                associate \texttt{Filter\_Clusters\_Helper}$(\tau, \TB)$ with $\tau$
+            \State $incompatible, minCover, T_{c}, \TB :=$ \texttt{Filter\_Clusters\_Helper}$(c, \TB)$
 
-            \State Let $l_1 :=$ leaf in $\TB$ labelled by $p_1$
+            \ForAll{$c' \in$ side children of $u$}
+                \State Construct $\TB||\TA[c']$
 
-            \State $counter^{\TB}(parent(l_1)) := 1$
+                \State Preprocess $\TB||\TA[c']$ for lca queries and compute $|children(w)|$ for each node $w \in V(\TB||\TA[c'])$
 
-            \State $roots := \{l_1\}$
+                \State $\_, minCover_{c'}, T_{c'}, \_ :=$ \texttt{Filter\_Clusters\_Helper}$(c', \TB||\TA[c'])$
 
-            \State $incompatible :=$ empty Brodal queue
+                \State Attach the root of $T_{c'}$ to the root of $T_u$
 
-            \For{$i := 2$ \textbf{to} $\gamma$}
-                \State $boundary := \{\text{list of roots associated with } \tau : \tau \in \sigma(p_i)\}$
-
-                \State $l_i := lca^{\TB}(l_{i-1} \cup boundary)$
-
-                \State $new, removed, old :=$ \texttt{Compute\_Roots\_Of\_Subtrees}$(roots, boundary, \TB)$
-
-                \State \algorithmicforall\ $r \in removed$, remove $r$ from $incompatible$
-                \label{step:removedrootsremoval}
-
-                \State \algorithmicforall\ $r \in new$, add $r, rmqTree^{\TB}(r, l_i)$ to $incompatible$
-
-                \If{$old \neq \emptyset$}
-                    \State Let $r \in old$
-
-                    \State Remove $r$ from $incompatible$
-                    \label{step:oldrootremoval}
-
-                    \State Add $r, rmqTree^{\TB}(r, l_i)$ to $incompatible$
-                \EndIf
-
-                \IIEf{$incompatible$ is empty}
-                    {$M := 0$}
-                    $M :=$ maximum weight of a node in $incompatible$
-
-                \IIf{$\weight(p_i) \leq M$}
-                    mark $p_i$ for deletion
-
-                \State $roots := old \cup new$
+                \ForAll{$v \in minCover_{c'}$}
+                    \State $incompatible, minCover, \TB :=$ \texttt{Update\_Incompatible\_Spoiled}$(incompatible, minCover, v, \TB)$
+                \EndFor
             \EndFor
 
-            \State \algorithmicforall\ $r \in roots$, $counter^{\TB}(parent(r)) := 0$
+            \IIEf{$incompatible$ is empty}
+                {$M := 0$}
+                $M :=$ maximum weight of a node in $incompatible$
 
-            \State \Return $roots$
+            \IIf{$\weight(u) \leq M$}
+                mark root of $T_u$ for deletion
+
+            \State \Return $incompatible, minCover, T_u, \TB$
         \end{algorithmic}
     \end{algorithm}
 
-    \bigskip
-    \begin{filterclustersruntime}
-        \label{lem:filterclustersruntime}
-
-        The algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ runs in $O(n\,log\,n)$ time.
-
-        \begin{proof}
-            We preprocess $\TB$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time. $\TB$ is also preprocessed to create the cFL and RMQ data structures using Lemma~\ref{lem:rmqdatastructure} and~\ref{lem:cfddatastructure}. These take $O(n\,log\,n)$ preprocessing time and thereafter allow us to answer $rmqTree$ queries in $O(1)$ time. The bottom-up traversal of $\TB$ to compute $|children(v)|$ for all $v \in V(\TB)$ takes $O(n)$ time. Finally, copying $\TA$ takes $O(n)$ time.
-
-            As before, we use linked lists to implement sets of nodes, coupled with membership properties.
-
-            The data structure used for $incompatible$ is the Brodal queue of \cite{brodal1995fast}. This allows $insert$ and $findMax$ operations in $O(1)$ time and $delete$ in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $\TB$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time.
-
-            Let $m = |\leafset^{\TA}|$ for some call to \texttt{Filter\_Clusters\_Helper}$(\TA, \TB)$. Recall that $n = |\leafset^{\TB}|$. Observe that for any cluster $C$, $|RST^{\TB}(C)| \leq |C|$. Thus $|boundary^{\TB}(p_i)| \leq |\leafset^{\TA}(p_i) - \leafset^{\TA}(p_{i-1})|$ and $\sum_{i = 2}^{\gamma} |boundary^{\TB}(p_i)| \leq m$. It can also be seen that $\sum_{P_i \in \mathcal{P}(\TA), p_j \in P_i} removedRST(p_j, p_{j-1}) \leq |V(\TA)|$.
-
-            Computing the centroid path takes $O(m)$ time. Constructing the $boundary$ sets costs $O(m)$ time in total. Since $lca$ queries can be made in constant time and the total number of $lca$ queries is $O(m)$, this also costs $O(m)$ time.
-
-            The runtime of \texttt{Compute\_Roots\_Of\_Subtrees} is $O(|boundary^{\TB}(p_i)| + |removedRST^{\TB}(p_i, p_{i-1})|)$. The cost due to the first half of this expression is $O(m)$. The cost due to the second half of this expression is $O(n)$ over all calls to \texttt{Filter\_Clusters\_Helper}.
-
-            $O(m)$ insertions are made into $incompatible$, costing $O(m)$ time. Since the total size of all the removed sets is $O(n)$, there are a total of $O(n)$ deletions from $incompatible$ over all calls due to Step~\ref{step:removedrootsremoval}. Step~\ref{step:oldrootremoval} also causes a total of $O(n)$ deletions over all calls as this step happens once for each node in the centroid path, and every node in $\TA$ belongs to exactly one centroid path. Thus deletions cost a total of $O(n\,log\,n)$ time.
-
-            We can hence write a recurrence for \texttt{Filter\_Clusters\_Helper} (ignoring steps that are being analysed over the entire call to \texttt{Filter\_Clusters}) in the following manner: $T(m) = \sum_{\tau \in \sigma(T)}T(|\leafset^{\tau}|) + O(m)$. Since for any $\tau \in \sigma(T)$, $|\leafset^{\tau}| \leq m/2$, there are $log\,m$ recursion levels, we get $T(n) = O(n\,log\,n)$.
-
-            Finally, we note that it takes $O(n)$ time to process $T_{\alpha'}$ after \texttt{Filter\_Clusters\_Helper} is done. This is because deleting all marked nodes can be done in a top down traversal (using the \texttt{delete} operation described in Subsection~\ref{subsec:delete}), where every node's parent changes at most once. Further, recall that the total preprocessing time is $O(n\,log\,n)$ and the time set aside to be analysed over the entire call to \texttt{Filter\_Clusters} is $O(n\,log\,n)$. Thus, \texttt{Filter\_Clusters} runs in $O(n\,log\,n)$ time.
-        \end{proof}
-    \end{filterclustersruntime}
+%             We preprocess $\TB$ for \textit{lca} queries using the technique of \cite{bender2000lca}. This takes $O(n)$ preprocessing time and thereafter allows us to answer \textit{lca} queries in $O(1)$ time. $\TB$ is also preprocessed to create the cFL and RMQ data structures using Lemma~\ref{lem:rmqdatastructure} and~\ref{lem:cfddatastructure}. These take $O(n\,log\,n)$ preprocessing time and thereafter allow us to answer $rmqTree$ queries in $O(1)$ time. The bottom-up traversal of $\TB$ to compute $|children(v)|$ for all $v \in V(\TB)$ takes $O(n)$ time. Finally, copying $\TA$ takes $O(n)$ time.
+%
+%             As before, we use linked lists to implement sets of nodes, coupled with membership properties.
+%
+%             The data structure used for $incompatible$ is the Brodal queue of \cite{brodal1995fast}. This allows $insert$ and $findMax$ operations in $O(1)$ time and $delete$ in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $\TB$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time.
+%
+%             Let $m = |\leafset^{\TA}|$ for some call to \texttt{Filter\_Clusters\_Helper}$(\TA, \TB)$. Recall that $n = |\leafset^{\TB}|$. Observe that for any cluster $C$, $|RST^{\TB}(C)| \leq |C|$. Thus $|boundary^{\TB}(p_i)| \leq |\leafset^{\TA}(p_i) - \leafset^{\TA}(p_{i-1})|$ and $\sum_{i = 2}^{\gamma} |boundary^{\TB}(p_i)| \leq m$. It can also be seen that $\sum_{P_i \in \mathcal{P}(\TA), p_j \in P_i} removedRST(p_j, p_{j-1}) \leq |V(\TA)|$.
+%
+%             Computing the centroid path takes $O(m)$ time. Constructing the $boundary$ sets costs $O(m)$ time in total. Since $lca$ queries can be made in constant time and the total number of $lca$ queries is $O(m)$, this also costs $O(m)$ time.
+%
+%             The runtime of \texttt{Compute\_Roots\_Of\_Subtrees} is $O(|boundary^{\TB}(p_i)| + |removedRST^{\TB}(p_i, p_{i-1})|)$. The cost due to the first half of this expression is $O(m)$. The cost due to the second half of this expression is $O(n)$ over all calls to \texttt{Filter\_Clusters\_Helper}.
+%
+%             $O(m)$ insertions are made into $incompatible$, costing $O(m)$ time. Since the total size of all the removed sets is $O(n)$, there are a total of $O(n)$ deletions from $incompatible$ over all calls due to Step~\ref{step:removedrootsremoval}. Step~\ref{step:oldrootremoval} also causes a total of $O(n)$ deletions over all calls as this step happens once for each node in the centroid path, and every node in $\TA$ belongs to exactly one centroid path. Thus deletions cost a total of $O(n\,log\,n)$ time.
+%
+%             We can hence write a recurrence for \texttt{Filter\_Clusters\_Helper} (ignoring steps that are being analysed over the entire call to \texttt{Filter\_Clusters}) in the following manner: $T(m) = \sum_{\tau \in \sigma(T)}T(|\leafset^{\tau}|) + O(m)$. Since for any $\tau \in \sigma(T)$, $|\leafset^{\tau}| \leq m/2$, there are $log\,m$ recursion levels, we get $T(n) = O(n\,log\,n)$.
+%
+%             Finally, we note that it takes $O(n)$ time to process $T_{\alpha'}$ after \texttt{Filter\_Clusters\_Helper} is done. This is because deleting all marked nodes can be done in a top down traversal (using the \texttt{delete} operation described in Subsection~\ref{subsec:delete}), where every node's parent changes at most once. Further, recall that the total preprocessing time is $O(n\,log\,n)$ and the time set aside to be analysed over the entire call to \texttt{Filter\_Clusters} is $O(n\,log\,n)$. Thus, \texttt{Filter\_Clusters} runs in $O(n\,log\,n)$ time.
 
     \section{Constructing the FDCT}
     \label{sec:freqdiffconstruction}
