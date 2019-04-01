@@ -1,8 +1,10 @@
 \documentclass{article}
 
+\usepackage{url}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
+\usepackage{array}
 \usepackage{enumerate}
 \usepackage{relsize}
 \usepackage{algorithm}
@@ -14,6 +16,7 @@
 \usepackage{caption}
 \usepackage{float}
 \usepackage{setspace}
+\usepackage{tabularx}
 \graphicspath{{images/}}
 
 \usepackage[
@@ -24,6 +27,8 @@
 ]{geometry}
 
 \captionsetup{font=footnotesize,justification=justified,margin=2cm}
+
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
 
 \algnewcommand\algorithmicinput{\textbf{Input:}}
 \algnewcommand\algorithmicoutput{\textbf{Output:}}
@@ -96,7 +101,7 @@
 
     Any two clusters $C_1, C_2 \subseteq \leafset(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible} (referred to as \textit{contradiction} in Section~\ref{sec:introduction}), denoted as $C_1 \not\compatible C_2$. Similarly, given trees $T_1$ and $T_2$ with identical leaf sets, and nodes $u \in V(T_1)$, $v \in V(T_2)$, we say $u$ is compatible with $v$, denoted as $u \compatible v$, if the clusters associated with $u$ and $v$ are compatible. For example (referring to Figure~\ref{fig:freqdiff}), let $u$ be the node in $T_1$ associated with the cluster $\{a, b\}$, $v$ the node in $T_2$ associated with $\{a, b, c\}$ and $w$ the node in $T_2$ associated with $\{b, c\}$. Then $u$ and $v$ are compatible since $\leafset^{T_1}(u) \subseteq \leafset^{T_2}(v)$. However, $u$ is incompatible with $w$ since they share $b$ but neither leafset is a subset of the other. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ (denoted as $C \compatible T$) iff for every $C_1 \in \mathcal{C}(T)$, $C \compatible C_1$. Further, two trees $T_1$ and $T_2$ with identical leafsets are \textit{compatible} (denoted as $T_1 \compatible T_2$) iff for every $C \in \mathcal{C}(T_1)$, $C \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$. Thus in Figure~\ref{fig:freqdiff}, $T_1$ is incompatible with $T_2$ since the former contains the cluster $\{a, b\}$ which is incompatible with $\{b, c\}$, contained in the latter tree (in fact, it can be checked that all the trees in this figure are incompatible).
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.5]{freqdiff}
         \centering
         \caption{Let $\mathcal{S} = \{T_1, T_2, T_3, T_4\}$. $T_{FD}$ is the FDCT of $\mathcal{S}$. The number beside each non-root internal node $u$ indicates the weight of the node, $\weight(u)$, which is the number of occurences of the cluster $\leafset(u)$ in $\mathcal{S}$.}
@@ -110,6 +115,8 @@
     Henceforth, $\mathcal{S}$ is taken to be the input set of trees with identical leaf labels. This set of leaf labels is denoted by $L$. Let $|\mathcal{S}| = k$ and $|L| = n$.
 
     \subsection{Previous Work}
+    \label{subsec:previouswork}
+
     An implementation of the FDCT can be found in the free software package TNT \cite{goloboff2008tnt}; however the algorithm used within is unavailable and so its complexity is not known. Jansson et al. \cite{jansson2018algorithms} gave a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the FDCT, implemented in the open source FACT package \cite{jansson2016improved}. Gawrychowski et al. \cite{gawrychowski2017faster} improved upon this to give a deterministic $O(kn\,log^2n)$ algorithm (not yet implemented).
 
     \subsection{Organisation of the Article and New Results}
@@ -142,11 +149,11 @@
 
     \subsection{Centroid Path Decomposition}
 
-    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. For any $u \in V(T)$, we define the \textit{heaviest child} of $u$, denoted by $heavyChild(u)$, to be the one with the largest leafset, with ties broken arbitrarily. The remaining children are called the \textit{side children} of $u$, denoted by $sideChildren(u)$. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the heaviest child. The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $p_i \in \pi(T)$, let $\sigma(p_i)$ be the set of trees rooted at $sideChildren(p_i)$, called the side trees \textit{associated} with $p_i$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree.
+    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. For any $u \in V(T)$, we define the \textit{heaviest child} of $u$, denoted by $heavyChild(u)$, to be the one with the largest leafset, with ties broken arbitrarily. The remaining children are called the \textit{side children} of $u$, denoted by $sideChildren(u)$. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the heaviest child. The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $u \in V(T)$, let $\sigma(u)$ be the set of trees rooted at $sideChildren(u)$, called the side trees \textit{associated} with $u$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree.
 
     We further define a \textit{complete centroid path decomposition} for any tree $T$. Here, the normal centroid path decomposition is applied on $T$, and then each side tree is recursively decomposed. This results in a set of disjoint paths in $T$, denoted by $\mathcal{P}(T)$. We also assign each path $P_i \in \mathcal{P}(T)$ a depth, denoted as $depth^{T}(P_i)$, defined to be $1\, +$ depth of centroid path containing the parent of the root of $P_i$. Intuitively, if we build a tree from only the roots of the centroid paths while maintaining the same relative structure, then the depth of a centroid path would simply be the depth of its root in this new tree. Figure~\ref{fig:centroid}(b) applies complete centroid path decomposition on the same tree as before. The bold paths, along with the isolated leaves, are centroid paths. As can be seen, the large side tree that remained intact in Figure~\ref{fig:centroid}(a) has now been recursively decomposed. The depth of each centroid path is shown next to its root.
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.5]{centroid}
         \centering
         \caption{Demonstration of centroid path decomposition. Both (a) and (b) use the same tree. In (a), the tree has undergone a centroid path decomposition such that after the dashed edges are removed, leaving a centroid path and a set of side trees. In (b), the tree has undergone a complete centroid path decomposition, with the dashed edges being removed to leave only a set of paths. The depth of each centroid path is shown next to its root.}
@@ -161,7 +168,7 @@
     \subsection{Restricted Trees}
     For any tree $T$ and any cluster $C \subseteq \leafset(T)$, define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leaves in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Figure~\ref{fig:restrictedsubtree} demonstrates this process. Notice that nodes which are not $lca$'s of the cluster are removed, but the structure of the tree in relation to the leaves in the cluster remains the same.
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.5]{restrictedsubtree}
         \centering
         \caption{Illustration of restricting a tree to a cluster. The tree $T$, along with $T|\{a, b, c, d\}$ and $T|\{e, f, g, h\}$ are shown.}
@@ -191,7 +198,7 @@
         Given trees $T_1$ and $T_2$ where $\leafset^{T_1} = \leafset^{T_2} = L$ and $T_1 \compatible T_2$, \texttt{Merge\_Trees}$(T_1, T_2) = T$, where $\leafset^T = L$ and $\mathcal{C}(T) = \mathcal{C}(T_1) \cup \mathcal{C}(T_2)$. This algorithm runs in $O(|L|)$ time.
     \end{mergetrees}
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.5]{mergetrees}
         \centering
         \caption{$T_1 \compatible T_2$. $T =$ \texttt{Merge\_Trees}$(T_1, T_2)$. $\mathcal{C}(T) = \mathcal{C}(T_1) \cup \mathcal{C}(T_2)$.}
@@ -295,7 +302,7 @@
     The data structure outlined here builds on the one presented in Lemma 8 of \cite{jansson2018algorithms}, while providing some further details of the implementation. We do a complete centroid path decomposition on $T$. Then for each leaf $x \in \leafset^T$, the path from $x$ to the root of $T$ can be seen as a concatenation of subpaths of centroid paths in $\mathcal{P}(T)$. An example of this can be seen in Figure~\ref{fig:rmq}. This figure shows part of a tree. The diagonal lines from right to left are centroid paths in the tree (elements of $\mathcal{P}(T)$). The dashed edges indicate that the child is not the heaviest child of its parent, hence starting a new centroid path. As can be seen, the path from the leaf $x$ to the root consists of subpaths of many centroid paths. The data structure we build consists of two parts. Firstly, for each centroid path $P_i \in \mathcal{P}(T)$, the weights along $P_i$ are stored in a linear RMQ structure (as described in Lemma~\ref{lem:linearrmq}). Secondly, for each $x$, we denote the subpaths of centroid paths on the leaf-root path by $Q_1, Q_2, ..., Q_f$, where $Q_1$ contains $root(T)$ and $Q_f$ contains $x$. Then we build the array $W_x[1 ... f]$, where $W_x[i] = max_{u \in Q_i} \weight(u)$ and store this array in a linear RMQ structure.
     \newline
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.5]{rmq}
         \centering
         \caption{Demonstration of an $rmqTree[v, w]$ query. The diagonal lines from right to left are centroid paths of the tree. The parts in bold lie on the path between $v$ and $w$, while those that are dotted do not. Dashed lines connect the root of a centroid path to its parent. $y$ is the leaf at the bottom of the centroid path to which $w$ belongs. $x$ is some leaf in the subtree rooted at $v$.}
@@ -384,7 +391,7 @@
 
     One iteration of this process is illustrated in Figure~\ref{fig:labelclusters}. Here $L' = \{a, b, c, d\}$ and $L'' = \{e, f, g, h\}$. It is assumed that the algorithm has correctly labelled the clusters for each of the restricted trees, and these labels are assigned as shown in Figure~\ref{fig:labelclusters}(b). Figure~\ref{fig:labelclusters}(a) then shows the pair associated with each internal node of $T_1$ and $T_2$. For example, the cluster $\{a, b, e\}$ in $T_1$ is labelled by $5$ from $\{a, b\}$ in $T_1|L'$ and $1$ from $\{e\}$ in $T_1|L''$. Similarly, the cluster $\{a, b\}$ in $T_1$ is labelled by $5$ from $\{a, b\}$ in $T_1|L'$ and $0$ from $\Phi$ since $\{a, b\} \cap \{e, f, g, h\} = \emptyset$.
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.5]{labelclusters}
         \centering
         \caption{Demonstration of \texttt{Label\_Clusters}$(T_1, T_2)$. $L' = \{a, b, c, d\}$ and $L'' = \{e, f, g, h\}$. (b) shows the trees $T_1|L', T_1|L'', T_2|L'$ and $T_2|L''$, where these have been recursively labelled. The labels are shown beside each of the nodes. (a) shows the trees $T_1$ and $T_2$ where the pair that represents each node (except the leaves) is shown beside it.}
@@ -436,19 +443,36 @@
     \subsection{The concept of a \textit{minimum cover}}
     \label{subsec:mincover}
 
-    Given a tree $T$ and a cluster $C \subseteq L$, define a set $M \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in M} \leafset^{T}(u) = C$. Then we define the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, to be the smallest set $M$ such that $M$ is a cover of $C$. Note that this set is well defined for each cluster. Figure~\ref{fig:mincover} gives an example of a minimum cover.
+    Given a tree $T$ and a cluster $C \subseteq L$, define a set $M \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in M} \leafset^{T}(u) = C$. Then we define the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, to be the smallest set $M$ such that $M$ is a cover of $C$. Note that this set is well defined for each cluster. Further, for any node $u \in V(T)$ such that $\leafset^{T}(u) \subseteq C$, define the node covering $u$, denoted as $coverer^{T, C}(u)$, to be the ancestor of $u$ which belongs in $minCover^{T}(C)$. Observe that this node must exist, since $\leafset^{T}(u)$ must be covered, and covering it with descendants of $u$ certainly yields a larger cover than if we use $u$. Figure~\ref{fig:mincoverrecursive}(a) gives an example of a minimum cover. In the same diagram, let $C$ be as stated in the caption and $v$ be the node with leafset $\{a, b\}$. Then $coverer^{T, C}(v)$ is the node with leafset $\{a, b, c\}$.
 
-    \begin{figure}[h]
-        \includegraphics[scale=0.5]{mincover}
+    \begin{figure}[ht]
+        \includegraphics[scale=0.48]{mincoverrecursive}
         \centering
-        \caption{Illustration of a minimum cover. Let $C = \{a, b, c, f, g, h, i, j, k, l\}$. Then the circled nodes give $minCover^{T}(C)$.}
-        \label{fig:mincover}
+        \caption{Illustration of minimum cover and an $addToCover$ operation. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Let $u$ be the leaf labelled with $e$, marked with a square in (a). We wish to execute $addToCover^{T}(minCover^{T}(C), u)$. (b) shows the state after going up the tree one level and (c) the state after one further level.}
+        \label{fig:mincoverrecursive}
     \end{figure}
+
+    As will be seen later, it is of interest to define, an operation that can take an existing minimum cover and add to it. For some tree $T$, cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then the operation $addToCover^{T}(M, u)$ returns $minCover^{T}(Cu)$ and $coverer^{T, Cu}(u)$.
+
+    Figure~\ref{fig:mincoverrecursive} demonstrates how an $addToCover$ query works. Here, $C = \{a, b, c, f, g, h\}$ and $u =$ leaf labelled with $e$. The circled nodes in Figure~\ref{fig:mincoverrecursive}(a) give $minCover^{T}(C)$. Then we wish to compute the minimum cover of the cluster $Cu = C \cup \leafset^{T}(u)$. The idea for doing so will be to iterate upwards from $u$ while the leafset of the node we are at is a subset of $Cu$. Thus, since $\leafset^{T}(parent(u)) \subseteq Cu$, we go upwards one level and remove all children of $parent(u)$ from $M$. This state is shown in Figure~\ref{fig:mincoverrecursive}(b). Now since the same is true of $parent(parent(u))$, we can go up another level, as in Figure~\ref{fig:mincoverrecursive}(c). At this point we have to stop. Thus, we can output the new minimum cover, as well as the last discovered node (with leafset $\{e, f, g, h\}$). Subsection~\ref{subsec:addtocover} details how to actually implement this operation.
+
+    We now make a claim about the running time of the $addToCover$ operation, which is proved later.
+    \newline
+
+    \begin{mincoverruntime}
+        \label{lem:mincoverruntime}
+
+        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, the operation $addToCover^{T}(minCover^{T}(C), u)$ can be performed in amortized $O(1)$ time.
+
+        \begin{proof}
+            Proved in Subsection~\ref{subsec:addtocover}.
+        \end{proof}
+    \end{mincoverruntime}
 
     \subsection{Redefining incompatibility}
     \label{subsec:redefiningincompatibility}
 
-    With the concept of a minimum cover in hand, we can proceed to give a stricter definition of incompatibility. Given tree $T$ and cluster $C \subseteq L$, let the set $incompatible^{T}(C) = \{v : v \in V(\TB) \text{ and } \leafset^{\TB}(v) \not\compatible C\}$.
+    With the concept of a minimum cover in hand, we can proceed to give a stricter definition of incompatibility. Given tree $T$ and cluster $C \subseteq L$, let the set $incompatible^{T}(C) = \{v : v \in V(T) \text{ and } \leafset^{T}(v) \not\compatible C\}$.
     \newline
 
     \begin{incompatibilitymincover}
@@ -463,59 +487,54 @@
         \end{proof}
     \end{incompatibilitymincover}
 
-    \begin{figure}[h]
+    The above result is illustrated in Figure~\ref{fig:incompatibility}(a). As for the minimum cover, that takes the set of nodes incompatible with a given cluster and updates this set to become those incompatible with a superset of that cluster. Formally, given tree $T$, cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $I = incompatible^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$, $l_C = lca^{T}(C)$, $l_{Cu} = lca^{T}(Cu)$ and $v = coverer^{T, Cu}(u)$. Then the operation $updateIncompatible^{T}(I, u, v, l_C, l_{Cu})$ returns $incompatible^{T}(Cu)$. The reason behind the extra arguments and the implementation of this operation is detailed in Subsection~\ref{subsec:updateincompatible}. The result of an $updateIncompatible$ query is shown in Figure~\ref{fig:incompatibility}(b).
+
+    \begin{figure}[ht]
         \includegraphics[scale=0.5]{incompatibility}
         \centering
-        \caption{Illustration of Lemma~\ref{lem:incompatibilitymincover}. Let $C = \{a, b, c, f, g, h\}$. Then $l_C = lca^T(C)$, the circled nodes give $minCover^{T}(C)$ and the nodes marked with squared give $incompatible^T(C)$. Notice that all nodes in $incompatible^T(C)$ are proper descendants of $l_C$ and proper ancestors of some $c \in minCover^{T}(C)$.}
+        \caption{Illustration of Lemma~\ref{lem:incompatibilitymincover} and an $updateIncompatible$ operation. Let $C = \{a, b, c, f, g, h\}$. Then in (a) $l_C = lca^T(C)$, the circled nodes give $minCover^{T}(C)$ and the nodes marked with squares give $incompatible^T(C)$. Notice that all nodes in $incompatible^T(C)$ are proper descendants of $l_C$ and proper ancestors of some $c \in minCover^{T}(C)$. Referencing (b), let $Cu = C \cup \leafset^{T}(u)$ and $l_{Cu} = lca^{T}(Cu)$. Then we run $updateIncompatible^{T}(incompatible^{T}(C), u, coverer^{T}(Cu), l_C, l_{Cu})$. Again, nodes in $minCover^{T}(Cu)$ are circled and nodes in $incompatible^{T}(Cu)$ are marked with squares.}
         \label{fig:incompatibility}
     \end{figure}
 
-    The above result is illustrated in Figure~\ref{fig:incompatibility}.
-
-    \subsection{The \texttt{Filter\_Clusters} algorithm}
-    \label{subsec:filterclusters}
-
-    Before going on to present \texttt{Filter\_Clusters} and analyse it, we make claims about the running time of an algorithm that finds the minimum cover and an algorithm that find incompatible nodes below. These are proved in Subsections~\ref{subsec:addtocover} and~\ref{subsec:updateincompatible} respectively.
+    We now make a claim about the running time of the $addToCover$ operation, which is proved later.
     \newline
 
-    \begin{mincoverruntime}
-        \label{lem:mincoverruntime}
-
-        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$ let $M = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then the operation $addToCover^{T}(M, u)$, which returns $minCover^{T}(Cu)$ and some node $v \in minCover^{T}(Cu)$ such that $v$ is an ancestor of $u$, can be performed in amortized $O(1)$ time.
-
-        \begin{proof}
-            Proved in Subsection~\ref{subsec:addtocover}.
-        \end{proof}
-    \end{mincoverruntime}
-
-    \medskip
     \begin{incompatibilityruntime}
         \label{lem:incompatibilityruntime}
 
-        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$, $I = incompatible^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$, $l_C = lca^{T}(C)$ and $l_{Cu} = lca^{T}(Cu)$. Then the operation $updateIncompatible^{T}(M, I, u, l_C)$, which returns $minCover^{T}(Cu)$, $incompatible^{T}(Cu)$ and $l_{Cu}$, can be performed in amortized $O(1 + |incompatible^{T}(Cu) - incompatible^{T}(C)| + |incompatible^{T}(C) - incompatible^{T}(Cu)|\,\times\,log\,n)$, where $n = |\leafset^{T}|$.
+        Given a tree $T$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $I = incompatible^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$, $l_C = lca^{T}(C)$, $l_{Cu} = lca^{T}(Cu)$ and $v = coverer^{T, Cu}(u)$. Then the operation $updateIncompatible^{T}(I, u, v, l_C, l_{Cu})$ can be performed in amortized $O(1 + |incompatible^{T}(Cu) - incompatible^{T}(C)| + |incompatible^{T}(C) - incompatible^{T}(Cu)|\,\times\,log\,n)$, where $n = |\leafset^{T}|$.
 
         \begin{proof}
             Proved in Subsection~\ref{subsec:updateincompatible}.
         \end{proof}
     \end{incompatibilityruntime}
 
+    The $|incompatible^{T}(Cu) - incompatible^{T}(C)|$ term in the runtime comes from the need to insert these nodes into $I$ and each of these insertions is performed in constant time. The $|incompatible^{T}(C) - incompatible^{T}(Cu)|\,\times\,log\,n$ is due to deleting these nodes from $I$ and because each of these deletions costs $log\,n$ time.
+
+    \subsection{The \texttt{Filter\_Clusters} algorithm}
+    \label{subsec:filterclusters}
+
     With these operations in hand, we now develop the solution for \texttt{Filter\_Clusters}. Recall that this method takes trees $\TA$ and $\TB$ as input. First, for any node $u \in V(\TA)$, define $incompatible^{\TB}(u)$ to be $incompatible^{\TB}(\leafset^{\TA}(u))$. As discussed earlier, the idea is to find $incompatible^{\TB}(u)$ for each node $u \in V(\TA)$.
+
+    Note that we change the signature of \texttt{Filter\_Clusters} slightly such that rather than returning a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$, it returns the set of nodes that need to be deleted from $\TA$ to give $T$, i.e. $\{u : u \in V(\TA) \text{ and } \weight(u) \leq max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible \leafset^{\TA}(u)\})\}$. It also returns the set $minCover^{\TB}(\leafset^{\TA})$.
 
     \texttt{Filter\_Clusters} decomposes $\TA$ into a \textit{centroid path} and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\TA}(u) : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root. Here, for any non-leaf node $p_i \in \pi(\TA)$, we use
     the $addToCover$ and $updateIncompatible$ operations to find $incompatible^{\TB}(p_i)$.
+
+    More specifically, for any $p_i \in \pi(\TA)$, $i > 1$, we obtain the set $sideCover^{\TB}(p_i) = \bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$ by recursive calls to \texttt{Filter\_Clusters}. The sets $minCover^{\TB}(\leafset^{\TA}(p_{i-1}))$ and $incompatible^{\TB}(\leafset^{\TA}(p_{i-1}))$ are obtained from the previous iteration of the loop. Then for each node $c \in sideCover^{\TB}(p_i)$, we iteratively add it to the cover of $p_{i-1}$ using $addToCover$. Simultaneously, we update the set of incompatible nodes using $updateIncompatible$.
 
     A key optimisation here is ensuring that when we call the function recursively on a side tree $\tau \in \sigma(\TA)$, the $\TB$ is restricted such that its leafset is the same as the leafset of $\tau$. Let $\tau$ be some side tree in $\sigma(\TA)$. We reuse the technique described in \cite{jansson2018algorithms} to construct a tree $\TB||\leafset^{\tau}$ such that $\leafset^{\TB||\leafset^{\tau}} = \leafset^{\tau}$, but at the same time does not lose important weight information. To do so, we first construct $\TB|\leafset^{\tau}$ and let the weight of each node in this tree be the same as its weight in $\TB$. For each non-root node $u \in V(\TB|\leafset^{\tau})$, let $v = parent^{\TB|\leafset^{\tau}}(u)$, then if $path^{\TB}(u, v) \neq \emptyset$, we create a new node $z$ in $\TB|\leafset^{\tau}$, set $parent(u) = z$ and $parent(z) = v$. Also, we set $\weight(z) = max_{w \in path^{\TB}(u, v)} \weight(w)$. Note that this value can be obtained with an $rmqTree^{\TB}[parent(u), cFD(v)]$ query, which we denote by $rmqTree^{\TB}(u, v)$. This gives us the tree $\TB||\leafset^{\tau}$.
 
     Further, for any node $u \in V(\TB||\leafset^{\tau})$, if $\leafset^{\TB||\leafset^{\tau}}(u) \neq \leafset^{\TB}(u)$, then $u$ is marked as $spoiled$. This concept is introduced since it will be important later to determine, for any node $u \in V(\TB||\leafset^{\tau})$, whether $\leafset^{\TB||\leafset^{\tau}}(u) \subseteq C$ for some cluster $C$. Special nodes are all marked as $spoiled$, since it is certain that the nodes they represent do not have their full leafset in $\TB||\leafset^{\tau}$. Observe that the ancestor of any spoiled node is also spoiled. Figure~\ref{fig:specialnodes} illustrates this entire process.
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.5]{specialnodes}
         \centering
         \caption{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||\{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are special nodes. Observe that the special node that is a parent of the leaf $j$ has weight $7$ since the nodes on the path from $j$ to the root of $T$ had weights $4, 7$ and $2$. Also note that all internal nodes in (b) are spoiled.}
         \label{fig:specialnodes}
     \end{figure}
 
-    In order to facilitate the $rmqTree$ queries, we preprocess $\TB$ to construct an RMQ and a cFD structure before \texttt{Filter\_Clusters} is called. Also note that we present a slightly modified version of \texttt{Filter\_Clusters} - rather than returning a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$, it returns the set of nodes $\{u : u \in V(\TA) \text{ and } \weight(u) \leq max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible \leafset^{\TA}(u)\})\}$. This is functionally equivalent, since we can then make a copy of $\TA$ and traverse this in a top-down manner, performing the $delete$ operation on the relevant nodes. Observe that this process takes $O(n)$ time. The procedure \texttt{Filter\_Clusters} is presented below.
+    In order to facilitate the $rmqTree$ queries, we preprocess $\TB$ to construct an RMQ and a cFD structure before \texttt{Filter\_Clusters} is called. Also note that since we have modified the signature of the algorithm, we need to do some processing after it finishes. In particular, we make a copy of $\TA$ and traverse this in a top-down manner, performing the $delete$ operation on the relevant nodes. Observe that this process takes $O(n)$ time. The resulting procedure \texttt{Filter\_Clusters} is presented below.
     \newline
 
     \begin{algorithm}
@@ -525,36 +544,46 @@
         \begin{algorithmic}[1]
             \Input Trees $\TA$ and $\TB$ with $\leafset^{\TA} = \leafset^{\TB} = L$ where every cluster has a known $weight$.
 
-            \Output The set of nodes $\{u : u \in V(\TA) \text{ and } \weight(u) \leq max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible \leafset^{\TA}(u)\})\}$
+            \Output The set of nodes $\{u : u \in V(\TA) \text{ and } \weight(u) \leq max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible \leafset^{\TA}(u)\})\}$ and the set of nodes $minCover^{\TB}(\leafset^{\TA})$.
 
             \State Compute a centroid path $\pi = \langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$ of $\TA$, where $p_{\gamma}$ is the root of $\TA$ and $p_1$ is a leaf.
 
             \State Preprocess $\TB$ for lca queries.
 
-            \State $toDelete := \bigcup_{\tau \in \sigma(\TA)}$ \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$
+            \State $toDelete := \emptyset$
+
+            \State \algorithmicforall{$p_i \in \pi(\TA)$} $sideCover^{\TB}(p_i) := \emptyset$
+
+            \ForAll{$\tau \in \sigma(\TA)$}
+                \State $toDelete', sideCover' :=$ \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$
+
+                \State $toDelete := toDelete \cup toDelete'$
+
+                \State Add $sideCover'$ to the side cover of the respective $p_i \in \pi(\TA)$
+            \EndFor
 
             \State $l :=$ leaf in $\TB$ labelled by $p_1$
 
-            \State $cover := \{l_1\}$
+            \State $cover := \{l\}$
 
             \State $incompatible :=$ empty Brodal queue
 
             \For{$i := 2$ \textbf{to} $\gamma$}
-                \State $sideCover := \emptyset$
+                \ForAll{$u \in sideCover^{\TB}(p_i)$}
+                    \State $cover, v :=$ \texttt{Add\_To\_Cover}$(cover, u)$
 
-                \ForAll{$x \in \bigcup_{\tau \in \sigma(p_i)} \leafset^{\TA}(p_i)$}
-                    \State $sideCover, \_ :=$ \texttt{Add\_To\_Cover}$(sideCover, x)$
-                \EndFor
+                    \State $l' := lca^{\TB}(l, u)$
 
-                \ForAll{$c \in sideCover$}
-                    \State $cover, incompatible, l :=$ \texttt{Update\_Incompatible}$(cover, incompatible, c, l)$
+                    \State $incompatible :=$ \texttt{Update\_Incompatible}$(incompatible, u, v, l, l')$
+
+                    \State $l := l'$
                 \EndFor
 
                 \IIf{$\weight(p_i) \leq$ maximum weight of a node in $incompatible$}
                     $toDelete := toDelete \cup \{p_i\}$
             \EndFor
 
-            \State \Return $toDelete$
+            \State \Return $toDelete, cover$
         \end{algorithmic}
     \end{algorithm}
 
@@ -631,7 +660,7 @@
         \end{proof}
     \end{mincoverrecursive}
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.48]{mincoverrecursive}
         \centering
         \caption{Illustration of Lemma~\ref{lem:mincoverrecursive}. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Let $u$ be the leaf labelled with $e$, marked with a square in (a). We wish to execute $addToCover^{T}(minCover^{T}(C), u)$. (b) shows the state after one recursive call, where the circled nodes give the new minimum cover and the node marked with a square is the new $u$. (c) shows the state after the next (and last) recursive call, where the minimum cover of $C \cup \leafset^{T}(u)$ has been found to be the circled nodes.}
@@ -672,7 +701,7 @@
     \subsection{The $updateIncompatible$ operation}
     \label{subsec:updateincompatible}
 
-    \begin{figure}[h]
+    \begin{figure}[ht]
         \includegraphics[scale=0.6]{incompatibilityrecursive}
         \centering
         \caption{Illustration of a recursive definition of incompatibility. Let $minCover^{T}(C) = \{c_1, c_2\}$ and circled nodes be in $incompatible^{T}(C)$, as in (a). For some node $u \in V(T)$, let $Cu = C \cup \leafset^{T}(u)$ and the nodes $l_C$ and $l_{Cu}$ be $lca^{T}(C)$ and $lca^{T}(Cu)$ respectively. In (b), $minCover^{T}(Cu) = \{c_1, c_3\}$ and $l_C = l_{Cu}$, while in (c), $minCover^{T}(Cu) = \{c_1, c_2, c_3\}$ and $l_C \neq l_{Cu}$. In both (b) and (c), nodes belonging to $incompatible^{T}(Cu)$ are marked with squares.}
@@ -762,6 +791,135 @@
             By Corollary~\ref{cor:freqdiffruntimecomponents} and Lemmas~\ref{lem:weightingruntime} and~\ref{lem:filterclustersruntime}, \texttt{Frequency\_Difference} runs in $O(kn\,log\,n + k \cdot n\,log\,n) = O(kn\,log\,n)$ time.
         \end{proof}
     \end{freqdiffruntime}
+
+    \section{Implementation}
+
+    As noted in Subsection~\ref{subsec:previouswork}, there are two existing implementations that compute FDCTs - TNT \cite{goloboff2008tnt} and the FACT package \cite{jansson2016improved}. However, the results in \cite{jansson2018algorithms} demonstrated that their implementation outperforms TNT under all conditions, so we only make a comparison with this. Our implementation of the algorithm \texttt{Frequency\_Difference} reuses their code, with certain key optimisations, as laid out above. The code is written in C++ and utilises some libraries from the Boost package \cite{BoostLibrary}. The source can be found at \url{https://github.com/varung97/FACT2}. Further, \url{http://compbio.ddns.comp.nus.edu.sg/~consensus.tree/} (by \cite{jansson2016improved}) provides an end-point which can generate consensus trees; our code has been integrated into this. Note that there are some differences between the implementation and the algorithm described above, made for reasons of optimisation and readability. These differences are described in Subsection~\ref{subsec:implementationdetails}.
+
+    The resulting implementation was compared with that from the FACT package by running them both on trees generated with various values of $k$ and $n$. This setup is described in Subsection~\ref{subsec:setup} and the results are presented in Subsection~\ref{subsec:results}.
+
+    \subsection{Implementation Details}
+    \label{subsec:implementationdetails}
+
+    The differences between the described algorithm and our implementation are:
+
+    \begin{enumerate}
+        \item While the algorithm is fully deterministic, the implementation is not; we use hash sets instead of linked lists to store nodes in the minimum cover for ease.
+
+        \item The algorithms \texttt{Add\_To\_Cover} and \texttt{Update\_Incompatible} are implemented iteratively instead of recursively for efficiency. Further, these were moved inside the main body of the algorithm rather than separating them out into functions, again because this is faster.
+
+        \item Rather than constructing the trees $\TB||\leafset^{\tau}$ and then inserting the nodes on certain paths into the Brodal queue, we simply obtain the maximum weight of nodes on the paths using $rmqTree$ queries and insert this maximum weight into the queue.
+    \end{enumerate}
+
+    \subsection{Experimental Setup}
+    \label{subsec:setup}
+
+    We generated input trees according to two different scenarios, exactly as in \cite{jansson2018algorithms}. The first scenario, ``Scenario 1'', is the situation where trees share a large percentage of clusters, which is largely realistic. On the other hand, the second scenario, ``Scenario 2'', generates completely independent trees, which represents the other end of the spectrum. In particular, the process for generating $k$ trees with leaf labels $\{1, 2, \dots, n\}$ under the two scenarios is:
+
+    \begin{itemize}
+        \item \textit{Scenario 1:} We generate a binary tree, with the given leaf labels, under the uniform model \cite{mckenzie2000distributions}. Then for each non-root internal node $u$ in this tree, we perform a $delete$ operation on $u$ with probability $0.2$. Then we make $k$ copies of this tree, and for each copy, we randomly select a non-root node $u$ and an internal node $v$ $n / 20$ times, remove the subtree rooted at $u$ and attach it to $v$.
+
+        \item \textit {Scenario 2:} We generate $k$ binary trees, with the given leaf labels, each under the uniform model \cite{mckenzie2000distributions}. Then for each non-root internal node $u$ in each tree, we $delete$ $u$ with probability $0.2$.
+    \end{itemize}
+
+    Since we wished to see the effect of both $k$ and $n$ on these algorithms, we ran two experiments, one with $n$ fixed and one with $k$ fixed. Further, we measured the time taken by the weighting step and the remainder of the algorithm separately. Note that we use the running time of the second half of \texttt{Frequency\_Difference} as a stand-in for running time of \texttt{Filter\_Clusters} as it is hard to measure the latter independently, and since the implementations are identical except for \texttt{Filter\_Clusters}. For each value of $k$ and $n$, we generated 50 input examples and averaged the running time over these.
+
+    We ran the experiments on a MacBook Pro laptop running macOS Sierra 10.12.6, equipped with 16GB RAM and a 2.2 GHz Intel Core i7 processor. The C++ compiler used was clang-802.0.42 and the version of the Boost libraries was 1.65.1. The time taken was measured using the inbuilt \texttt{clock()} function in C++.
+
+    \subsection{Experimental Results}
+    \label{subsec:results}
+
+    \begin{table}[!ht]
+        \captionsetup{font=footnotesize,justification=justified,margin=0cm}
+        \small
+        \begin{minipage}{0.48\textwidth}
+            \centering
+            \caption{Weighting time with $n = 100$, varying $k$}
+            \label{tab:weightk}
+            \begin{tabular}{c||ccccc}
+                $k$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
+                \hline\hline
+                500 & 0.24 & 0.02 & 0.27\\
+                1000 & 0.49 & 0.05 & 1.03\\
+                1500 & 0.74 & 0.08 & 2.29\\
+                2000 & 1.00 & 0.11 & 4.22\\
+                3000 & 1.60 & 0.16 & 9.60\\
+                4000 & 2.04 & 0.20 & 16.52\\
+                5000 & 2.77 & 0.27 & 26.97\\
+                7500 & 4.04 & 0.40 & 60.67\\
+                10000 & 5.72 & 0.55 & 109.67\\
+            \end{tabular}
+            \includegraphics[scale=0.4]{varyingk1_weighting}
+            \vspace{0.5cm}
+        \end{minipage}\hfill
+        \begin{minipage}{0.48\textwidth}
+            \centering
+            \caption{\texttt{Filter\_Clusters} time with $n = 100$, varying $k$}
+            \label{tab:filterk}
+            \begin{tabular}{c||ccccc}
+                $k$ & $n\,log\,n$ & $n\,log^2n$\\
+                \hline\hline
+                500 & 1.11 & 0.24\\
+                1000 & 2.20 & 0.46\\
+                1500 & 3.19 & 0.68\\
+                2000 & 4.30 & 0.94\\
+                3000 & 6.65 & 1.32\\
+                4000 & 8.49 & 1.63\\
+                5000 & 10.66 & 2.11\\
+                7500 & 15.44 & 3.18\\
+                10000 & 22.13 & 4.24\\
+            \end{tabular}
+            \includegraphics[scale=0.4]{varyingk1_filter}
+            \vspace{0.5cm}
+        \end{minipage}
+        \begin{minipage}{0.48\textwidth}
+            \centering
+            \caption{Weighting time with $k = 100$, varying $n$}
+            \label{tab:weightn}
+            \begin{tabular}{c||ccccc}
+                $n$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
+                \hline\hline
+                500 & 0.31 & 0.03 & 0.06\\
+                1000 & 0.69 & 0.08 & 0.12\\
+                1500 & 1.06 & 0.15 & 0.18\\
+                2000 & 1.45 & 0.24 & 0.24\\
+                3000 & 2.31 & 0.43 & 0.36\\
+                4000 & 3.19 & 0.78 & 0.49\\
+                5000 & 4.12 & 1.08 & 0.63\\
+                7500 & 6.37 & 2.21 & 0.91\\
+                10000 & 8.87 & 3.80 & 1.26\\
+            \end{tabular}
+            \includegraphics[scale=0.4]{varyingn1_weighting}
+        \end{minipage}\hfill
+        \begin{minipage}{0.48\textwidth}
+            \centering
+            \caption{\texttt{Filter\_Clusters} time with $k = 100$, varying $n$}
+            \label{tab:filtern}
+            \begin{tabular}{c||ccccc}
+                $n$ & $n\,log\,n$ & $n\,log^2n$\\
+                \hline\hline
+                500 & 1.12 & 0.60\\
+                1000 & 2.32 & 2.48\\
+                1500 & 3.54 & 11.48\\
+                2000 & 4.76 & 19.15\\
+                3000 & 7.27 & 33.16\\
+                4000 & 9.87 & 55.42\\
+                5000 & 12.81 & 70.86\\
+                7500 & 19.78 & 153.63\\
+                10000 & 26.63 & 264.19\\
+            \end{tabular}
+            \includegraphics[scale=0.4]{varyingn1_filter}
+        \end{minipage}
+    \end{table}
+
+    The experimentally observed average running times are given in Tables~\ref{tab:weightk},~\ref{tab:filterk},~\ref{tab:weightn} and~\ref{tab:filtern}.
+
+    \textit{Weighting Step.} From Table~\ref{tab:weightk}, it is clear that, as expected, as $k$ increases, the runtime of the $k^2n$ algorithm becomes much worse than that of the other two. Similarly, Table~\ref{tab:weightn} shows that when $n$ increases, runtime of the $kn^2$ becomes worse than that of the $k^2n$. More interestingly, the algorithm with a theoretical runtime of $kn\,log\,n$ actually performs worse than the $kn^2$ one. This is because the constants in the new algorithm are larger, due to the construction of the restricted subtrees. However, a closer look at Table~\ref{tab:weightn} does show that the runtime for the $kn^2$ algorithm is growing faster than the new algorithm, and indeed, our informal testing showed that it performs worse for large values of $n$. In practice, though, values of $n$ are not so large, and hence it is likely that the old implementation is better in practice. Also note that, as mentioned in \cite{jansson2018algorithms}, the $kn^2$ algorithm costs memory quadratic in $n$, so if memory is a concern, then using on of the other methods might be more advisable. The choice of which one to use would depend on the value of $k$.
+
+    \texttt{Filter\_Clusters.} Table~\ref{tab:filterk} is not particularly interesting here since it merely demonstrates that the $kn\,log^2n$ algorithm performs better when $n$ is small. However, Table~\ref{tab:filtern} illustrates that the new algorithm overtakes this very quickly when $n > 1000$, performing up to $10$ times better as $n$ nears $10000$. This might be surprising, as the theoretical difference is only a factor of $log\,n$. We (informally) think that this is because of implementation detail 3, due to which we can skip the costly construction of the $\TB||\leafset^{\tau}$ trees. Thus, based on these results, we recommend using the old algorithm if $n < 1000$ and the new one otherwise. Note that the old algorithm in fact uses a simpler version of \texttt{Filter\_Clusters}, with time complexity $O(n^2)$, when $n < 1000$.
+
+    \section{Conclusion}
+    We have given a new deterministic algorithm for constructing the FDCT of a set of phylogenetic trees. This algorithm betters the previously best known one by a factor of $log\,n$. We leave open the problem of finding an optimal solution, i.e. one with time complexity $O(kn)$. Observe that doing so would involve bettering both halves of the algorithm or coming up with a new approach.
 
     \newpage
     \bibliographystyle{plain}
