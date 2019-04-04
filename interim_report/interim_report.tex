@@ -17,6 +17,7 @@
 \usepackage{float}
 \usepackage{setspace}
 \usepackage{tabularx}
+\usepackage[capitalise,noabbrev]{cleveref}
 \graphicspath{{images/}}
 
 \usepackage[
@@ -104,7 +105,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{freqdiff}
         \centering
-        \caption{Let $\mathcal{S} = \{T_1, T_2, T_3, T_4\}$. $T_{FD}$ is the FDCT of $\mathcal{S}$. The number beside each non-root internal node $u$ indicates the weight of the node, $\weight(u)$, which is the number of occurences of the cluster $\leafset(u)$ in $\mathcal{S}$.}
+        \caption[Example of a frequency difference consensus tree]{Let $\mathcal{S} = \{T_1, T_2, T_3, T_4\}$. $T_{FD}$ is the FDCT of $\mathcal{S}$. The number beside each non-root internal node $u$ indicates the weight of the node, $\weight(u)$, which is the number of occurences of the cluster $\leafset(u)$ in $\mathcal{S}$.}
         \label{fig:freqdiff}
     \end{figure}
 
@@ -156,7 +157,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{centroid}
         \centering
-        \caption{Demonstration of centroid path decomposition. Both (a) and (b) use the same tree. In (a), the tree has undergone a centroid path decomposition such that after the dashed edges are removed, leaving a centroid path and a set of side trees. In (b), the tree has undergone a complete centroid path decomposition, with the dashed edges being removed to leave only a set of paths. The depth of each centroid path is shown next to its root.}
+        \caption[Centroid path decomposition]{Demonstration of centroid path decomposition. Both (a) and (b) use the same tree. In (a), the tree has undergone a centroid path decomposition such that after the dashed edges are removed, leaving a centroid path and a set of side trees. In (b), the tree has undergone a complete centroid path decomposition, with the dashed edges being removed to leave only a set of paths. The depth of each centroid path is shown next to its root.}
         \label{fig:centroid}
     \end{figure}
 
@@ -171,7 +172,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{restrictedsubtree}
         \centering
-        \caption{Illustration of restricting a tree to a cluster. The tree $T$, along with $T|\{a, b, c, d\}$ and $T|\{e, f, g, h\}$ are shown.}
+        \caption[Restricted subtrees]{Illustration of restricting a tree to a cluster. The tree $T$, along with $T|\{a, b, c, d\}$ and $T|\{e, f, g, h\}$ are shown.}
         \label{fig:restrictedsubtree}
     \end{figure}
 
@@ -201,7 +202,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{mergetrees}
         \centering
-        \caption{$T_1 \compatible T_2$. $T =$ \texttt{Merge\_Trees}$(T_1, T_2)$. $\mathcal{C}(T) = \mathcal{C}(T_1) \cup \mathcal{C}(T_2)$.}
+        \caption[The \texttt{Merge\_Trees} algorithm]{$T_1 \compatible T_2$. $T =$ \texttt{Merge\_Trees}$(T_1, T_2)$. $\mathcal{C}(T) = \mathcal{C}(T_1) \cup \mathcal{C}(T_2)$.}
         \label{fig:mergetrees}
     \end{figure}
 
@@ -305,7 +306,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{rmq}
         \centering
-        \caption{Demonstration of an $rmqTree[v, w]$ query. The diagonal lines from right to left are centroid paths of the tree. The parts in bold lie on the path between $v$ and $w$, while those that are dotted do not. Dashed lines connect the root of a centroid path to its parent. $y$ is the leaf at the bottom of the centroid path to which $w$ belongs. $x$ is some leaf in the subtree rooted at $v$.}
+        \caption[$rmqTree$ query]{Demonstration of an $rmqTree[v, w]$ query. The diagonal lines from right to left are centroid paths of the tree. The parts in bold lie on the path between $v$ and $w$, while those that are dotted do not. Dashed lines connect the root of a centroid path to its parent. $y$ is the leaf at the bottom of the centroid path to which $w$ belongs. $x$ is some leaf in the subtree rooted at $v$.}
         \label{fig:rmq}
     \end{figure}
 
@@ -394,7 +395,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{labelclusters}
         \centering
-        \caption{Demonstration of \texttt{Label\_Clusters}$(T_1, T_2)$. $L' = \{a, b, c, d\}$ and $L'' = \{e, f, g, h\}$. (b) shows the trees $T_1|L', T_1|L'', T_2|L'$ and $T_2|L''$, where these have been recursively labelled. The labels are shown beside each of the nodes. (a) shows the trees $T_1$ and $T_2$ where the pair that represents each node (except the leaves) is shown beside it.}
+        \caption[The \texttt{Label\_Clusters} algorithm]{Demonstration of \texttt{Label\_Clusters}$(T_1, T_2)$. $L' = \{a, b, c, d\}$ and $L'' = \{e, f, g, h\}$. (b) shows the trees $T_1|L', T_1|L'', T_2|L'$ and $T_2|L''$, where these have been recursively labelled. The labels are shown beside each of the nodes. (a) shows the trees $T_1$ and $T_2$ where the pair that represents each node (except the leaves) is shown beside it.}
         \label{fig:labelclusters}
     \end{figure}
 
@@ -448,7 +449,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.48]{mincoverrecursive}
         \centering
-        \caption{Illustration of minimum cover and an $addToCover$ operation. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Let $u$ be the leaf labelled with $e$, marked with a square in (a). We wish to execute $addToCover^{T}(minCover^{T}(C), u)$. (b) shows the state after going up the tree one level and (c) the state after one further level.}
+        \caption[Minimum cover and the $addToCover$ operation]{Illustration of minimum cover and an $addToCover$ operation. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Let $u$ be the leaf labelled with $e$, marked with a square in (a). We wish to execute $addToCover^{T}(minCover^{T}(C), u)$. (b) shows the state after going up the tree one level and (c) the state after one further level.}
         \label{fig:mincoverrecursive}
     \end{figure}
 
@@ -492,7 +493,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{incompatibility}
         \centering
-        \caption{Illustration of Lemma~\ref{lem:incompatibilitymincover} and an $updateIncompatible$ operation. Let $C = \{a, b, c, f, g, h\}$. Then in (a) $l_C = lca^T(C)$, the circled nodes give $minCover^{T}(C)$ and the nodes marked with squares give $incompatible^T(C)$. Notice that all nodes in $incompatible^T(C)$ are proper descendants of $l_C$ and proper ancestors of some $c \in minCover^{T}(C)$. Referencing (b), let $Cu = C \cup \leafset^{T}(u)$ and $l_{Cu} = lca^{T}(Cu)$. Then we run $updateIncompatible^{T}(incompatible^{T}(C), u, coverer^{T}(Cu), l_C, l_{Cu})$. Again, nodes in $minCover^{T}(Cu)$ are circled and nodes in $incompatible^{T}(Cu)$ are marked with squares.}
+        \caption[Incompatibility and the $addToCover$ operation]{Illustration of Lemma~\ref{lem:incompatibilitymincover} and an $updateIncompatible$ operation. Let $C = \{a, b, c, f, g, h\}$. Then in (a) $l_C = lca^T(C)$, the circled nodes give $minCover^{T}(C)$ and the nodes marked with squares give $incompatible^T(C)$. Notice that all nodes in $incompatible^T(C)$ are proper descendants of $l_C$ and proper ancestors of some $c \in minCover^{T}(C)$. Referencing (b), let $Cu = C \cup \leafset^{T}(u)$ and $l_{Cu} = lca^{T}(Cu)$. Then we run $updateIncompatible^{T}(incompatible^{T}(C), u, coverer^{T}(Cu), l_C, l_{Cu})$. Again, nodes in $minCover^{T}(Cu)$ are circled and nodes in $incompatible^{T}(Cu)$ are marked with squares.}
         \label{fig:incompatibility}
     \end{figure}
 
@@ -530,7 +531,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{specialnodes}
         \centering
-        \caption{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||\{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are special nodes. Observe that the special node that is a parent of the leaf $j$ has weight $7$ since the nodes on the path from $j$ to the root of $T$ had weights $4, 7$ and $2$. Also note that all internal nodes in (b) are spoiled.}
+        \caption[Constructing the tree $T||C$]{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||C$, where $C = \{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are special nodes. Observe that the special node that is a parent of the leaf $j$ has weight $7$ since the nodes on the path from $j$ to the root of $T$ had weights $4, 7$ and $2$. Also note that all internal nodes in (b) are spoiled.}
         \label{fig:specialnodes}
     \end{figure}
 
@@ -713,7 +714,7 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.6]{incompatibilityrecursive}
         \centering
-        \caption{Illustration of a recursive definition of incompatibility. Let $minCover^{T}(C) = \{c_1, c_2\}$ and circled nodes be in $incompatible^{T}(C)$, as in (a). For some node $u \in V(T)$, let $Cu = C \cup \leafset^{T}(u)$ and the nodes $l_C$ and $l_{Cu}$ be $lca^{T}(C)$ and $lca^{T}(Cu)$ respectively. In (b), $minCover^{T}(Cu) = \{c_1, c_3\}$, and $l_C = l_{Cu}$, while in (c), $minCover^{T}(Cu) = \{c_1, c_2, c_3\}$ and $l_C \neq l_{Cu}$. In both (b) and (c), nodes belonging to $incompatible^{T}(Cu)$ are marked with squares and $coverer^{T, Cu}(u) = c_3$.}
+        \caption[Recursively defining incompatibility]{Illustration of a recursive definition of incompatibility. Let $minCover^{T}(C) = \{c_1, c_2\}$ and circled nodes be in $incompatible^{T}(C)$, as in (a). For some node $u \in V(T)$, let $Cu = C \cup \leafset^{T}(u)$ and the nodes $l_C$ and $l_{Cu}$ be $lca^{T}(C)$ and $lca^{T}(Cu)$ respectively. In (b), $minCover^{T}(Cu) = \{c_1, c_3\}$, and $l_C = l_{Cu}$, while in (c), $minCover^{T}(Cu) = \{c_1, c_2, c_3\}$ and $l_C \neq l_{Cu}$. In both (b) and (c), nodes belonging to $incompatible^{T}(Cu)$ are marked with squares and $coverer^{T, Cu}(u) = c_3$.}
         \label{fig:incompatibilityrecursive}
     \end{figure}
 
@@ -827,7 +828,7 @@
         \item \textit {Scenario 2:} We generate $k$ binary trees, with the given leaf labels, each under the uniform model \cite{mckenzie2000distributions}. Then for each non-root internal node $u$ in each tree, we $delete$ $u$ with probability $0.2$.
     \end{itemize}
 
-    Since we wished to see the effect of both $k$ and $n$ on these algorithms, we ran two experiments, one with $n$ fixed and one with $k$ fixed. Further, we measured the time taken by the weighting step and the remainder of the algorithm separately. Note that we use the running time of the second half of \texttt{Frequency\_Difference} as a stand-in for running time of \texttt{Filter\_Clusters} as it is hard to measure the latter independently, and since the implementations are identical except for \texttt{Filter\_Clusters}. For each value of $k$ and $n$, we generated 50 input examples and averaged the running time over these.
+    Since we wished to see the effect of both $k$ and $n$ on these algorithms, we ran two experiments, one with $n$ fixed and one with $k$ fixed. Further, we measured the time taken by the weighting step and the remainder of the algorithm separately. Note that we use the running time of the second half of \texttt{Frequency\_Difference} as a stand-in for running time of \texttt{Filter\_Clusters} as it is hard to measure the latter independently, and since the implementations are identical except for \texttt{Filter\_Clusters}. For each value of $k$ and $n$, we generated 5 input examples and averaged the running time over these.
 
     We ran the experiments on a MacBook Pro laptop running macOS Sierra 10.12.6, equipped with 16GB RAM and a 2.2 GHz Intel Core i7 processor. The C++ compiler used was clang-802.0.42 and the version of the Boost libraries was 1.65.1. The time taken was measured using the inbuilt \texttt{clock()} function in C++.
 
@@ -840,39 +841,37 @@
         \begin{minipage}{0.48\textwidth}
             \centering
             \caption{Weighting time with $n = 100$, varying $k$}
-            \label{tab:weightk}
+            \label{tab:weightk1}
             \begin{tabular}{c||ccccc}
                 $k$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
                 \hline\hline
-                500 & 0.24 & 0.02 & 0.27\\
-                1000 & 0.49 & 0.05 & 1.03\\
-                1500 & 0.74 & 0.08 & 2.29\\
-                2000 & 1.00 & 0.11 & 4.22\\
-                3000 & 1.60 & 0.16 & 9.60\\
-                4000 & 2.04 & 0.20 & 16.52\\
-                5000 & 2.77 & 0.27 & 26.97\\
-                7500 & 4.04 & 0.40 & 60.67\\
-                10000 & 5.72 & 0.55 & 109.67\\
+                50 & 0.34 & 0.04 & 0.04\\
+                100 & 0.66 & 0.09 & 0.12\\
+                200 & 1.32 & 0.17 & 0.46\\
+                500 & 3.51 & 0.47 & 2.82\\
+                1000 & 7.32 & 1.03 & 11.25\\
+                2000 & 15.07 & 2.27 & 45.13\\
+                3000 & 23.58 & 3.66 & 100.06\\
+                4000 & 31.48 & 4.87 & 174.49\\
             \end{tabular}
             \includegraphics[scale=0.4]{varyingk1_weighting}
             \vspace{0.5cm}
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time with $n = 100$, varying $k$}
-            \label{tab:filterk}
+            \caption{\texttt{Filter\_Clusters} time with $n = 1000$, varying $k$}
+            \label{tab:filterk1}
             \begin{tabular}{c||ccccc}
                 $k$ & $n\,log\,n$ & $n\,log^2n$\\
                 \hline\hline
-                500 & 1.11 & 0.24\\
-                1000 & 2.20 & 0.46\\
-                1500 & 3.19 & 0.68\\
-                2000 & 4.30 & 0.94\\
-                3000 & 6.65 & 1.32\\
-                4000 & 8.49 & 1.63\\
-                5000 & 10.66 & 2.11\\
-                7500 & 15.44 & 3.18\\
-                10000 & 22.13 & 4.24\\
+                50 & 1.13 & 1.04\\
+                100 & 2.31 & 2.52\\
+                200 & 4.65 & 5.00\\
+                500 & 11.89 & 13.90\\
+                1000 & 24.84 & 27.39\\
+                2000 & 52.71 & 62.18\\
+                3000 & 81.01 & 84.99\\
+                4000 & 108.53 & 116.16\\
             \end{tabular}
             \includegraphics[scale=0.4]{varyingk1_filter}
             \vspace{0.5cm}
@@ -880,48 +879,135 @@
         \begin{minipage}{0.48\textwidth}
             \centering
             \caption{Weighting time with $k = 100$, varying $n$}
-            \label{tab:weightn}
+            \label{tab:weightn1}
             \begin{tabular}{c||ccccc}
                 $n$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
                 \hline\hline
-                500 & 0.31 & 0.03 & 0.06\\
-                1000 & 0.69 & 0.08 & 0.12\\
-                1500 & 1.06 & 0.15 & 0.18\\
-                2000 & 1.45 & 0.24 & 0.24\\
-                3000 & 2.31 & 0.43 & 0.36\\
-                4000 & 3.19 & 0.78 & 0.49\\
-                5000 & 4.12 & 1.08 & 0.63\\
-                7500 & 6.37 & 2.21 & 0.91\\
-                10000 & 8.87 & 3.80 & 1.26\\
+                500 & 0.30 & 0.03 & 0.06\\
+                1000 & 0.65 & 0.08 & 0.11\\
+                1500 & 1.03 & 0.14 & 0.17\\
+                2000 & 1.40 & 0.23 & 0.23\\
+                3000 & 2.21 & 0.43 & 0.36\\
+                4000 & 3.06 & 0.68 & 0.47\\
+                5000 & 3.92 & 1.06 & 0.60\\
+                7500 & 6.09 & 2.08 & 0.90\\
+                10000 & 8.36 & 3.65 & 1.22\\
             \end{tabular}
             \includegraphics[scale=0.4]{varyingn1_weighting}
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
             \caption{\texttt{Filter\_Clusters} time with $k = 100$, varying $n$}
-            \label{tab:filtern}
+            \label{tab:filtern1}
             \begin{tabular}{c||ccccc}
                 $n$ & $n\,log\,n$ & $n\,log^2n$\\
                 \hline\hline
-                500 & 1.12 & 0.60\\
-                1000 & 2.32 & 2.48\\
-                1500 & 3.54 & 11.48\\
-                2000 & 4.76 & 19.15\\
-                3000 & 7.27 & 33.16\\
-                4000 & 9.87 & 55.42\\
-                5000 & 12.81 & 70.86\\
-                7500 & 19.78 & 153.63\\
-                10000 & 26.63 & 264.19\\
+                500 & 1.09 & 0.51\\
+                1000 & 2.22 & 2.42\\
+                1500 & 3.33 & 10.86\\
+                2000 & 4.54 & 17.74\\
+                3000 & 7.06 & 31.29\\
+                4000 & 9.62 & 49.92\\
+                5000 & 12.20 & 69.88\\
+                7500 & 18.54 & 129.07\\
+                10000 & 25.38 & 211.64\\
             \end{tabular}
             \includegraphics[scale=0.4]{varyingn1_filter}
         \end{minipage}
+        \captionof{figure}{Experimental Results for Scenario $1$}
+        \label{fig:expresults1}
     \end{table}
 
-    The experimentally observed average running times are given in Tables~\ref{tab:weightk},~\ref{tab:filterk},~\ref{tab:weightn} and~\ref{tab:filtern}.
+    \begin{table}[!ht]
+        \captionsetup{font=footnotesize,justification=justified,margin=0cm}
+        \small
+        \begin{minipage}{0.48\textwidth}
+            \centering
+            \caption{Weighting time with $n = 100$, varying $k$}
+            \label{tab:weightk2}
+            \begin{tabular}{c||ccccc}
+                $k$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
+                \hline\hline
+                50 & 0.41 & 0.04 & 0.03\\
+                100 & 0.80 & 0.08 & 0.10\\
+                200 & 1.57 & 0.18 & 0.37\\
+                500 & 4.10 & 0.50 & 2.29\\
+                1000 & 8.62 & 1.09 & 8.95\\
+                2000 & 17.56 & 2.39 & 35.30\\
+                3000 & 27.30 & 3.71 & 79.17\\
+                4000 & 37.71 & 5.16 & 140.47\\
+            \end{tabular}
+            \includegraphics[scale=0.4]{varyingk2_weighting}
+            \vspace{0.5cm}
+        \end{minipage}\hfill
+        \begin{minipage}{0.48\textwidth}
+            \centering
+            \caption{\texttt{Filter\_Clusters} time with $n = 1000$, varying $k$}
+            \label{tab:filterk2}
+            \begin{tabular}{c||ccccc}
+                $k$ & $n\,log\,n$ & $n\,log^2n$\\
+                \hline\hline
+                50 & 1.14 & 1.00\\
+                100 & 2.18 & 2.78\\
+                200 & 4.38 & 5.54\\
+                500 & 11.24 & 19.86\\
+                1000 & 22.87 & 46.90\\
+                2000 & 49.79 & 101.64\\
+                3000 & 80.24 & 162.47\\
+                4000 & 112.12 & 227.85\\
+            \end{tabular}
+            \includegraphics[scale=0.4]{varyingk2_filter}
+            \vspace{0.5cm}
+        \end{minipage}
+        \begin{minipage}{0.48\textwidth}
+            \centering
+            \caption{Weighting time with $k = 100$, varying $n$}
+            \label{tab:weightn2}
+            \begin{tabular}{c||ccccc}
+                $n$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
+                \hline\hline
+                500 & 0.35 & 0.03 & 0.05\\
+                1000 & 0.75 & 0.08 & 0.09\\
+                1500 & 1.22 & 0.14 & 0.14\\
+                2000 & 1.68 & 0.25 & 0.20\\
+                3000 & 2.68 & 0.43 & 0.29\\
+                4000 & 3.70 & 0.71 & 0.39\\
+                5000 & 4.77 & 1.05 & 0.48\\
+                7500 & 7.56 & 2.07 & 0.76\\
+                10000 & 10.59 & 3.62 & 1.01\\
+            \end{tabular}
+            \includegraphics[scale=0.4]{varyingn2_weighting}
+        \end{minipage}\hfill
+        \begin{minipage}{0.48\textwidth}
+            \centering
+            \caption{\texttt{Filter\_Clusters} time with $k = 100$, varying $n$}
+            \label{tab:filtern2}
+            \begin{tabular}{c||ccccc}
+                $n$ & $n\,log\,n$ & $n\,log^2n$\\
+                \hline\hline
+                500 & 1.04 & 0.60\\
+                1000 & 2.09 & 2.65\\
+                1500 & 3.20 & 7.34\\
+                2000 & 4.40 & 11.84\\
+                3000 & 6.77 & 20.64\\
+                4000 & 9.28 & 32.04\\
+                5000 & 11.81 & 45.94\\
+                7500 & 18.71 & 90.62\\
+                10000 & 26.69 & 150.22\\
+            \end{tabular}
+            \includegraphics[scale=0.4]{varyingn2_filter}
+        \end{minipage}
+        \captionof{figure}{Experimental Results for Scenario $2$}
+        \label{fig:expresults2}
+    \end{table}
 
-    \textit{Weighting Step.} From Table~\ref{tab:weightk}, it is clear that, as expected, as $k$ increases, the runtime of the $k^2n$ algorithm becomes much worse than that of the other two. Similarly, Table~\ref{tab:weightn} shows that when $n$ increases, runtime of the $kn^2$ becomes worse than that of the $k^2n$. More interestingly, the algorithm with a theoretical runtime of $kn\,log\,n$ actually performs worse than the $kn^2$ one. This is because the constants in the new algorithm are larger, due to the construction of the restricted subtrees. However, a closer look at Table~\ref{tab:weightn} does show that the runtime for the $kn^2$ algorithm is growing faster than the new algorithm, and indeed, our informal testing showed that it performs worse for large values of $n$. In practice, though, values of $n$ are not so large, and hence it is likely that the old implementation is better in practice. Also note that, as mentioned in \cite{jansson2018algorithms}, the $kn^2$ algorithm costs memory quadratic in $n$, so if memory is a concern, then using on of the other methods might be more advisable. The choice of which one to use would depend on the value of $k$.
+    The experimentally observed average running times are given in \cref{tab:weightk1,tab:filterk1,tab:weightn1,tab:filtern1,tab:weightk2,tab:filterk2,tab:weightn2,tab:filtern2}, seen in \cref{fig:expresults1,fig:expresults2}.
 
-    \texttt{Filter\_Clusters.} Table~\ref{tab:filterk} is not particularly interesting here since it merely demonstrates that the $kn\,log^2n$ algorithm performs better when $n$ is small. However, Table~\ref{tab:filtern} illustrates that the new algorithm overtakes this very quickly when $n > 1000$, performing up to $10$ times better as $n$ nears $10000$. This might be surprising, as the theoretical difference is only a factor of $log\,n$. We (informally) think that this is because of implementation detail 3, due to which we can skip the costly construction of the $\TB||\leafset^{\tau}$ trees. Thus, based on these results, we recommend using the old algorithm if $n < 1000$ and the new one otherwise. Note that the old algorithm in fact uses a simpler version of \texttt{Filter\_Clusters}, with time complexity $O(n^2)$, when $n < 1000$.
+    \textit{Comparing Scenarios.} Observe that the basic structure of the graphs across the two scenarios is the same, i.e. we see the same relationships between the various algorithms. An interesting case is to compare Table~\ref{tab:weightk1} to Table~\ref{tab:weightk2}. Here, it can be seen that the $kn\,log\,n$ algorithm performs worse in Scenario 2. This is likely because in Scenario 2 there is a far larger number of distinct clusters, increasing the range of the labels assigned during the weighting step. This leads to the counting/radix sorts becoming less efficient. Since our algorithm performs similarly for both scenarios under the other conditions, we will henceforth only be referring to \cref{tab:weightk1,tab:filterk1,tab:weightn1,tab:filtern1}.
+
+    \textit{Weighting Step.} From Table~\ref{tab:weightk1}, it is clear that, as expected, as $k$ increases, the runtime of the $k^2n$ algorithm becomes much worse than that of the other two. Similarly, Table~\ref{tab:weightn1} shows that when $n$ increases, runtime of the $kn^2$ becomes worse than that of the $k^2n$. More interestingly, the algorithm with a theoretical runtime of $kn\,log\,n$ actually performs worse than the $kn^2$ one. This is because the constants in the new algorithm are larger, due to the construction of the restricted subtrees. However, a closer look at Table~\ref{tab:weightn1} does show that the runtime for the $kn^2$ algorithm is growing faster than the new algorithm, and indeed, our informal testing showed that it performs worse for large values of $n$. In practice, though, values of $n$ are not so large, and hence it is likely that the old implementation is better in practice. Also note that, as mentioned in \cite{jansson2018algorithms}, the $kn^2$ algorithm costs memory quadratic in $n$, so if memory is a concern, then using on of the other methods might be more advisable. The choice of which one to use would depend on the value of $k$.
+
+    \texttt{Filter\_Clusters.} Table~\ref{tab:filterk1} is not particularly interesting here since it merely demonstrates that the two algorithms perform similarly when $n = 1000$. However, Table~\ref{tab:filtern1} illustrates that the new algorithm overtakes the old one very quickly when $n > 1000$, performing up to $10$ times better as $n$ nears $10000$. This might be surprising, as the theoretical difference is only a factor of $log\,n$. We (informally) think that this is because of implementation detail 3, due to which we can skip the costly construction of the $\TB||\leafset^{\tau}$ trees. Thus, based on these results, we recommend using the old algorithm if $n \leq 1000$ and the new one otherwise. Note that the old algorithm in fact uses a simpler version of \texttt{Filter\_Clusters}, with time complexity $O(n^2)$, when $n \leq 1000$.
 
     \section{Conclusion}
     We have given a new deterministic algorithm for constructing the FDCT of a set of phylogenetic trees. This algorithm betters the previously best known one by a factor of $log\,n$. We leave open the problem of finding an optimal solution, i.e. one with time complexity $O(kn)$. Observe that doing so would involve bettering both halves of the algorithm or coming up with a new approach.
