@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[12pt]{article}
 
 \usepackage{url}
 \usepackage{amsmath}
@@ -11,7 +11,7 @@
 \usepackage{algpseudocode}
 \usepackage{parskip}
 \usepackage{graphicx}
-\usepackage{cite}
+\usepackage[natbibapa]{apacite}
 \usepackage{xcolor}
 \usepackage{caption}
 \usepackage{float}
@@ -28,7 +28,7 @@
 ]{geometry}
 
 \captionsetup{font=footnotesize,justification=justified,margin=2cm}
-
+\onehalfspacing
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 
 \algnewcommand\algorithmicinput{\textbf{Input:}}
@@ -75,24 +75,35 @@
 
 
 \begin{document}
+    \pagenumbering{roman}
     \maketitle
+    \newpage
 
     \begin{abstract}
         This report presents a new deterministic algorithm for constructing a frequency difference consensus tree. Given $k$ phylogenetic trees with identical leaf label sets of size $n$, this algorithm constructs the frequency difference tree in $O(kn\,log\,n)$ time, bettering the previously best known time of $O(kn\,log^2n)$.
     \end{abstract}
+    \newpage
 
+    \tableofcontents
+    \newpage
+
+    \listoffigures
+    \listoftables
+    \newpage
+
+    \pagenumbering{arabic}
     \section{Introduction}
     \label{sec:introduction}
 
     A \textit{taxon} (pl. taxa) is a group of organisms that taxonomists classify as a single unit, such as \textit{homo sapiens}. These come together to give a \textit{rooted phylogenetic tree}, which presents the evolutionary relationships between various taxa in a hierarchical manner. Each leaf in this tree represents a taxon. An internal node then represents the common ancestor of a subgroup of the taxa shown in the entire tree. Children of each node split the group rooted at that node into smaller ones. A subgroup of taxa that are descendants of some common ancestor is called a \textit{clade}, i.e. a clade is the leaf set of any node in a phylogenetic tree.
 
-    We often obtain multiple phylogenetic trees from biological datasets. These trees may be produced from different datasets or from a single dataset using techniques like maximum parsimony that yield a number of candidate trees \cite{bryant1997hunting}. This motivates the concept of a \textit{consensus tree}, which reconciles many phylogenetic trees by summarising the branching information contained in each into a single tree. Consensus trees are also useful in determining which clades have strong suppport within the input trees \cite{felsenstein2004inferring}.
+    We often obtain multiple phylogenetic trees from biological datasets. These trees may be produced from different datasets or from a single dataset using techniques like maximum parsimony that yield a number of candidate trees \citep{bryant1997hunting}. This motivates the concept of a \textit{consensus tree}, which reconciles many phylogenetic trees by summarising the branching information contained in each into a single tree. Consensus trees are also useful in determining which clades have strong suppport within the input trees \citep{felsenstein2004inferring}.
 
-    A variety of techniques of constructing a consensus tree from a set of phylogenetic trees have been developed over the last half century, starting with the Adams consensus tree \cite{adams1972consensus} in 1972. There is a strong motivation for the development of different types of consensus trees since they each have their own benefits and drawbacks. Some of these techniques are summarised in \S 6.2 of \cite{bryant1997hunting} and a comparative analysis can be found in \cite{bryant2003classification}. We illustrate some techniques here. The \textit{strict consensus tree} \cite{sokal1981taxonomic} only keeps those clades that occur in all the input trees. While easily reconstructed and interpreted, it can discard a lot of potentially important information if there is a lot of disagreement between the various trees. The \textit{majority rule consensus tree} \cite{margush1981consensusn} is a generalisation of the previous, allowing all clades that occur in a majority of the trees. Holder et al. \cite{holder2008justification} showed that these trees are optimal given a certain context.
+    A variety of techniques of constructing a consensus tree from a set of phylogenetic trees have been developed over the last half century, starting with the Adams consensus tree \citep{adams1972consensus} in 1972. There is a strong motivation for the development of different types of consensus trees since they each have their own benefits and drawbacks. Some of these techniques are summarised in \S 6.2 of \citep{bryant1997hunting} and a comparative analysis can be found in \citep{bryant2003classification}. We illustrate some techniques here. The \textit{strict consensus tree} \citep{sokal1981taxonomic} only keeps those clades that occur in all the input trees. While easily reconstructed and interpreted, it can discard a lot of potentially important information if there is a lot of disagreement between the various trees. The \textit{majority rule consensus tree} \citep{margush1981consensusn} is a generalisation of the previous, allowing all clades that occur in a majority of the trees. \cite{holder2008justification} showed that these trees are optimal given a certain context.
 
-    This article studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} \cite{goloboff2003improvements}. The \textit{frequency difference consensus tree} (abbreviated henceforth as FDCT) further generalises the \textit{majority rule consensus tree}, keeping every clade that occurs in more trees than the most frequent clade that contradicts it (the concept of contradiction is formalized in Subsection~\ref{subsec:def}). The FDCT is motivated by a desire to design an effective criterion for determining which clades are strongly supported within a set of trees. As set out in \cite{goloboff2003improvements}, although the \textit{majority rule consensus tree} includes a clade that is supported by 60\% of a set of trees and contradicted by 40\% of them, it does not include a clade supported by 40\% of the trees but not contradicted by any of them. A possible resolution to this is to define strongly supported clades as those with greater frequency than all clades incompatible with them. These are called frequency difference clades and all of these are included in the FDCT.
+    This article studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} \citep{goloboff2003improvements}. The \textit{frequency difference consensus tree} (abbreviated henceforth as FDCT) further generalises the \textit{majority rule consensus tree}, keeping every clade that occurs in more trees than the most frequent clade that contradicts it (the concept of contradiction is formalized in Subsection~\ref{subsec:def}). The FDCT is motivated by a desire to design an effective criterion for determining which clades are strongly supported within a set of trees. As set out in \citep{goloboff2003improvements}, although the \textit{majority rule consensus tree} includes a clade that is supported by 60\% of a set of trees and contradicted by 40\% of them, it does not include a clade supported by 40\% of the trees but not contradicted by any of them. A possible resolution to this is to define strongly supported clades as those with greater frequency than all clades incompatible with them. These are called frequency difference clades and all of these are included in the FDCT.
 
-    Dong et al. \cite{dong2010majority} provided a comparison of the FDCT and a few other types of consensus trees. Barrett et al. \cite{barrett2013plastid} employed the idea of using frequency difference as a measure of clade support while analysing angiosperm phylogeny and commented ``[the] frequency difference metric ... is particularly useful for assessing support when it is not overwhelmingly in favour of one particular topology, and should be especially useful in phylogenomic analyses in general, where hundreds or thousands of characters may contribute to branch support''. Steel and Velasco \cite{steel2014axiomatic} investigated a generalisation of the FDCT to \textit{supertrees}, i.e. consensus trees built from input trees that do not necessarily have the same leaf sets. They show that, unlike some other popular techniques, the FDCT definition easily generalises to a viable supertree definition and conclude that the FDCT is ``worthy of more widespread usage and serious study''. Given that the FDCT and the frequency difference measure have been utilised in various studies over the years \cite{garcia2014testing,barrett2013plastid,molineri2010cladistic,molineri2013phylogeny,molineri2015phylogeny,lindqvist2006molecular,han2014new} and keeping in mind the favourable opinions above, we set out to improve upon the best known deterministic algorithm for reconstructing the FDCT of a set of trees.
+    \cite{dong2010majority} provided a comparison of the FDCT and a few other types of consensus trees. Barrett et al. \cite{barrett2013plastid} employed the idea of using frequency difference as a measure of clade support while analysing angiosperm phylogeny and commented ``[the] frequency difference metric ... is particularly useful for assessing support when it is not overwhelmingly in favour of one particular topology, and should be especially useful in phylogenomic analyses in general, where hundreds or thousands of characters may contribute to branch support''. \cite{steel2014axiomatic} investigated a generalisation of the FDCT to \textit{supertrees}, i.e. consensus trees built from input trees that do not necessarily have the same leaf sets. They show that, unlike some other popular techniques, the FDCT definition easily generalises to a viable supertree definition and conclude that the FDCT is ``worthy of more widespread usage and serious study''. Given that the FDCT and the frequency difference measure have been utilised in various studies over the years \citep{garcia2014testing,barrett2013plastid,molineri2010cladistic,molineri2013phylogeny,molineri2015phylogeny,lindqvist2006molecular,han2014new} and keeping in mind the favourable opinions above, we set out to improve upon the best known deterministic algorithm for reconstructing the FDCT of a set of trees.
 
     \subsection{Definitions and Notation}
     \label{subsec:def}
@@ -110,7 +121,7 @@
         \label{fig:freqdiff}
     \end{figure}
 
-    A \textit{frequency difference consensus tree} is defined as follows. Let $\mathcal{S}$ be a set of $k$ trees with identical leaf labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let weight of $C$, denoted as $\weight(C)$, be $|\{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}|$, i.e. the number of trees in $\mathcal{S}$ which $C$ occurs in. For convenience, we also define, for any tree $T \in \mathcal{S}$, for any node $u \in V(T)$, the weight of $u$, denoted as $\weight(u)$ to be $\weight(\leafset^{T}(u))$. Then the FDCT of $\mathcal{S}$ is the tree $T_{FD}$, where $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \cite{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$. Figure~\ref{fig:freqdiff} gives an example. In this, $\weight(\{a, b\}) = 2 \leq \weight(\{b, c\}) = 2$ and $\{a, b\} \not\compatible \{b, c\}$, hence $\{a, b\}$ is not in the final consensus tree. However $\{a, b, c\}$ and $\{d, e\}$ have frequencies greater than any cluster incompatible with them, hence they both exist in the consensus tree. Note that frequencies are not shown for the trivial clusters.
+    A \textit{frequency difference consensus tree} is defined as follows. Let $\mathcal{S}$ be a set of $k$ trees with identical leaf labels, i.e. $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$. For any cluster $C \subseteq L$, let weight of $C$, denoted as $\weight(C)$, be $|\{T : T \in \mathcal{S} \text{ and } C \in \mathcal{C}(T)\}|$, i.e. the number of trees in $\mathcal{S}$ which $C$ occurs in. For convenience, we also define, for any tree $T \in \mathcal{S}$, for any node $u \in V(T)$, the weight of $u$, denoted as $\weight(u)$ to be $\weight(\leafset^{T}(u))$. Then the FDCT of $\mathcal{S}$ is the tree $T_{FD}$, where $\mathcal{C}(T_{FD}) = \{C : C \subseteq L \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \subseteq L \text{ and } C \not\compatible C_1\})\}$. Thus $T_{FD}$ contains all clusters that occur more frequently than any cluster that they are incompatible with. By Proposition $3$ in \citep{steel2014axiomatic}, this tree always exists and is unique for a given $\mathcal{S}$. Figure~\ref{fig:freqdiff} gives an example. In this, $\weight(\{a, b\}) = 2 \leq \weight(\{b, c\}) = 2$ and $\{a, b\} \not\compatible \{b, c\}$, hence $\{a, b\}$ is not in the final consensus tree. However $\{a, b, c\}$ and $\{d, e\}$ have frequencies greater than any cluster incompatible with them, hence they both exist in the consensus tree. Note that frequencies are not shown for the trivial clusters.
 
     For each of the definitions above where the tree is specified in the superscript, this superscript is omitted if the tree being referred to is clear from context. For example, $children^T(u)$ would be written as $children(u)$. This will also be applied to any notation developed in the remainder of this text.
 
@@ -119,7 +130,7 @@
     \subsection{Previous Work}
     \label{subsec:previouswork}
 
-    An implementation of the FDCT can be found in the free software package TNT \cite{goloboff2008tnt}; however the algorithm used within is unavailable and so its complexity is not known. Jansson et al. \cite{jansson2018algorithms} gave a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the FDCT, implemented in the open source FACT package \cite{jansson2016improved}. Gawrychowski et al. \cite{gawrychowski2017faster} improved upon this to give a deterministic $O(kn\,log^2n)$ algorithm (not yet implemented).
+    An implementation of the FDCT can be found in the free software package TNT \citep{goloboff2008tnt}; however the algorithm used within is unavailable and so its complexity is not known. \cite{jansson2018algorithms} gave a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the FDCT, implemented in the open source FACT package \citep{jansson2016improved}. \cite{gawrychowski2017faster} improved upon this to give a deterministic $O(kn\,log^2n)$ algorithm (not yet implemented).
 
     \subsection{Organisation of the Article and New Results}
     Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later. Sections~\ref{sec:cfd} and~\ref{sec:rmqtree} show how certain efficient data structures can be built on trees; these will be utilised later. Sections~\ref{sec:weighting} and~\ref{sec:filterclusters} present algorithms for solving subproblems of the FDCT construction; these are brought together in Section~\ref{sec:freqdiffconstruction} to give a new deterministic algorithm for constructing the FDCT that runs in $O(kn\,log\,n)$ time.
@@ -129,7 +140,7 @@
 
     \subsection{The \textit{lca} operation}
 
-    We restate the following lemma outlining the \textit{lca} operation from \cite{bender2000lca}:
+    We restate the following lemma outlining the \textit{lca} operation from \citep{bender2000lca}:
     \newline
 
     \begin{lca}
@@ -140,7 +151,7 @@
 
     \subsection{The linear RMQ (range minimum/maximum) data structure}
 
-    For any array $A[1 ... n]$ of length $n$ and any indices $i, j$, $1 \leq i \leq j \leq n$, let $rmq^A(i, j)$ denote $max_{i \leq k \leq j}A[k]$. We restate the following lemma about answering $rmq$ queries from \cite{bender2000lca}:
+    For any array $A[1 ... n]$ of length $n$ and any indices $i, j$, $1 \leq i \leq j \leq n$, let $rmq^A(i, j)$ denote $max_{i \leq k \leq j}A[k]$. We restate the following lemma about answering $rmq$ queries from \citep{bender2000lca}:
     \newline
 
     \begin{linearrmq}
@@ -151,7 +162,7 @@
 
     \subsection{Centroid Path Decomposition}
 
-    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. For any $u \in V(T)$, we define the \textit{heaviest child} of $u$, denoted by $heavyChild(u)$, to be the one with the largest leafset, with ties broken arbitrarily. The remaining children are called the \textit{side children} of $u$, denoted by $sideChildren(u)$. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the heaviest child. The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $u \in V(T)$, let $\sigma(u)$ be the set of trees rooted at $sideChildren(u)$, called the side trees \textit{associated} with $u$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree.
+    The \textit{centroid path decomposition technique} of \citep{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. For any $u \in V(T)$, we define the \textit{heaviest child} of $u$, denoted by $heavyChild(u)$, to be the one with the largest leafset, with ties broken arbitrarily. The remaining children are called the \textit{side children} of $u$, denoted by $sideChildren(u)$. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the heaviest child. The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, ..., p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $u \in V(T)$, let $\sigma(u)$ be the set of trees rooted at $sideChildren(u)$, called the side trees \textit{associated} with $u$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree.
 
     We further define a \textit{complete centroid path decomposition} for any tree $T$. Here, the normal centroid path decomposition is applied on $T$, and then each side tree is recursively decomposed. This results in a set of disjoint paths in $T$, denoted by $\mathcal{P}(T)$. We also assign each path $P_i \in \mathcal{P}(T)$ a depth, denoted as $depth^{T}(P_i)$, defined to be $1\, +$ depth of centroid path containing the parent of the root of $P_i$. Intuitively, if we build a tree from only the roots of the centroid paths while maintaining the same relative structure, then the depth of a centroid path would simply be the depth of its root in this new tree. Figure~\ref{fig:centroid}(b) applies complete centroid path decomposition on the same tree as before. The bold paths, along with the isolated leaves, are centroid paths. As can be seen, the large side tree that remained intact in Figure~\ref{fig:centroid}(a) has now been recursively decomposed. The depth of each centroid path is shown next to its root.
 
@@ -165,7 +176,7 @@
     \subsection{The \textit{delete} operation}
     \label{subsec:delete}
 
-    As described in \cite{jansson2018algorithms}, the \textit{delete} operation deletes a cluster from a tree. To do so, we specify some internal node $u$ in a tree $T$, such that we wish to delete the cluster $\leafset^{T}(u)$. Then the \textit{delete} operation makes $parent(u)$ the parent of all nodes in $children(u)$ and removes $u$, along with any associated edges from $T$. This has the effect of removing only $\leafset(u)$ from $T$, without affecting any other cluster. For example, in Figure~\ref{fig:freqdiff}, if we perform a delete operation on $T_2$, on the node associated with the cluster $\{b, c\}$, the resulting tree is identical to $T_{FD}$.
+    As described in \citep{jansson2018algorithms}, the \textit{delete} operation deletes a cluster from a tree. To do so, we specify some internal node $u$ in a tree $T$, such that we wish to delete the cluster $\leafset^{T}(u)$. Then the \textit{delete} operation makes $parent(u)$ the parent of all nodes in $children(u)$ and removes $u$, along with any associated edges from $T$. This has the effect of removing only $\leafset(u)$ from $T$, without affecting any other cluster. For example, in Figure~\ref{fig:freqdiff}, if we perform a delete operation on $T_2$, on the node associated with the cluster $\{b, c\}$, the resulting tree is identical to $T_{FD}$.
 
     \subsection{Restricted Trees}
     For any tree $T$ and any cluster $C \subseteq \leafset(T)$, define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leaves in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Figure~\ref{fig:restrictedsubtree} demonstrates this process. Notice that nodes which are not $lca$'s of the cluster are removed, but the structure of the tree in relation to the leaves in the cluster remains the same.
@@ -179,7 +190,7 @@
 
     \subsection{Characterising incompatibility}
 
-    For any tree $T$ and cluster $C \subseteq \leafset(T)$, define the set $incompatible^{T}(C) = \{u : u \in V(T) \text{ and } \leafset^{T}(u) \not\compatible C\}$. Lemma 6 of \cite{jansson2018algorithms}, which gives a property of this set, is restated here since it is crucial in the development of an algorithm discussed below.
+    For any tree $T$ and cluster $C \subseteq \leafset(T)$, define the set $incompatible^{T}(C) = \{u : u \in V(T) \text{ and } \leafset^{T}(u) \not\compatible C\}$. Lemma 6 of \citep{jansson2018algorithms}, which gives a property of this set, is restated here since it is crucial in the development of an algorithm discussed below.
     \newline
 
     \begin{incompatibility}
@@ -191,7 +202,7 @@
     \subsection{The \texttt{Merge\_Trees} algorithm}
     \label{subsec:mergetrees}
 
-    We restate the following lemma outlining the \texttt{Merge\_Trees} operation from \cite{jansson2016improved}:
+    We restate the following lemma outlining the \texttt{Merge\_Trees} operation from \citep{jansson2016improved}:
     \newline
 
     \begin{mergetrees}
@@ -217,9 +228,9 @@
 
     \subsection{The \texttt{Frequency\_Difference} algorithm}
 
-    The algorithm \texttt{Frequency\_Difference} \cite{jansson2018algorithms} computes the FDCT of a set of trees $\mathcal{S}$. It runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $\weight(u)$ in the \textit{weighting} step. In the second part, it utilises \texttt{Filter\_Clusters} (defined below) and \texttt{Merge\_Trees} (from Subsection~\ref{subsec:mergetrees}) to compute the FDCT.
+    The algorithm \texttt{Frequency\_Difference} \citep{jansson2018algorithms} computes the FDCT of a set of trees $\mathcal{S}$. It runs in two parts. First, for any tree $T \in \mathcal{S}$ and any node $u \in V(T)$, it computes $\weight(u)$ in the \textit{weighting} step. In the second part, it utilises \texttt{Filter\_Clusters} (defined below) and \texttt{Merge\_Trees} (from Subsection~\ref{subsec:mergetrees}) to compute the FDCT.
 
-    As in \cite{jansson2018algorithms}, the subprocedure \texttt{Filter\_Clusters}, is defined to take as input trees $\TA$ and $\TB$, with $\leafset^{\TA} = \leafset^{\TB} = L$ and the values of $\weight(u)$ for all $u \in V(\TA) \cup V(\TB)$. It returns a tree $T$ which contains all clusters $C$ in $\TA$ for which $\weight(C) > $ weights of all clusters in $\TB$ that are incompatible with $C$. Formally, \texttt{Filter\_Clusters}$(\TA, \TB) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset^T = L$. For example, referring to Figure~\ref{fig:freqdiff}, \texttt{Filter\_Clusters}$(T_2, T_1) = T_{FD}$. Notice that there are three non-trivial clusters in $T_2$: $\{a, b, c\}, \{b, c\}$ and $\{d, e\}$. All of these have weight $2$. Now the only cluster in $T_1$ incompatible with $\{a, b, c\}$ is $\{c, d, e\}$, but this only has weight $1$ and so $\{a, b, c\}$ is kept. The cluster $\{d, e\}$ is compatible with $T_1$ so it is also kept. However, $\{b, c\}$ is incompatible with $\{a, b\}$ and they both have weight $2$, hence $\{b, c\} \not\in \mathcal{C}($\texttt{Filter\_Clusters}$(T_2, T_1))$.
+    As in \citep{jansson2018algorithms}, the subprocedure \texttt{Filter\_Clusters}, is defined to take as input trees $\TA$ and $\TB$, with $\leafset^{\TA} = \leafset^{\TB} = L$ and the values of $\weight(u)$ for all $u \in V(\TA) \cup V(\TB)$. It returns a tree $T$ which contains all clusters $C$ in $\TA$ for which $\weight(C) > $ weights of all clusters in $\TB$ that are incompatible with $C$. Formally, \texttt{Filter\_Clusters}$(\TA, \TB) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset^T = L$. For example, referring to Figure~\ref{fig:freqdiff}, \texttt{Filter\_Clusters}$(T_2, T_1) = T_{FD}$. Notice that there are three non-trivial clusters in $T_2$: $\{a, b, c\}, \{b, c\}$ and $\{d, e\}$. All of these have weight $2$. Now the only cluster in $T_1$ incompatible with $\{a, b, c\}$ is $\{c, d, e\}$, but this only has weight $1$ and so $\{a, b, c\}$ is kept. The cluster $\{d, e\}$ is compatible with $T_1$ so it is also kept. However, $\{b, c\}$ is incompatible with $\{a, b\}$ and they both have weight $2$, hence $\{b, c\} \not\in \mathcal{C}($\texttt{Filter\_Clusters}$(T_2, T_1))$.
 
     The \texttt{Frequency\_Difference} algorithm is given below.
 
@@ -252,7 +263,7 @@
         \end{algorithmic}
     \end{algorithm}
 
-    Theorem 3 of \cite{jansson2018algorithms} gives the following corollary:
+    Theorem 3 of \citep{jansson2018algorithms} gives the following corollary:
     \newline
 
     \begin{freqdiffruntimecomponents}
@@ -261,7 +272,7 @@
         The total runtime of \texttt{Frequency\_Difference} is given by $O(g(n, k) + k \cdot f(n))$ where $g(n, k)$ is the time taken by the weighting step and $f(n)$ is the runtime of \texttt{Filter\_Clusters}.
     \end{freqdiffruntimecomponents}
 
-    Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the weighting step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the weighting step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.
+    \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the weighting step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. \cite{gawrychowski2017faster} improved the runtime of the weighting step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.
 
     \section{$childD$ queries}
     \label{sec:cfd}
@@ -301,7 +312,7 @@
 
     Here, we generalise the linear RMQ data structure to trees. Given a tree $T$ and $\weight(u)$ for each $u \in V(T)$, for any nodes $v, w \in V(T)$ such that $w$ is an ancestor of $v$, let $rmqTree^T[v, w] = max_{u \in path^T[v, w]}\weight(u)$. Note that the square brackets are again used to indicate inclusion of the two endpoints. We build a data structure for answering $rmqTree^T[v, w]$ queries in constant time, given $O(n\,log\,n)$ preprocessing time, where $n = |V(T)|$.
 
-    The data structure outlined here builds on the one presented in Lemma 8 of \cite{jansson2018algorithms}, while providing some further details of the implementation. We do a complete centroid path decomposition on $T$. Then for each leaf $x \in \leafset^T$, the path from $x$ to the root of $T$ can be seen as a concatenation of subpaths of centroid paths in $\mathcal{P}(T)$. An example of this can be seen in Figure~\ref{fig:rmq}. This figure shows part of a tree. The diagonal lines from right to left are centroid paths in the tree (elements of $\mathcal{P}(T)$). The dashed edges indicate that the child is not the heaviest child of its parent, hence starting a new centroid path. As can be seen, the path from the leaf $x$ to the root consists of subpaths of many centroid paths. The data structure we build consists of two parts. Firstly, for each centroid path $P_i \in \mathcal{P}(T)$, the weights along $P_i$ are stored in a linear RMQ structure (as described in Lemma~\ref{lem:linearrmq}). Secondly, for each $x$, we denote the subpaths of centroid paths on the leaf-root path by $Q_1, Q_2, ..., Q_f$, where $Q_1$ contains $root(T)$ and $Q_f$ contains $x$. Then we build the array $W_x[1 ... f]$, where $W_x[i] = max_{u \in Q_i} \weight(u)$ and store this array in a linear RMQ structure.
+    The data structure outlined here builds on the one presented in Lemma 8 of \citep{jansson2018algorithms}, while providing some further details of the implementation. We do a complete centroid path decomposition on $T$. Then for each leaf $x \in \leafset^T$, the path from $x$ to the root of $T$ can be seen as a concatenation of subpaths of centroid paths in $\mathcal{P}(T)$. An example of this can be seen in Figure~\ref{fig:rmq}. This figure shows part of a tree. The diagonal lines from right to left are centroid paths in the tree (elements of $\mathcal{P}(T)$). The dashed edges indicate that the child is not the heaviest child of its parent, hence starting a new centroid path. As can be seen, the path from the leaf $x$ to the root consists of subpaths of many centroid paths. The data structure we build consists of two parts. Firstly, for each centroid path $P_i \in \mathcal{P}(T)$, the weights along $P_i$ are stored in a linear RMQ structure (as described in Lemma~\ref{lem:linearrmq}). Secondly, for each $x$, we denote the subpaths of centroid paths on the leaf-root path by $Q_1, Q_2, ..., Q_f$, where $Q_1$ contains $root(T)$ and $Q_f$ contains $x$. Then we build the array $W_x[1 ... f]$, where $W_x[i] = max_{u \in Q_i} \weight(u)$ and store this array in a linear RMQ structure.
     \newline
 
     \begin{figure}[ht]
@@ -345,9 +356,9 @@
     \section{Weighting}
     \label{sec:weighting}
 
-    Given the set of trees $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$ and $n = |L|$, the weighting step computes $\weight(u)$ for every node $u \in \bigcup_{T \in \mathcal{S}}V(T)$. Recall that $\weight(u)$ gives the frequency of $\leafset(u)$ in $\mathcal{S}$. We divide this work (as in \cite{gawrychowski2017faster}) into the labelling and counting steps. The labelling step assigns a label to each node $u \in T, T \in \mathcal{S}$, denoted by $id(u)$, such that $id(u) \in [1 ... 2kn]$ and for any node $u' \in T', T' \in \mathcal{S}$, $id(u) = id(u')$ iff $\leafset^T(u) = \leafset^{T'}(u')$. That is, two nodes have the same label iff they are associated with the same cluster. The counting step sorts these labels, allowing us to count how many nodes exist with each label, giving us the frequencies (or the weights) of the nodes.
+    Given the set of trees $\mathcal{S} = \{T_1, T_2, ..., T_k\}$, where $\leafset(T_1) = \leafset(T_2) = ... = \leafset(T_k) = L$ and $n = |L|$, the weighting step computes $\weight(u)$ for every node $u \in \bigcup_{T \in \mathcal{S}}V(T)$. Recall that $\weight(u)$ gives the frequency of $\leafset(u)$ in $\mathcal{S}$. We divide this work (as in \citep{gawrychowski2017faster}) into the labelling and counting steps. The labelling step assigns a label to each node $u \in T, T \in \mathcal{S}$, denoted by $id(u)$, such that $id(u) \in [1 ... 2kn]$ and for any node $u' \in T', T' \in \mathcal{S}$, $id(u) = id(u')$ iff $\leafset^T(u) = \leafset^{T'}(u')$. That is, two nodes have the same label iff they are associated with the same cluster. The counting step sorts these labels, allowing us to count how many nodes exist with each label, giving us the frequencies (or the weights) of the nodes.
 
-    Recall that the approach in \cite{gawrychowski2017faster} costs $O(kn\,log^2n)$ time. We develop a way to achieve $O(kn\,log\,n)$ time.
+    Recall that the approach in \citep{gawrychowski2017faster} costs $O(kn\,log^2n)$ time. We develop a way to achieve $O(kn\,log\,n)$ time.
 
     This problem can be solved using a divide and conquer strategy. Let \texttt{Label\_Clusters}$(\{T_1, T_2, \dots, T_k\})$ be the procedure to compute the labels for all clusters. We partition $L$ into two equal sized halves, $L'$ and $L''$ such that $L = L' \cup L''$. Then we recursively call \texttt{Label\_Clusters}$(\{T_1|L', T_2|L', \dots, T_k|L'\})$ and \texttt{Label\_Clusters}$(\{T_1|L'', T_2|L'', \dots, T_k|L''\})$. The first call gives us labels for the set of clusters $\{\leafset^{T|L'}(u) : T \in \mathcal{S}, u \in T|L'\}$, which turns out to be equivalent to the set $\{\leafset^{T}(u) \cap L' : T \in \mathcal{S}, u \in T\}$. Similarly, the second call gives labels for the set of clusters $\{\leafset^{T}(u) \cap L'' : T \in \mathcal{S}, u \in T\}$. Then for any tree $T \in \mathcal{S}$, for any node $u \in V(T)$, $\leafset^T(u)$ is uniquely identified by the pair $(id(\leafset^T(u) \cap L'), id(\leafset^T(u) \cap L''))$. To be able to quickly compute this pair, we introduce the definition below.
 
@@ -418,7 +429,7 @@
         The algorithm \texttt{Label\_Clusters}$(\mathcal{S})$ runs in $O(kn\,log\,n)$ time.
 
         \begin{proof}
-            Let $T(m)$ be the runtime of \texttt{Label\_Clusters}$(\mathcal{T})$, where $m =$ size of leaf set of each tree in $\mathcal{T}$. By Lemma 5.2 of \cite{farach1995fast}, construction of $T'_i$ and $T''_i$ takes $O(m)$ time for each $T_i \in \mathcal{T}$, taking total $O(km)$ time over all the trees. Computing $assoc^{L'}(u)$ and $assoc^{L''}(u)$ for each node $u$ in some tree $T_i \in \mathcal{T}$ can be done by a bottom up traversal of $T_i$ along with $T'_i$ and $T''_i$, taking $O(km)$ time total. Also observe that the number of pairs obtained is $O(km)$. Further, each of the values in the pair is in the range [0, km]. Thus radix sorting these pairs and assigning labels back to the nodes takes $O(km)$ time. So $T(m) = 2T(m/2) + O(km)$, giving $T(n) = kn\,log\,n$.
+            Let $T(m)$ be the runtime of \texttt{Label\_Clusters}$(\mathcal{T})$, where $m =$ size of leaf set of each tree in $\mathcal{T}$. By Lemma 5.2 of \citep{farach1995fast}, construction of $T'_i$ and $T''_i$ takes $O(m)$ time for each $T_i \in \mathcal{T}$, taking total $O(km)$ time over all the trees. Computing $assoc^{L'}(u)$ and $assoc^{L''}(u)$ for each node $u$ in some tree $T_i \in \mathcal{T}$ can be done by a bottom up traversal of $T_i$ along with $T'_i$ and $T''_i$, taking $O(km)$ time total. Also observe that the number of pairs obtained is $O(km)$. Further, each of the values in the pair is in the range [0, km]. Thus radix sorting these pairs and assigning labels back to the nodes takes $O(km)$ time. So $T(m) = 2T(m/2) + O(km)$, giving $T(n) = kn\,log\,n$.
         \end{proof}
     \end{labelclustersruntime}
 
@@ -436,7 +447,7 @@
     \section{\texttt{Filter\_Clusters}}
     \label{sec:filterclusters}
 
-    Given the trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ returns a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$. Recall that the previous best known solution, as in \cite{jansson2018algorithms}, costs $O(kn\,log^2n)$ time; we present an $O(kn\,log\,n)$ solution.
+    Given the trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ returns a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$. Recall that the previous best known solution, as in \citep{jansson2018algorithms}, costs $O(kn\,log^2n)$ time; we present an $O(kn\,log\,n)$ solution.
 
     The key here is finding, for any node $u \in V(\TA)$, the set $incompatible^{\TB}(\leafset^{\TA}(u))$, so that we can find the maximum weight of the nodes in this set. Then it is easy to figure out whether $u$ should be in $T$ or not.
 
@@ -598,7 +609,7 @@
 
     Recall that \texttt{Filter\_Clusters} takes in trees $\TA$ and $\TB$ and returns a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$. However, during recursive calls to this function, it could be that we delete the root of $\TA$. Thus, we change the signature slightly to return a forest $\mathcal{F}$ such that the clusters present in this forest are exactly the required ones, i.e. $\bigcup_{T' \in \mathcal{F}} \mathcal{C}(T') = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$. Note that since the root of the original $\TA$ is a trivial cluster, it is compatible with all other clusters, so it will never be deleted. Thus, the outermost recursive call will yield only a single tree. We also modify the signature to return the set $minCover^{\TB}(\leafset^{\TA})$.
 
-    Algorithm~\ref{alg:filterclusters} gives the algorithm \texttt{Filter\_Clusters}. Step~\ref{step:centroidpath} decomposes $\TA$ into a \textit{centroid path} $\langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$, where $p_{\gamma}$ is the root of $\TA$, and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\tau} : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root, finding $incompatible^{\TB}(p_i)$ for each $p_i \in \pi(\TA)$.
+    Algorithm~\ref{alg:filterclusters} gives the algorithm \texttt{Filter\_Clusters}. Step~\ref{step:centroidpath} decomposes $\TA$ into a \textit{centroid path} $\langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$, where $p_{\gamma}$ is the root of $\TA$, and a set of \textit{side trees} (similarly to \citep{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\tau} : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root, finding $incompatible^{\TB}(p_i)$ for each $p_i \in \pi(\TA)$.
 
     More specifically, Step~\ref{step:obtainsidecover} first obtains the nodes that cover, for each $p_i \in \pi(\TA)$, each of the side trees of $p_i$ using recursive calls to \texttt{Filter\_Clusters}, i.e. the set $\bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$. This set is denoted by $sideCover^{\TB}(p_i)$.
 
@@ -606,7 +617,7 @@
 
     The maximum weight of any node in the incompatible set is obtained and compared against the weight of $p_i$ in Step~\ref{step:maximumweight}. If $p_i$ is not to be deleted, then we attach the trees in the forest obtained from the previous iteration and the trees in the forests obtained from the side trees to $p_i$. Otherwise, we simply union these forests to create a larger one.
 
-    A key optimisation here is ensuring that when we call the function recursively in Step~\ref{step:recursivecall} on a side tree $\tau \in \sigma(\TA)$, the $\TB$ is restricted such that its leafset is the same as the leafset of $\tau$. Let $\tau$ be some side tree in $\sigma(\TA)$. We reuse the technique described in \cite{jansson2018algorithms} to construct a tree $\TB||\leafset^{\tau}$ such that $\leafset^{\TB||\leafset^{\tau}} = \leafset^{\tau}$, but at the same time does not lose important weight information. To do so, we first construct $\TB|\leafset^{\tau}$ and let the weight of each node in this tree be the same as its weight in $\TB$. For each non-root node $u \in V(\TB|\leafset^{\tau})$, let $v = parent^{\TB|\leafset^{\tau}}(u)$, then if $path^{\TB}(u, v) \neq \emptyset$, we create a new node $z$ in $\TB|\leafset^{\tau}$, set $parent(u) = z$ and $parent(z) = v$. Also, we set $\weight(z) = max_{w \in path^{\TB}(u, v)} \weight(w)$. Note that this value can be obtained with an $rmqTree^{\TB}[parent(u), cFD(v)]$ query, which we denote by $rmqTree^{\TB}(u, v)$. This gives us the tree $\TB||\leafset^{\tau}$.
+    A key optimisation here is ensuring that when we call the function recursively in Step~\ref{step:recursivecall} on a side tree $\tau \in \sigma(\TA)$, the $\TB$ is restricted such that its leafset is the same as the leafset of $\tau$. Let $\tau$ be some side tree in $\sigma(\TA)$. We reuse the technique described in \citep{jansson2018algorithms} to construct a tree $\TB||\leafset^{\tau}$ such that $\leafset^{\TB||\leafset^{\tau}} = \leafset^{\tau}$, but at the same time does not lose important weight information. To do so, we first construct $\TB|\leafset^{\tau}$ and let the weight of each node in this tree be the same as its weight in $\TB$. For each non-root node $u \in V(\TB|\leafset^{\tau})$, let $v = parent^{\TB|\leafset^{\tau}}(u)$, then if $path^{\TB}(u, v) \neq \emptyset$, we create a new node $z$ in $\TB|\leafset^{\tau}$, set $parent(u) = z$ and $parent(z) = v$. Also, we set $\weight(z) = max_{w \in path^{\TB}(u, v)} \weight(w)$. Note that this value can be obtained with an $rmqTree^{\TB}[parent(u), cFD(v)]$ query, which we denote by $rmqTree^{\TB}(u, v)$. This gives us the tree $\TB||\leafset^{\tau}$.
 
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{specialnodes}
@@ -716,9 +727,9 @@
         For some trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ runs in $O(n\,log\,n)$ time, if RMQ and cFD structures on $\TB$ are given.
 
         \begin{proof}
-            The centroid path can be computed in $O(n)$ time and by Lemma~\ref{lem:lca}, the $lca$ data structure can also be constructed in $O(n)$ time. Since the side trees $\sigma(\TA)$ give a partition of $L$, the trees $\TB|\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time total using Lemma 5.2 of \cite{farach1995fast}. From these, $\TB||\leafset^{\tau}$ can be constructed in further $O(n)$ time since we can carry out $rmqTree$ queries in constant time. Merging the $toDelete$ and $sideCover$ sets costs $O(1)$ time if we implement them as linked lists.
+            The centroid path can be computed in $O(n)$ time and by Lemma~\ref{lem:lca}, the $lca$ data structure can also be constructed in $O(n)$ time. Since the side trees $\sigma(\TA)$ give a partition of $L$, the trees $\TB|\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time total using Lemma 5.2 of \citep{farach1995fast}. From these, $\TB||\leafset^{\tau}$ can be constructed in further $O(n)$ time since we can carry out $rmqTree$ queries in constant time. Merging the $toDelete$ and $sideCover$ sets costs $O(1)$ time if we implement them as linked lists.
 
-            We use the Brodal queue of \cite{brodal1995fast} to store incompatible nodes. This data structure allows $insert$ and $findMax$ operations in $O(1)$ time and $delete$ in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $\TB$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time (this leads to the $log\,n$ factor seen in Lemma~\ref{lem:incompatibilityruntime}).
+            We use the Brodal queue of \citep{brodal1995fast} to store incompatible nodes. This data structure allows $insert$ and $findMax$ operations in $O(1)$ time and $delete$ in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $\TB$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time (this leads to the $log\,n$ factor seen in Lemma~\ref{lem:incompatibilityruntime}).
 
             The total size of the leafsets of the side trees of $\TA$ is $O(n)$, thus the total size of the side covers is bounded by $n$. This means that the inner for loop is entered $\leq n$ times. Since each call to \texttt{Find\_Coverer} and \texttt{Add\_To\_Cover} costs amortized constant time and $lca$ queries can be anwered in $O(1)$ time, the for loops cost a total of $O(n)$ time, if we ignore Step~\ref{step:updateincompatible}.
 
@@ -814,7 +825,7 @@
     \begin{proof}[Proof of Lemma~\ref{lem:incompatibilityruntime}]
         We implement the check for $\leafset^{T}(l_C) = C$ in constant time using the counter technique described in the proof of Lemma~\ref{lem:mincoverruntime}. Then constant term in the runtime is due the various checks, an $lca$ operation (which costs $O(1)$ once the $T$ has been preprocessed) and amortized $O(1)$ cost for \texttt{Add\_To\_Cover}.
 
-        The incompatible nodes are stored in the Brodal queue of \cite{brodal1995fast}, described in the proof of Lemma~\ref{lem:filterclustersruntime}.
+        The incompatible nodes are stored in the Brodal queue of \citep{brodal1995fast}, described in the proof of Lemma~\ref{lem:filterclustersruntime}.
 
         Observe that when adding nodes along the paths, we can iterate upwards along these, adding the nodes while they are not already in $I$, and stopping as soon as we find one that already belongs to $I$. This check can also be implemented in constant time by giving each node a membership property. Since inserts into Brodal queues take $O(1)$ time, the total cost due to these additions is $O(|incompatible^{T}(Cu) - incompatible^{T}(C)|)$.
 
@@ -836,7 +847,7 @@
 
     \section{Implementation}
 
-    As noted in Subsection~\ref{subsec:previouswork}, there are two existing implementations that compute FDCTs - TNT \cite{goloboff2008tnt} and the FACT package \cite{jansson2016improved}. However, the results in \cite{jansson2018algorithms} demonstrated that their implementation outperforms TNT under all conditions, so we only make a comparison with this. Our implementation of the algorithm \texttt{Frequency\_Difference} reuses their code, with certain key optimisations, as laid out above. The code is written in C++ and utilises some libraries from the Boost package \cite{BoostLibrary}. The source can be found at \url{https://github.com/varung97/FACT2}. Note that there are some differences between the implementation and the algorithm described above, made for reasons of optimisation and readability. These differences are described in Subsection~\ref{subsec:implementationdetails}.
+    As noted in Subsection~\ref{subsec:previouswork}, there are two existing implementations that compute FDCTs - TNT \citep{goloboff2008tnt} and the FACT package \citep{jansson2016improved}. However, the results in \citep{jansson2018algorithms} demonstrated that their implementation outperforms TNT under all conditions, so we only make a comparison with this. Our implementation of the algorithm \texttt{Frequency\_Difference} reuses their code, with certain key optimisations, as laid out above. The code is written in C++ and utilises some libraries from the Boost package \citep{BoostLibrary}. The source can be found at \url{https://github.com/varung97/FACT2}. Note that there are some differences between the implementation and the algorithm described above, made for reasons of optimisation and readability. These differences are described in Subsection~\ref{subsec:implementationdetails}.
 
     The resulting implementation was compared with that from the FACT package by running them both on trees generated with various values of $k$ and $n$. This setup is described in Subsection~\ref{subsec:setup} and the results are presented in Subsection~\ref{subsec:results}.
 
@@ -856,12 +867,12 @@
     \subsection{Experimental Setup}
     \label{subsec:setup}
 
-    We generated input trees according to two different scenarios, exactly as in \cite{jansson2018algorithms}. The first scenario, ``Scenario 1'', is the situation where trees share a large percentage of clusters, which is largely realistic. On the other hand, the second scenario, ``Scenario 2'', generates completely independent trees, which represents the other end of the spectrum. In particular, the process for generating $k$ trees with leaf labels $\{1, 2, \dots, n\}$ under the two scenarios is:
+    We generated input trees according to two different scenarios, exactly as in \citep{jansson2018algorithms}. The first scenario, ``Scenario 1'', is the situation where trees share a large percentage of clusters, which is largely realistic. On the other hand, the second scenario, ``Scenario 2'', generates completely independent trees, which represents the other end of the spectrum. In particular, the process for generating $k$ trees with leaf labels $\{1, 2, \dots, n\}$ under the two scenarios is:
 
     \begin{itemize}
-        \item \textit{Scenario 1:} We generate a binary tree, with the given leaf labels, under the uniform model \cite{mckenzie2000distributions}. Then for each non-root internal node $u$ in this tree, we perform a $delete$ operation on $u$ with probability $0.2$. Then we make $k$ copies of this tree, and for each copy, we randomly select a non-root node $u$ and an internal node $v$ $n / 20$ times, remove the subtree rooted at $u$ and attach it to $v$.
+        \item \textit{Scenario 1:} We generate a binary tree, with the given leaf labels, under the uniform model \citep{mckenzie2000distributions}. Then for each non-root internal node $u$ in this tree, we perform a $delete$ operation on $u$ with probability $0.2$. Then we make $k$ copies of this tree, and for each copy, we randomly select a non-root node $u$ and an internal node $v$ $n / 20$ times, remove the subtree rooted at $u$ and attach it to $v$.
 
-        \item \textit {Scenario 2:} We generate $k$ binary trees, with the given leaf labels, each under the uniform model \cite{mckenzie2000distributions}. Then for each non-root internal node $u$ in each tree, we $delete$ $u$ with probability $0.2$.
+        \item \textit {Scenario 2:} We generate $k$ binary trees, with the given leaf labels, each under the uniform model \citep{mckenzie2000distributions}. Then for each non-root internal node $u$ in each tree, we $delete$ $u$ with probability $0.2$.
     \end{itemize}
 
     Since we wished to see the effect of both $k$ and $n$ on these algorithms, we ran two experiments, one with $n$ fixed and one with $k$ fixed. Further, we measured the time taken by the weighting step and the remainder of the algorithm separately. Note that we use the running time of the second half of \texttt{Frequency\_Difference} as a stand-in for running time of \texttt{Filter\_Clusters} as it is hard to measure the latter independently, and since the implementations are identical except for \texttt{Filter\_Clusters}. For each value of $k$ and $n$, we generated 5 input examples and averaged the running time over these.
@@ -872,11 +883,12 @@
     \label{subsec:results}
 
     \begin{table}[!ht]
-        \captionsetup{font=footnotesize,justification=justified,margin=0cm}
-        \small
+        \captionsetup{font=scriptsize,justification=justified,margin=0cm}
+        % \scriptsize
+        \fontsize{9}{11}\selectfont
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{Weighting time with $n = 1000$, varying $k$}
+            \caption{Weighting time, $n = 1000$, varying $k$}
             \label{tab:weightk1}
             \begin{tabular}{c||ccccc}
                 $k$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
@@ -895,7 +907,7 @@
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time with $n = 1000$, varying $k$}
+            \caption{\texttt{Filter\_Clusters} time, $n = 1000$, varying $k$}
             \label{tab:filterk1}
             \begin{tabular}{c||ccccc}
                 $k$ & $n\,log\,n$ & $n\,log^2n$\\
@@ -914,7 +926,7 @@
         \end{minipage}
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{Weighting time with $k = 100$, varying $n$}
+            \caption{Weighting time, $k = 100$, varying $n$}
             \label{tab:weightn1}
             \begin{tabular}{c||ccccc}
                 $n$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
@@ -933,7 +945,7 @@
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time with $k = 100$, varying $n$}
+            \caption{\texttt{Filter\_Clusters} time, $k = 100$, varying $n$}
             \label{tab:filtern1}
             \begin{tabular}{c||ccccc}
                 $n$ & $n\,log\,n$ & $n\,log^2n$\\
@@ -955,11 +967,11 @@
     \end{table}
 
     \begin{table}[!ht]
-        \captionsetup{font=footnotesize,justification=justified,margin=0cm}
-        \small
+        \captionsetup{font=scriptsize,justification=justified,margin=0cm}
+        \fontsize{9}{11}\selectfont
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{Weighting time with $n = 1000$, varying $k$}
+            \caption{Weighting time, $n = 1000$, varying $k$}
             \label{tab:weightk2}
             \begin{tabular}{c||ccccc}
                 $k$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
@@ -978,7 +990,7 @@
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time with $n = 1000$, varying $k$}
+            \caption{\texttt{Filter\_Clusters} time, $n = 1000$, varying $k$}
             \label{tab:filterk2}
             \begin{tabular}{c||ccccc}
                 $k$ & $n\,log\,n$ & $n\,log^2n$\\
@@ -997,7 +1009,7 @@
         \end{minipage}
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{Weighting time with $k = 100$, varying $n$}
+            \caption{Weighting time, $k = 100$, varying $n$}
             \label{tab:weightn2}
             \begin{tabular}{c||ccccc}
                 $n$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
@@ -1016,7 +1028,7 @@
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time with $k = 100$, varying $n$}
+            \caption{\texttt{Filter\_Clusters} time, $k = 100$, varying $n$}
             \label{tab:filtern2}
             \begin{tabular}{c||ccccc}
                 $n$ & $n\,log\,n$ & $n\,log^2n$\\
@@ -1041,7 +1053,7 @@
 
     \textit{Comparing Scenarios.} Observe that the basic structure of the graphs across the two scenarios is the same, i.e. we see the same relationships between the various algorithms. An interesting case is to compare Table~\ref{tab:weightk1} to Table~\ref{tab:weightk2}. Here, it can be seen that the $kn\,log\,n$ algorithm performs worse in Scenario 2. This is likely because in Scenario 2 there is a far larger number of distinct clusters, increasing the range of the labels assigned during the weighting step. This leads to the counting/radix sorts becoming less efficient. Since our algorithm performs similarly for both scenarios under the other conditions, we will henceforth only be referring to \cref{tab:weightk1,tab:filterk1,tab:weightn1,tab:filtern1}.
 
-    \textit{Weighting Step.} From Table~\ref{tab:weightk1}, it is clear that, as expected, as $k$ increases, the runtime of the $k^2n$ algorithm becomes much worse than that of the other two. Similarly, Table~\ref{tab:weightn1} shows that when $n$ increases, runtime of the $kn^2$ becomes worse than that of the $k^2n$. More interestingly, the algorithm with a theoretical runtime of $kn\,log\,n$ actually performs worse than the $kn^2$ one. This is because the constants in the new algorithm are larger, due to the construction of the restricted subtrees. However, a closer look at Table~\ref{tab:weightn1} does show that the runtime for the $kn^2$ algorithm is growing faster than the new algorithm, and indeed, our informal testing showed that it performs worse for large values of $n$. In practice, though, values of $n$ are not so large, and hence it is likely that the old implementation is better in practice. Also note that, as mentioned in \cite{jansson2018algorithms}, the $kn^2$ algorithm costs memory quadratic in $n$, so if memory is a concern, then using on of the other methods might be more advisable. The choice of which one to use would depend on the value of $k$.
+    \textit{Weighting Step.} From Table~\ref{tab:weightk1}, it is clear that, as expected, as $k$ increases, the runtime of the $k^2n$ algorithm becomes much worse than that of the other two. Similarly, Table~\ref{tab:weightn1} shows that when $n$ increases, runtime of the $kn^2$ becomes worse than that of the $k^2n$. More interestingly, the algorithm with a theoretical runtime of $kn\,log\,n$ actually performs worse than the $kn^2$ one. This is because the constants in the new algorithm are larger, due to the construction of the restricted subtrees. However, a closer look at Table~\ref{tab:weightn1} does show that the runtime for the $kn^2$ algorithm is growing faster than the new algorithm, and indeed, our informal testing showed that it performs worse for large values of $n$. In practice, though, values of $n$ are not so large, and hence it is likely that the old implementation is better in practice. Also note that, as mentioned in \citep{jansson2018algorithms}, the $kn^2$ algorithm costs memory quadratic in $n$, so if memory is a concern, then using on of the other methods might be more advisable. The choice of which one to use would depend on the value of $k$.
 
     \texttt{Filter\_Clusters.} Table~\ref{tab:filterk1} is not particularly interesting here since it merely demonstrates that the two algorithms perform similarly when $n = 1000$. However, Table~\ref{tab:filtern1} illustrates that the new algorithm overtakes the old one very quickly when $n > 1000$, performing up to $10$ times better as $n$ nears $10000$. This might be surprising, as the theoretical difference is only a factor of $log\,n$. We (informally) think that this is because of implementation detail 3, due to which we can skip the costly construction of the $\TB||\leafset^{\tau}$ trees. Thus, based on these results, we recommend using the old algorithm if $n \leq 1000$ and the new one otherwise. Note that the old algorithm in fact uses a simpler version of \texttt{Filter\_Clusters}, with time complexity $O(n^2)$, when $n \leq 1000$.
 
@@ -1049,6 +1061,6 @@
     We have given a new deterministic algorithm for constructing the FDCT of a set of phylogenetic trees. This algorithm betters the previously best known one by a factor of $log\,n$. We leave open the problem of finding an optimal solution, i.e. one with time complexity $O(kn)$. Observe that doing so would involve bettering both halves of the algorithm or coming up with a new approach.
 
     \newpage
-    \bibliographystyle{plain}
+    \bibliographystyle{apacite}
     \bibliography{final_report}
 \end{document}
