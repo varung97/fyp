@@ -449,18 +449,18 @@
     \subsection{The concept of a \textit{minimum cover}}
     \label{subsec:mincover}
 
-    Given a tree $T$ leaf-labelled by $L$ and a cluster $C \subseteq L$, define a set $M \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in M} \leafset^{T}(u) = C$. Then we define the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, to be the smallest set $M$ such that $M$ is a cover of $C$. Note that this set is well defined for each cluster. Further, for any node $u \in V(T)$ such that $\leafset^{T}(u) \subseteq C$, define the node covering $u$, denoted as $coverer^{T, C}(u)$, to be the ancestor of $u$ which belongs in $minCover^{T}(C)$. Observe that this node must exist, since $\leafset^{T}(u)$ must be covered, and covering it with descendants of $u$ certainly yields a larger cover than if we use $u$. Figure~\ref{fig:mincoverrecursive}(a) gives an example of a minimum cover. In the same diagram, let $C = \{a, b, c, f, g, h\}$ and $v$ be as labelled. Then $coverer^{T, C}(v) = w$ and $minCover^{T}(C)$ is given by all the circled nodes.
+    Given a tree $T$ leaf-labelled by $L$ and a cluster $C \subseteq L$, define a set $M \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in M} \leafset^{T}(u) = C$. Then we define the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, to be the smallest set $M$ such that $M$ is a cover of $C$. Note that this set is well defined for each cluster. Further, for any node $u \in V(T)$ such that $\leafset^{T}(u) \subseteq C$, define the node covering $u$, denoted as $coverer^{T, C}(u)$, to be the ancestor of $u$ which belongs in $minCover^{T}(C)$. Observe that this node must exist, since $\leafset^{T}(u)$ must be covered, and covering it with descendants of $u$ certainly yields a larger cover than if we use $u$. Figure~\ref{fig:mincoverrecursive}(a) gives an example of a minimum cover. In the same diagram, let $C = \{a, b, c, f, g, h\}$ and $u$ be as labelled. Then $coverer^{T, C}(u) = v$ and $minCover^{T}(C)$ is given by all the circled nodes.
 
     \begin{figure}[ht]
         \includegraphics[scale=0.48]{mincoverrecursive}
         \centering
-        \caption[Minimum cover and the $addToCover$ operation]{Illustration of minimum cover and $addToCover$ operation. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Take the leaf $e$, marked with a square in (a) and let $Ce = C \cup \{e\}$. Then $coverer^{T, Ce}(e) = u$, marked with a square in (b). Then the circled node and $u$ in (b) give $minCover^{T}(Ce)$.}
+        \caption[Minimum cover and the $findCoverer$ operation]{Illustration of minimum cover and $findCoverer$ operation. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Take the leaf $e$, marked with a square in (a) and let $Ce = C \cup \{e\}$. Then $coverer^{T, Ce}(e) = w$, marked with a square in (b). Then the circled node and $w$ in (b) give $minCover^{T}(Ce)$.}
         \label{fig:mincoverrecursive}
     \end{figure}
 
-    Given some tree $T$ leaf-labelled by $L$, cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then it is useful to be able to find $coverer^{T, Cu}(u)$. To this end, we define the operation $findCoverer^{T}(M, u)$ which returns $coverer^{T, Cu}(u)$. It is also of interest to define an operation that can then find the minimum cover of $Cu$ using this. Thus, we define the operation $addToCover^{T}(M, u, v)$, where $v = coverer^{T, Cu}(u)$, which returns $minCover^{T}(Cu)$.
+    Given some tree $T$ leaf-labelled by $L$, cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then it is useful to be able to find $coverer^{T, Cu}(u)$. To this end, we define the operation $findCoverer^{T}(M, u)$ which returns $coverer^{T, Cu}(u)$.
 
-    Figure~\ref{fig:mincoverrecursive} demonstrates how these queries work. Here, $C = \{a, b, c, f, g, h\}$ and we take the leaf $e$. The circled nodes in Figure~\ref{fig:mincoverrecursive}(a) give $minCover^{T}(C)$. Then we wish to compute $coverer^{T, Ce}(e)$, where $Ce = C \cup \{e\}$. The idea for doing so will be to iterate upwards from $e$ while the leafset of the node we are at is a subset of $Ce$. Thus, since $\leafset^{T}(parent(e)) \subseteq Ce$, we go upwards one level. We can then go a further  level, to the node $u$ since $\leafset^{T}(u) \subseteq Ce$. At this point we cannot go any further up. Hence, we say that we have found $u = coverer^{T, Ce}(e)$. Now to find $minCover^{T}(Ce)$, notice that we can subtract the set of all children of the nodes on the path from $e$ to $u$ (excluding $e$) from $M$, add $u$, and this gives us the required set. That is, we take $M \cup \{u\} - \bigcup_{u' \in path^{T}(e, u]} children(u')$. From these observations, we give the following recursive formulation of the two queries.
+    Figure~\ref{fig:mincoverrecursive} demonstrates how this query works. Here, $C = \{a, b, c, f, g, h\}$ and we take the leaf $e$. The circled nodes in Figure~\ref{fig:mincoverrecursive}(a) give $minCover^{T}(C)$. Then we wish to compute $coverer^{T, Ce}(e)$, where $Ce = C \cup \{e\}$. The idea for doing so will be to iterate upwards from $e$ while the leafset of the node we are at is a subset of $Ce$. Thus, since $\leafset^{T}(parent(e)) \subseteq Ce$, we go upwards one level. We can then go a further  level, to the node $w$ since $\leafset^{T}(w) \subseteq Ce$. At this point we cannot go any further up. Hence, we say that we have found $w = coverer^{T, Ce}(e)$. This yields the following definition of $findCoverer^{T}(M, u)$:
     \newline
 
     \begin{findcovererrecursive}
@@ -479,12 +479,14 @@
         \end{proof}
     \end{findcovererrecursive}
 
-    \medskip
+    Now given $coverer^{T, Cu}(u)$, we would like to actually obtain the minimum cover of $Cu$. Referring back to Figure~\ref{fig:mincoverrecursive}, notice that we can subtract the set of all children of the nodes on the path from $e$ to $w$ (excluding $e$) from $M$, add $w$, and this gives us the required set. That is, we take $M \cup \{w\} - \bigcup_{w' \in path^{T}(e, w]} children(w')$. This leads to the following lemma:
+    \newline
+
     \begin{mincoverrecursive}
         \label{lem:mincoverrecursive}
 
         Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$ let $M = minCover^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$ and $v = coverer^{T, Cu}(u)$. Then
-         \[addToCover^{T}(M, u, v) = M \cup \{v\} - \bigcup_{w \in path^{T}(u, v]} children(w)\]
+         \[minCover^{T}(Cu) = M \cup \{v\} - \bigcup_{w \in path^{T}(u, v]} children(w)\]
 
         \begin{proof}
             Firstly, $M \cup \{v\} - \bigcup_{w \in path^{T}(u, v]} children(w)$ covers $Cu$. To see this, take any leaf $x \in Cu$. Then if $x \in \leafset^{T}(v)$, then we are clearly done. Otherwise, $x \in C$, so there must be some $c \in M$ such that $x \in leafset^{T}(c)$. But $c \not\in \bigcup_{w \in path^{T}(u, v]} children(w)$, otherwise $x \in \leafset^{T}(v)$. Thus $c \in M - \bigcup_{w \in path^{T}(u, v]} children(w)$, so we are done.
@@ -495,18 +497,19 @@
         \end{proof}
     \end{mincoverrecursive}
 
+    % TODO:
     Subsection~\ref{subsec:addtocover} details how to actually implement these. We now make a claim (proved later) about the running time of these operations.
-    \newline
-
-    \begin{mincoverruntime}
-        \label{lem:mincoverruntime}
-
-        Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$ and $v = coverer^{T, Cu}(u)$. Then the operations $findCoverer(M, u)$ and $addToCover^{T}(M, u, v)$ can be performed in amortized $O(1)$ time.
-
-        \begin{proof}
-            Proved in Subsection~\ref{subsec:addtocover}.
-        \end{proof}
-    \end{mincoverruntime}
+    % \newline
+    %
+    % \begin{mincoverruntime}
+    %     \label{lem:mincoverruntime}
+    %
+    %     Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$ and $v = coverer^{T, Cu}(u)$. Then the operations $findCoverer(M, u)$ and $addToCover^{T}(M, u, v)$ can be performed in amortized $O(1)$ time.
+    %
+    %     \begin{proof}
+    %         Proved in Subsection~\ref{subsec:addtocover}.
+    %     \end{proof}
+    % \end{mincoverruntime}
 
     \subsection{Redefining incompatibility}
     \label{subsec:redefiningincompatibility}
@@ -531,11 +534,11 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{incompatibility}
         \centering
-        \caption[Incompatibility and the $addToCover$ operation]{Illustration of Lemma~\ref{lem:incompatibilitymincover} and an $updateIncompatible$ operation. Let $C = \{a, b, c, f, g, h\}$. Then in (a), $l_C = lca^T(C)$, the circled nodes give $minCover^{T}(C)$ and the nodes marked with squares give $incompatible^T(C)$. Notice that all nodes in $incompatible^T(C)$ are proper descendants of $l_C$ and proper ancestors of some $c \in minCover^{T}(C)$. Referencing (b), let $Cu = C \cup \leafset^{T}(u)$ and $l_{Cu} = lca^{T}(Cu)$. Note that $u = coverer^{T, Cu}(u)$. Then we run $updateIncompatible^{T}(incompatible^{T}(C), u, u, l_C, l_{Cu})$. Again, nodes in $minCover^{T}(Cu)$ are circled and nodes in $incompatible^{T}(Cu)$ are marked with squares.}
+        \caption[Incompatibility and the $updateIncompatible$ operation]{Illustration of Lemma~\ref{lem:incompatibilitymincover} and an $updateIncompatible$ operation. Let $C = \{a, b, c, f, g, h\}$. Then in (a), $l_C = lca^T(C)$, the circled nodes give $minCover^{T}(C)$ and the nodes marked with squares give $incompatible^T(C)$. Notice that all nodes in $incompatible^T(C)$ are proper descendants of $l_C$ and proper ancestors of some $c \in minCover^{T}(C)$. Referencing (b), let $Cu = C \cup \leafset^{T}(u)$ and $l_{Cu} = lca^{T}(Cu)$. Note that $u = coverer^{T, Cu}(u)$. Then we run $updateIncompatible^{T}(incompatible^{T}(C), u, u, l_C, l_{Cu})$. Again, nodes in $minCover^{T}(Cu)$ are circled and nodes in $incompatible^{T}(Cu)$ are marked with squares.}
         \label{fig:incompatibility}
     \end{figure}
 
-    We now wish to define an operation similar to $addToCover$, which takes the set of nodes incompatible with a given cluster and updates this set to become those incompatible with a superset of that cluster. Formally, given tree a $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, we would like to have an operation that takes in $I$ and $u$ (along with some other arguments) and returns $incompatible^{T}(C \cup \leafset^{T}(u))$. Figure~\ref{fig:incompatibility}(b) shows the result of an $updateIncompatible$ query.
+    We now wish to define an operation which takes the set of nodes incompatible with a given cluster and updates this set to become those incompatible with a superset of that cluster. Formally, given tree a $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, we would like to have an operation that takes in $I$ and $u$ (along with some other arguments) and returns $incompatible^{T}(C \cup \leafset^{T}(u))$. Figure~\ref{fig:incompatibility}(b) shows the result of an $updateIncompatible$ query.
 
     \begin{figure}[ht]
         \includegraphics[scale=0.6]{incompatibilityrecursive}
@@ -578,6 +581,7 @@
         \end{proof}
     \end{incompatibilityrecursive}
 
+    % TODO: Should remove this??
     Thus we define the operation $updateIncompatible^{T}(I, u, v, l_C, l_{Cu})$ which returns $incompatible^{T}(Cu)$. The actual implementation of this operation is detailed in Subsection~\ref{subsec:updateincompatible}.
 
     We now make a claim about the running time of the $updateIncompatible$ operation, which is proved later.
@@ -600,7 +604,14 @@
 
     Recall the concept of restricted trees introduced in Subsection~\ref{subsec:restrictedtree} - given a tree $T$ leaf-labelled by $L$ and a cluster $C \subseteq L$, $V(T|C) = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T|C}(C')$ for all clusters $C' \subseteq C$. Observe that certain nodes are deleted from $T$ when forming $T|C$; this leads to losing information about the weights of these nodes. Hence, we extend the concept of restricted trees to the case where the tree is weighted, following the definition given in \cite{jansson2018algorithms}.
 
-    Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$, we define the tree $T||C$, read as ``weighted $T$ restricted to $C$''. First, the tree $T|C$ is constructed and let the weight of each node in this tree be the same as its weight in $T$. Now for each non-root node $u \in V(T|C)$, let $v = parent^{T|C}(u)$. Then if $path^{T}(u, v) \neq \emptyset$ we create a dummy node $z$ in $T|C$ and set $parent(u) = z$ and $parent(z) = v$. Also, $\weight(z)$ is set as $max_{w \in path^{T}(u, v)} \weight(w)$. Intuitively, if $path^{T}(u, v) \neq \emptyset$, then the nodes in this path have been deleted from $T$ to form $T|C$. As we wish to retain some information about their weights, we insert the dummy node $z$ into $T||C$ to represent this path and hold the largest weight along it.
+    Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$, we define the tree $T||C$, read as ``weighted $T$ restricted to $C$''. First, the tree $T|C$ is constructed and let the weight of each node in this tree be the same as its weight in $T$. Now for each non-root node $u \in V(T|C)$, let $v = parent^{T|C}(u)$. Then if $path^{T}(u, v) \neq \emptyset$ we create a dummy node $z$ in $T|C$ and set $parent(u) = z$ and $parent(z) = v$. Also, $\weight(z)$ is set as $max_{w \in path^{T}(u, v)} \weight(w)$. Intuitively, if $path^{T}(u, v) \neq \emptyset$, then the nodes in this path have been deleted from $T$ to form $T|C$. As we wish to retain some information about their weights, we insert the dummy node $z$ into $T||C$ to represent this path and hold the largest weight along it. Figure~\ref{fig:dummynodes} demonstrates this procedure.
+
+    \begin{figure}[ht]
+        \includegraphics[scale=0.5]{dummynodes}
+        \centering
+        \caption[Constructing the tree $T||C$]{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||C$, where $C = \{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are dummy nodes. Observe that the dummy node that is a parent of the leaf $j$ has weight $7$ since the nodes on the path from $j$ to the root of $T$ had weights $4, 7$ and $2$.}
+        \label{fig:dummynodes}
+    \end{figure}
 
     Now, we observe some properties of $T||C$. First, define the pure nodes in $T$ with respect to $C$, denoted as $pure^{T}(C)$, to be the set $\{\leafset^{T}(u) \subseteq C : u \in V(T)\}$. Observe that $pure^{T}(C) = \bigcup_{c \in minCover^{T}(C)} V(T[c])$, i.e. the set of nodes that belong to the subtrees rooted at the minimum cover of $C$ in $T$. Notice that for any node $u \in pure^{T}(C)$, since $\leafset^{T}(u) \subseteq C$, $u \in V(T|C)$ and so $u \in V(T||C)$. Thus these subtrees are copied over without change to $T||C$. Now define the impure nodes in $T||C$, denoted as $impure^{T}(C)$, to be the set $V(T||C) - pure^{T}(C)$. Observe that all dummy nodes in $T||C$ belong to $impure^{T}(C)$. Now we prove a Lemma about the incompatibility of nodes in $T||C$.
     \newline
@@ -635,9 +646,12 @@
 
     With these operations in hand, we now develop the solution for \texttt{Filter\_Clusters}. Recall that this method takes trees $\TA$ and $\TB$ as input. First, for any node $u \in V(\TA)$, define $incompatible^{\TB}(u)$ to be $incompatible^{\TB}(\leafset^{\TA}(u))$. As discussed earlier, the idea is to find $incompatible^{\TB}(u)$ for each node $u \in V(\TA)$.
 
+    % TODO: Filter_Clusters definition
     Recall that \texttt{Filter\_Clusters} takes in trees $\TA$ and $\TB$ and returns a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$. However, during recursive calls to this function, it could be that we delete the root of $\TA$. Thus, we change the signature slightly to return a forest $\mathcal{F}$ such that the clusters present in this forest are exactly the required ones, i.e. $\bigcup_{T' \in \mathcal{F}} \mathcal{C}(T') = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$. Note that since the root of the original $\TA$ is a trivial cluster, it is compatible with all other clusters, so it will never be deleted. Thus, the outermost recursive call will yield only a single tree. We also modify the signature to return the set $minCover^{\TB}(\leafset^{\TA})$.
 
     Algorithm~\ref{alg:filterclusters} gives the algorithm \texttt{Filter\_Clusters}. Step~\ref{step:centroidpath} decomposes $\TA$ into a \textit{centroid path} $\langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$, where $p_{\gamma}$ is the root of $\TA$, and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\tau} : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root, finding $incompatible^{\TB}(p_i)$ for each $p_i \in \pi(\TA)$.
+
+
 
     More specifically, Step~\ref{step:obtainsidecover} first obtains the nodes that cover, for each $p_i \in \pi(\TA)$, each of the side trees of $p_i$ using recursive calls to \texttt{Filter\_Clusters}, i.e. the set $\bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$. This set is denoted by $sideCover^{\TB}(p_i)$.
 
@@ -647,12 +661,6 @@
 
     A key optimisation here is ensuring that when we call the function recursively in Step~\ref{step:recursivecall} on a side tree $\tau \in \sigma(\TA)$, the $\TB$ is restricted such that its leafset is the same as the leafset of $\tau$. Let $\tau$ be some side tree in $\sigma(\TA)$. We reuse the technique described in \cite{jansson2018algorithms} to construct a tree $\TB||\leafset^{\tau}$ such that $\leafset^{\TB||\leafset^{\tau}} = \leafset^{\tau}$, but at the same time does not lose important weight information. To do so, we first construct $\TB|\leafset^{\tau}$ and let the weight of each node in this tree be the same as its weight in $\TB$. For each non-root node $u \in V(\TB|\leafset^{\tau})$, let $v = parent^{\TB|\leafset^{\tau}}(u)$, then if $path^{\TB}(u, v) \neq \emptyset$, we create a new node $z$ in $\TB|\leafset^{\tau}$, set $parent(u) = z$ and $parent(z) = v$. Also, we set $\weight(z) = max_{w \in path^{\TB}(u, v)} \weight(w)$. Note that this value can be obtained with an $rmqTree^{\TB}[parent(u), cFD(v)]$ query, which we denote by $rmqTree^{\TB}(u, v)$. This gives us the tree $\TB||\leafset^{\tau}$.
 
-    \begin{figure}[ht]
-        \includegraphics[scale=0.5]{specialnodes}
-        \centering
-        \caption[Constructing the tree $T||C$]{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||C$, where $C = \{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are special nodes. Observe that the special node that is a parent of the leaf $j$ has weight $7$ since the nodes on the path from $j$ to the root of $T$ had weights $4, 7$ and $2$.}
-        \label{fig:specialnodes}
-    \end{figure}
 
     We build the RMQ and cFD data structure for $\TB$ to allow $rmqTree$ queries before \texttt{Filter\_Clusters} is called. Also note that since we have modified the signature of the algorithm, we need to do some processing after it finishes. In particular, we make a copy of $\TA$ and traverse this in a top-down manner, performing the $delete$ operation on the relevant nodes. Observe that this process takes $O(n)$ time. The resulting procedure \texttt{Filter\_Clusters} is presented below.
 
@@ -793,7 +801,7 @@
         \end{algorithmic}
     \end{algorithm}
 
-    Note that we have to make a query of the form $\leafset^{T}(v) \subseteq Cu$. However, recall that we construct trees of the form $\TB||\leafset^{\tau}$, which removes some leaves. Hence, we need to keep track of all nodes $u$ in any $\TB||\leafset^{\tau}$ where $\leafset^{\TB}(u) \neq \leafset^{\TB||\leafset^{\tau}}(u)$. This is easy to do while we're forming the tree $\TB|\leafset^{\tau}$; all such nodes are marked $spoiled$. Note that any special node is certainly $spoiled$. For example, in Figure~\ref{fig:specialnodes}(b), all internal nodes are spoilt. Thus, our check is updated to checking if $\leafset^{T}(v) \subseteq Cu$ and $v$ is not $spoiled$.
+    Note that we have to make a query of the form $\leafset^{T}(v) \subseteq Cu$. However, recall that we construct trees of the form $\TB||\leafset^{\tau}$, which removes some leaves. Hence, we need to keep track of all nodes $u$ in any $\TB||\leafset^{\tau}$ where $\leafset^{\TB}(u) \neq \leafset^{\TB||\leafset^{\tau}}(u)$. This is easy to do while we're forming the tree $\TB|\leafset^{\tau}$; all such nodes are marked $spoiled$. Note that any special node is certainly $spoiled$. For example, in Figure~\ref{fig:dummynodes}(b), all internal nodes are spoilt. Thus, our check is updated to checking if $\leafset^{T}(v) \subseteq Cu$ and $v$ is not $spoiled$.
 
     The \texttt{Add\_To\_Cover} procedure is also easy to define using Lemma~\ref{lem:mincoverrecursive}, as done in Algorithm~\ref{alg:addtocover}.
 
