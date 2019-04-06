@@ -67,6 +67,8 @@
 \newtheorem{mincoverruntime}[incompatibility]{Lemma}
 \newtheorem{incompatibilitymincover}[incompatibility]{Lemma}
 \newtheorem{incompatibilityruntime}[incompatibility]{Lemma}
+\newtheorem{impurenodes}[incompatibility]{Lemma}
+\newtheorem{restrictedrmq}[incompatibility]{Lemma}
 \newtheorem{numremovednodes}[incompatibility]{Lemma}
 \newtheorem{numaddednodes}[incompatibility]{Lemma}
 \newtheorem{incompatibilityrecursive}[incompatibility]{Lemma}
@@ -168,13 +170,15 @@
     As described in \cite{jansson2018algorithms}, the \textit{delete} operation deletes a cluster from a tree. To do so, we specify some internal node $u$ in a tree $T$, such that we wish to delete the cluster $\leafset^{T}(u)$. Then the \textit{delete} operation makes $parent(u)$ the parent of all nodes in $children(u)$ and removes $u$, along with any associated edges from $T$. This has the effect of removing only $\leafset(u)$ from $T$, without affecting any other cluster. For example, in Figure~\ref{fig:freqdiff}, if we perform a delete operation on $T_2$, on the node associated with the cluster $\{b, c\}$, the resulting tree is identical to $T_{FD}$.
 
     \subsection{Restricted Trees}
-    For any tree $T$ and any cluster $C \subseteq \leafset(T)$, define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leaves in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Figure~\ref{fig:restrictedsubtree} demonstrates this process. Notice that nodes which are not $lca$'s of the cluster are removed, but the structure of the tree in relation to the leaves in the cluster remains the same.
+    \label{subsec:restrictedtree}
+
+    For any tree $T$ and any cluster $C \subseteq \leafset(T)$, define $T|C$, read as ``$T$ restricted to $C$'', as the tree $T'$ with $V(T') = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T'}(C')$ for all $C' \subseteq C$. Intuitively, $T'$ has the leaf set $C$ and consists of all nodes in $T$ that are $lca$'s of the leaves in $C$, with these nodes connected such that they have the same ancestor/descendant relationships as they had in $T$. Figure~\ref{fig:restrictedtree} demonstrates this process. Notice that nodes which are not $lca$'s of the cluster are removed, but the structure of the tree in relation to the leaves in the cluster remains the same.
 
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{restrictedsubtree}
         \centering
-        \caption[Restricted subtrees]{Illustration of restricting a tree to a cluster. The tree $T$, along with $T|\{a, b, c, d\}$ and $T|\{e, f, g, h\}$ are shown.}
-        \label{fig:restrictedsubtree}
+        \caption[Restricted Trees]{Illustration of restricting a tree to a cluster. The tree $T$, along with $T|\{a, b, c, d\}$ and $T|\{e, f, g, h\}$ are shown.}
+        \label{fig:restrictedtree}
     \end{figure}
 
     \subsection{Characterising incompatibility}
@@ -590,6 +594,41 @@
     \end{incompatibilityruntime}
 
     The $|incompatible^{T}(Cu) - incompatible^{T}(C)|$ term in the runtime comes the nodes we add to $I$, while the $|incompatible^{T}(C) - incompatible^{T}(Cu)|$ term is due to deleting nodes from $I$. The $log\,n$ factor comes about due to the data structure used to store $I$; this is explained in detail later.
+
+    \subsection{Weighted Restricted Trees}
+    \label{subsec:restrictedweighted}
+
+    Recall the concept of restricted trees introduced in Subsection~\ref{subsec:restrictedtree} - given a tree $T$ leaf-labelled by $L$ and a cluster $C \subseteq L$, $V(T|C) = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T|C}(C')$ for all clusters $C' \subseteq C$. Observe that certain nodes are deleted from $T$ when forming $T|C$; this leads to losing information about the weights of these nodes. Hence, we extend the concept of restricted trees to the case where the tree is weighted, following the definition given in \cite{jansson2018algorithms}.
+
+    Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$, we define the tree $T||C$, read as ``weighted $T$ restricted to $C$''. First, the tree $T|C$ is constructed and let the weight of each node in this tree be the same as its weight in $T$. Now for each non-root node $u \in V(T|C)$, let $v = parent^{T|C}(u)$. Then if $path^{T}(u, v) \neq \emptyset$ we create a dummy node $z$ in $T|C$ and set $parent(u) = z$ and $parent(z) = v$. Also, $\weight(z)$ is set as $max_{w \in path^{T}(u, v)} \weight(w)$. Intuitively, if $path^{T}(u, v) \neq \emptyset$, then the nodes in this path have been deleted from $T$ to form $T|C$. As we wish to retain some information about their weights, we insert the dummy node $z$ into $T||C$ to represent this path and hold the largest weight along it.
+
+    Now, we observe some properties of $T||C$. First, define the pure nodes in $T$ with respect to $C$, denoted as $pure^{T}(C)$, to be the set $\{\leafset^{T}(u) \subseteq C : u \in V(T)\}$. Observe that $pure^{T}(C) = \bigcup_{c \in minCover^{T}(C)} V(T[c])$, i.e. the set of nodes that belong to the subtrees rooted at the minimum cover of $C$ in $T$. Notice that for any node $u \in pure^{T}(C)$, since $\leafset^{T}(u) \subseteq C$, $u \in V(T|C)$ and so $u \in V(T||C)$. Thus these subtrees are copied over without change to $T||C$. Now define the impure nodes in $T||C$, denoted as $impure^{T}(C)$, to be the set $V(T||C) - pure^{T}(C)$. Observe that all dummy nodes in $T||C$ belong to $impure^{T}(C)$. Now we prove a Lemma about the incompatibility of nodes in $T||C$.
+    \newline
+
+    \begin{impurenodes}
+        \label{lem:impurenodes}
+
+        Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$. Further, take any cluster $C' \subseteq C$ and any node $u \in impure^{T}(C)$, such that $u$ is a proper descendant of $lca^{T||C}(C')$. Then for any node $v \in V(T)$ that is represented by $u$, $\leafset^{T}(v) \not\compatible C'$.
+
+        \begin{proof}
+            Take the case where $u$ is a dummy node. Then let the nodes $w, w' \in V(T)$ be such that $u$ represents $path^{T}(w, w')$ and take any node $v \in path^{T}(w, w')$. Since $u$ is a proper descendant of $lca^{T||C}(C')$, $v$ is a proper descendant of $lca^{T}(C')$. Further, since $w$ is also a proper descendant of $lca^{T||C}(C')$ and $w \in V(T|C)$, $\leafset^{T}(w) \cap C' \neq \emptyset$. Also, if $\leafset^{T}(v) \subseteq C'$, then $v \in V(T|C)$, but that contradicts the construction of $T||C$. Thus $\leafset^{T}(v) \not\compatible C'$.
+
+            Take the case where $u$ is not a dummy node. Then $u$ only represents itself. Further, $u \in V(T)$ and $u$ is a proper descendant of $lca^{T}(C')$. Since it is also true that $u \in V(T|C)$, $\leafset^{T}(u) \cap C' \neq \emptyset$. Finally, if $\leafset^{T}(u) \subseteq C'$ then $u \in pure^{T}(C)$, but that contradicts the underlying assumption that $u \in impure^{T}(C)$. Thus $\leafset^{T}(u) \not\compatible C'$.
+        \end{proof}
+    \end{impurenodes}
+
+    Recall that we need to make queries of the form $max_{w \in path^{T}(u, v)} \weight(w)$, where $u, v \in V(T)$, in order to construct a weighted restricted tree. Notice that we can answer this with a query of the form $rmqTree^{T}[parent(u), cFD(v)]$, which we denote by $rmqTree^{T}(u, v)$. We now show that to further restrict a weighted restricted tree, we can use RMQ and cFD structures constructed on the original tree.
+    \newline
+
+    \begin{restrictedrmq}
+        \label{lem:restrictedrmq}
+
+        Given a tree $T$ leaf-labelled by $L$, clusters $C \subseteq L$ and $C' \subseteq C$, for each node $u \in V(T)$, the value $\weight(u)$ and RMQ and cFD structures on $T$. The tree $(T||C)||C'$ can be constructed from the tree $T||C$ using $rmqTree$ queries on $T$.
+
+        \begin{proof}
+            The key insight here is that no dummy node in $T||C$ belongs to $(T||C)||C'$. The reason for this is that any dummy node has only one child, and so can never be the $lca$ of any cluster. Thus, we only need to make $rmqTree^{T||C}(u, v)$ queries, where $u, v \in V(T||C)$ and $u, v$ are not dummy nodes. But since these are not dummy nodes, $u, v \in V(T)$. Since the construction of $T||C$ guarantees that $rmqTree^{T||C}(u, v) = rmqTree^{T}(u, v)$, we can use the RMQ and cFD structures on $T$ to answer these queries.
+        \end{proof}
+    \end{restrictedrmq}
 
     \subsection{The \texttt{Filter\_Clusters} algorithm}
     \label{subsec:filterclusters}
