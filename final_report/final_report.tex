@@ -67,8 +67,11 @@
 \newtheorem{mincoverruntime}[incompatibility]{Lemma}
 \newtheorem{incompatibilitymincover}[incompatibility]{Lemma}
 \newtheorem{incompatibilityruntime}[incompatibility]{Lemma}
-\newtheorem{impurenodes}[incompatibility]{Lemma}
+\newtheorem{impurenodesincompatible}[incompatibility]{Lemma}
 \newtheorem{restrictedrmq}[incompatibility]{Lemma}
+\newtheorem{numremovednodesrecursive}[incompatibility]{Lemma}
+\newtheorem{numremovednodescentroid}[incompatibility]{Lemma}
+\newtheorem{numremovednodesdummy}[incompatibility]{Lemma}
 \newtheorem{numremovednodes}[incompatibility]{Lemma}
 \newtheorem{numaddednodes}[incompatibility]{Lemma}
 \newtheorem{incompatibilityrecursive}[incompatibility]{Lemma}
@@ -616,8 +619,8 @@
     Now, we observe some properties of $T||C$. First, define the pure nodes in $T$ with respect to $C$, denoted as $pure^{T}(C)$, to be the set $\{\leafset^{T}(u) \subseteq C : u \in V(T)\}$. Observe that $pure^{T}(C) = \bigcup_{c \in minCover^{T}(C)} V(T[c])$, i.e. the set of nodes that belong to the subtrees rooted at the minimum cover of $C$ in $T$. Notice that for any node $u \in pure^{T}(C)$, since $\leafset^{T}(u) \subseteq C$, $u \in V(T|C)$ and so $u \in V(T||C)$. Thus these subtrees are copied over without change to $T||C$. Now define the impure nodes in $T||C$, denoted as $impure^{T}(C)$, to be the set $V(T||C) - pure^{T}(C)$. Observe that all dummy nodes in $T||C$ belong to $impure^{T}(C)$. Now we prove a Lemma about the incompatibility of nodes in $T||C$.
     \newline
 
-    \begin{impurenodes}
-        \label{lem:impurenodes}
+    \begin{impurenodesincompatible}
+        \label{lem:impurenodesincompatible}
 
         Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$. Further, take any cluster $C' \subseteq C$ and any node $u \in impure^{T}(C)$, such that $u$ is a proper descendant of $lca^{T||C}(C')$. Then for any node $v \in V(T)$ that is represented by $u$, $\leafset^{T}(v) \not\compatible C'$.
 
@@ -626,7 +629,7 @@
 
             Take the case where $u$ is not a dummy node. Then $u$ only represents itself. Further, $u \in V(T)$ and $u$ is a proper descendant of $lca^{T}(C')$. Since it is also true that $u \in V(T|C)$, $\leafset^{T}(u) \cap C' \neq \emptyset$. Finally, if $\leafset^{T}(u) \subseteq C'$ then $u \in pure^{T}(C)$, but that contradicts the underlying assumption that $u \in impure^{T}(C)$. Thus $\leafset^{T}(u) \not\compatible C'$.
         \end{proof}
-    \end{impurenodes}
+    \end{impurenodesincompatible}
 
     Recall that we need to make queries of the form $max_{w \in path^{T}(u, v)} \weight(w)$, where $u, v \in V(T)$, in order to construct a weighted restricted tree. Notice that we can answer this with a query of the form $rmqTree^{T}[parent(u), cFD(v)]$, which we denote by $rmqTree^{T}(u, v)$. We now show that to further restrict a weighted restricted tree, we can use RMQ and cFD structures constructed on the original tree.
     \newline
@@ -651,18 +654,11 @@
 
     Algorithm~\ref{alg:filterclusters} gives the algorithm \texttt{Filter\_Clusters}. Step~\ref{step:centroidpath} decomposes $\TA$ into a \textit{centroid path} $\langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$, where $p_{\gamma}$ is the root of $\TA$, and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\tau} : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root, finding $incompatible^{\TB}(p_i)$ for each $p_i \in \pi(\TA)$.
 
-
-
-    More specifically, Step~\ref{step:obtainsidecover} first obtains the nodes that cover, for each $p_i \in \pi(\TA)$, each of the side trees of $p_i$ using recursive calls to \texttt{Filter\_Clusters}, i.e. the set $\bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$. This set is denoted by $sideCover^{\TB}(p_i)$.
+    More specifically, Step~\ref{step:recursivecall} first recursively calls, for each $\tau \in \sigma(\TA)$, \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$. From these calls, Step~\ref{step:obtainsidecover} obtains the set $\bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$ for each $p_i \in \pi(\TA)$. This set is denoted by $sideCover^{\TB}(p_i)$. Note that building the trees $\TB||\leafset^{\tau}$ requires RMQ and cFD data structures on $\TB$ to allow $rmqTree$ queries. To facilitate this, we contruct these before the outermost call to \texttt{Filter\_Clusters}.
 
     Before iterating over the centroid path, we do some setup for $p_1$ in Steps~\ref{step:p1cover} and~\ref{step:p1incompatible}, where the set of incompatible nodes is simply empty and the minimum cover is just the leaf in $\TB$ labelled by $p_1$. Then for-loop in Step~\ref{step:outerfor} iterates over the remaining nodes in the centroid path from bottom to top. The sets $minCover^{\TB}(\leafset^{\TA}(p_{i-1}))$ and $incompatible^{\TB}(\leafset^{\TA}(p_{i-1}))$ are obtained from the previous iteration of the loop. Then for each node $c \in sideCover^{\TB}(p_i)$, we find its coverer and then iteratively add it to the minimum cover of $p_{i-1}$ in Steps~\ref{step:findcoverer} and~\ref{step:addtocover}. Then we update the set of incompatible nodes in Step~\ref{step:updateincompatible}.
 
     The maximum weight of any node in the incompatible set is obtained and compared against the weight of $p_i$ in Step~\ref{step:maximumweight}. If $p_i$ is not to be deleted, then we attach the trees in the forest obtained from the previous iteration and the trees in the forests obtained from the side trees to $p_i$. Otherwise, we simply union these forests to create a larger one.
-
-    A key optimisation here is ensuring that when we call the function recursively in Step~\ref{step:recursivecall} on a side tree $\tau \in \sigma(\TA)$, the $\TB$ is restricted such that its leafset is the same as the leafset of $\tau$. Let $\tau$ be some side tree in $\sigma(\TA)$. We reuse the technique described in \cite{jansson2018algorithms} to construct a tree $\TB||\leafset^{\tau}$ such that $\leafset^{\TB||\leafset^{\tau}} = \leafset^{\tau}$, but at the same time does not lose important weight information. To do so, we first construct $\TB|\leafset^{\tau}$ and let the weight of each node in this tree be the same as its weight in $\TB$. For each non-root node $u \in V(\TB|\leafset^{\tau})$, let $v = parent^{\TB|\leafset^{\tau}}(u)$, then if $path^{\TB}(u, v) \neq \emptyset$, we create a new node $z$ in $\TB|\leafset^{\tau}$, set $parent(u) = z$ and $parent(z) = v$. Also, we set $\weight(z) = max_{w \in path^{\TB}(u, v)} \weight(w)$. Note that this value can be obtained with an $rmqTree^{\TB}[parent(u), cFD(v)]$ query, which we denote by $rmqTree^{\TB}(u, v)$. This gives us the tree $\TB||\leafset^{\tau}$.
-
-
-    We build the RMQ and cFD data structure for $\TB$ to allow $rmqTree$ queries before \texttt{Filter\_Clusters} is called. Also note that since we have modified the signature of the algorithm, we need to do some processing after it finishes. In particular, we make a copy of $\TA$ and traverse this in a top-down manner, performing the $delete$ operation on the relevant nodes. Observe that this process takes $O(n)$ time. The resulting procedure \texttt{Filter\_Clusters} is presented below.
 
     \begin{algorithm}[!ht]
         \caption{Filter\_Clusters}
@@ -685,7 +681,7 @@
                 \State $\mathcal{F}', sideCover' :=$ \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$
                 \label{step:recursivecall}
 
-                \State $sideCover^{\TB}(p_i) := sideCover^{\TB}(p_i) \cup sideCover'$ and $\mathcal{F}_{p_i} := \mathcal{F}_{p_i} \cup \mathcal{F}'$, where $\tau$ is associated with $p_i \in \pi(\TA)$
+                \State $sideCover^{\TB}(p_i) := sideCover^{\TB}(p_i) \cup sideCover'$ and $\mathcal{F}_{p_i} := \mathcal{F}_{p_i} \cup \mathcal{F}'$, where $\tau$ is associated with \hspace*{\algorithmicindent}$p_i \in \pi(\TA)$
                 \label{step:obtainsidecover}
             \EndFor
 
@@ -705,7 +701,7 @@
                     \State $v :=$ \texttt{Find\_Coverer}$(cover, u)$
                     \label{step:findcoverer}
 
-                    \State $cover :=$ \texttt{Add\_To\_Cover}$(cover, u)$
+                    \State $cover := cover \cup \{v\} - \bigcup_{w \in path^{T}(u, v]} children(w)$
                     \label{step:addtocover}
 
                     \State $l' := lca^{\TB}(l, u)$
@@ -724,24 +720,64 @@
                 \EndIf
             \EndFor
 
-            \State \Return $toDelete, cover$
+            \State \Return $\mathcal{F}, cover$
         \end{algorithmic}
     \end{algorithm}
 
     Key to analysing the runtime of \texttt{Filter\_Clusters} is the insight that no node is deleted from $incompatible$ twice. Intuitively, this is because nodes are removed from $incompatible$ when their leafsets become subsets of the cluster under consideration. Then this node, or an ancestor of this node, will become part of the cover, and eventually the side cover when the algorithm returns. Then this node can never be incompatible with any cluster under consideration again. Thus, over \textit{all} calls to \texttt{Filter\_Clusters}, the total number of deletions is $\leq |V(\TB)|$.
 
-    We now go ahead to formally prove the above claim. To do so, we simply show that a node that is deleted at some point of time in the algorithm will never be added to $incompatible$ again.
+    We prove this claim in three parts. First, we show that the set of nodes deleted from $incompatible$ in separate recursive calls are disjoint.
     \newline
 
+    \begin{numremovednodesrecursive}
+        \label{lem:numremovednodesrecursive}
+
+        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$, and some node $p_i \in \pi(\TA)$. Then for any node $u \in V(\TB)$ such that $u$ is deleted from $incompatible$ when processing $p_i$, $u$ must be a descendant of some node $c_{p} \in minCover^{\TB}(\leafset^{\TA}(p_i))$ and a proper ancestor of some node $c_s \in sideCover^{\TB}(p_i)$.
+
+        \begin{proof}
+            $u$ is deleted from $incompatible$ if it is incompatible with some subset of $\leafset^{\TA}(p_i)$ and compatible with $\leafset^{\TA}(p_i)$. This only happens when $\leafset^{\TB}(u) \subseteq \leafset^{\TA}(p_i)$. But then there must be some ancestor $c_p$ of $u$ such that $c_p \in minCover^{\TB}(\leafset^{\TA}(p_i))$.
+
+            By Lemma~\ref{lem:incompatibilityrecursive}, when we update the set of incompatible nodes with some node $c \in V(\TB)$, we only delete the nodes in $path^{\TB}(c, c']$, where $c'$ is the coverer of $c$. Thus we can only delete nodes that are proper ancestors of $c$. Since Step~\ref{step:updateincompatible} updates the incompatible set with nodes from $sideCover^{\TB}(p_i)$, we can only delete nodes that are proper ancestors of nodes in the side cover.
+        \end{proof}
+    \end{numremovednodesrecursive}
+
+    Recalling that the side cover of $p_i$ is composed of the minimum covers of the side trees associated with $p_i$, it is clear that the set of nodes deleted in recursive calls is disjoint. We now show that in any single call to \texttt{Filter\_Clusters}, the sets of nodes deleted from $incompatible$ during an $updateIncompatible$ operation are also disjoint.
+    \newline
+
+    \begin{numremovednodescentroid}
+        \label{lem:numremovednodescentroid}
+
+        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$. Then during the call \texttt{Filter\_Clusters}$(\TA, \TB)$, no node is deleted from $incompatible$ twice.
+
+        \begin{proof}
+            Take any node $u \in V(\TB)$ such that $u$ is first deleted from $incompatible$ during the processing of some $p_i \in \pi(\TA)$. By the same argument as in Lemma~\ref{lem:numremovednodesrecursive}, $\leafset^{\TB}(u) \subseteq \leafset^{\TA}(p_i)$. Then $\leafset^{\TB}(u) \compatible p_j$ for all $j \geq i$, as the nodes on the centroid path have nested leafsets. Thus $u$ will not be added to $incompatible$ again and so will not be deleted again.
+        \end{proof}
+    \end{numremovednodescentroid}
+
+    We have shown above that no node is deleted twice from $incompatible$. However, recall that we create some dummy nodes, hence it remains to be shown that these nodes are never deleted from $incompatible$.
+    \newline
+
+    \begin{numremovednodesdummy}
+        \label{lem:numremovednodesdummy}
+
+        No dummy node is deleted from $incompatible$.
+
+        \begin{proof}
+            When a dummy node is added to $incompatible$, it must be a proper descendant of the $lca$ of the respective cluster by Lemma~\ref{lem:incompatibility}. Since we are considering nested clusters, it must also be a proper descendant of the $lca$ of all subsequent cluster. Then by Lemma~\ref{lem:impurenodesincompatible}, the dummy node is incompatible with all such subsequent clusters, so it will not be deleted from $incompatible$.
+        \end{proof}
+    \end{numremovednodesdummy}
+
+    \medskip
     \begin{numremovednodes}
         \label{lem:numremovednodes}
 
-        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$, if a node $u \in V(\TB)$ is removed from $incompatible$ in some recursive call to \texttt{Filter\_Clusters}, it will never be added to any other $incompatible$ set.
+        The total number of nodes deleted from $incompatible$ over all calls to \texttt{Filter\_Clusters} is $\leq |V(\TB)|$.
 
         \begin{proof}
-            Let $\tau$ be some subtree of $\TA$ such that $u$ is removed from $incompatible$ when \texttt{Filter\_Clusters} is called on $\tau$. Then, by Lemma~\ref{lem:incompatibilityrecursive}, there must be some ancestor of $u$ which is in $minCover^{\TB}(\leafset^{\tau})$. Let $\tau'$ be another subtree of $\TA$ such that $u$ is added to $incompatible$ during the call to \texttt{Filter\_Clusters} on $\tau$ and this call is made after the previous one. Then for some nodes $p_i \in \pi(\tau')$, $c \in sideCover^{\TB}(p_{i+1})$,  $\leafset^{\TB}(u)$ is incompatible with $\leafset^{\TA}(p_i) \cup \leafset^{\TB}(c)$ since nodes are added to $incompatible$ as we iterate over the side cover. But then $\leafset^{\tau} \cap (\leafset^{\TA}(p_i) \cup \leafset^{\TB}(c)) \neq \emptyset$. Given the way \texttt{Filter\_Clusters} is structured, $\tau$ must be either a subtree of $\TA[p_i]$ or of one of the side trees of $p_{i+1}$. If the former, then $\leafset^{\TB}(u) \subseteq \leafset^{\TA}(p_i)$, so it cannot be incompatible. If the latter, then since some ancestor of $u$ is in the minimum cover of $\leafset^{\tau}$, $\leafset^{\TB}(u) \subseteq \leafset^{\TB}(c)$. Here also it cannot be incompatible, hence we have a contradiction.
+            Lemmas~\ref{lem:numremovednodesrecursive},~\ref{lem:numremovednodescentroid} and~\ref{lem:numremovednodesdummy} together show that any node in $\TB$ is only deleted once over all calls to \texttt{Filter\_Clusters}, and that these are the only nodes deleted. Thus total number of deletions $\leq |V(\TB)|$.
         \end{proof}
     \end{numremovednodes}
+
 
     Recall that the runtime of \texttt{Update\_Incompatible} depends both on the number of nodes removed and added. Thus, we also need to give an upper bound on the number of nodes added during calls to this function. This upper bound can be looser than the one for removed nodes, since insertions only cost us constant time. Hence, we only show that the number of additions is $O(|V(\TB)|)$ for a \textit{single} call to \texttt{Filter\_Clusters}, i.e. we only analyse over the centroid path, rather than the entirety of $\TA$.
     \newline
