@@ -908,7 +908,7 @@
     \begin{enumerate}
         \item While the algorithm is fully deterministic, the implementation is not; we use hash sets instead of linked lists to store nodes in the minimum cover for ease.
 
-        \item The algorithm \texttt{Find\_Coverer} is implemented iteratively instead of recursively for efficiency. Further, this and the algorithm \texttt{Update\_Incompatible} were moved inside the main body of the algorithm rather than separating them out into functions, again because this is faster.
+        \item The algorithm \texttt{Find\_Coverer} is implemented iteratively instead of recursively for efficiency. Further, this procedure and the procedure \texttt{Update\_Incompatible} were moved inside the main body of the algorithm rather than separating them out into functions, again because this is faster.
 
         \item Rather than constructing the trees $\TB||\leafset^{\tau}$ and then inserting the nodes on certain paths into the Brodal queue, we simply obtain the maximum weight of nodes on the paths using $rmqTree$ queries and insert this maximum weight into the queue.
     \end{enumerate}
