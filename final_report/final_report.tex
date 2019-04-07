@@ -1,4 +1,4 @@
-\documentclass[12pt]{article}
+\documentclass[12pt,a4paper]{article}
 
 \usepackage{url}
 \usepackage{amsmath}
@@ -18,6 +18,7 @@
 \usepackage{setspace}
 \usepackage{tabularx}
 \usepackage[capitalise,noabbrev]{cleveref}
+\usepackage{enumitem}
 \graphicspath{{images/}}
 
 \usepackage[
@@ -76,21 +77,81 @@
 
 \begin{document}
     \pagenumbering{roman}
-    \maketitle
+    \begin{titlepage}
+        \begin{center}
+            \Large
+            \textbf{A Faster Construction of Frequency Difference Consensus Trees}
+
+            \vspace{7cm}
+
+            Submitted by\\
+            Varun Gupta
+
+            \vfill
+
+            In partial fulfilment of the\\
+            requirements for the Degree of\\
+            Bachelor of Engineering (Computer Engineering)\\
+            National University of Singapore
+        \end{center}
+    \end{titlepage}
     \newpage
 
-    \begin{abstract}
-        This report presents a new deterministic algorithm for constructing a frequency difference consensus tree. Given $k$ phylogenetic trees with identical leaf label sets of size $n$, this algorithm constructs the frequency difference tree in $O(kn\,log\,n)$ time, bettering the previously best known time of $O(kn\,log^2n)$.
-    \end{abstract}
+    \begin{titlepage}
+        \begin{center}
+            \large
+            B.Eng. Dissertation
+            \vspace{2cm}
+
+            \Large
+            \textbf{A Faster Construction of Frequency Difference Consensus Trees}
+
+            \vspace{4cm}
+
+            \large
+            By\\
+            Varun Gupta\\
+            National University of Singapore\\
+            2018/2019
+        \end{center}
+
+        \vfill
+
+        \large
+        Project ID: H045660\\
+        Project Supervisor: Dr. Wing-Kin Sung\\
+
+        Deliverables:\\
+        \hspace*{1.5cm}Report: 1 Volume
+    \end{titlepage}
     \newpage
+
+    \section*{Abstract}
+    A consensus tree is used to summarise the branching information present in a set of phylogenetic trees. A number of ways of constructing consensus trees have been proposed; this report focuses on the frequency difference consensus tree. It presents a new deterministic algorithm for constructing this. Given $k$ phylogenetic trees with identical leaf label sets of size $n$, this algorithm constructs the frequency difference consensus tree in $O(kn\,log\,n)$ time, bettering the previously best known time of $O(kn\,log^2n)$.
+
+    \vspace{1cm}
+    Subject Descriptors:
+    \begin{description}[labelindent=1cm]
+        \item[F.2.2] Nonnumerical Algorithms and Problems---Computations on discrete structures
+    \end{description}
+
+    \vspace{0.5cm}
+    Keywords:\\[0.2cm]
+    \hspace*{1cm}Consensus trees, Algorithms, Bioinformatics
+
+    \vspace{0.5cm}
+    Implementation Software and Hardware:\\[0.2cm]
+    \hspace*{1cm}MacOSX, C++, Boost
+    \newpage
+
+    \section*{Acknowledgements}
 
     \doublespacing
-    \section*{Acknowledgements}
     This report concludes a four year long journey that has been in turns incredibly rewarding and immensely frustrating. As I approach the end of my undergraduate degree, it would be remiss of me to fail to thank the following individuals, without whom it would have been impossible for me to get through this.
 
     Firstly, my supervisor, Dr. Wing-Kin Sung, who guided me through every step of the project. Without his willingness to help, his eye for detail and his unstinting commitment to making this project the best version of itself possible, I would have been totally lost.
 
-    Second, my friends - Srishti, whose maturity has ever been my anchor; Advay, whom I should have long since appointed my official decision maker; Chandraanshu, who soaked up innumerable rants with nary a complaint; Avnika and Ishanee, who continue to tolerate me for reasons unknown; Shailesh, Akshat and Tanvi, who play the best game of cards I have seen; Pankaj, whose boundless enthusiasm is an instant pick-me-up; and all the rest, with whom countless memories were made.
+    Second, my friends - Srishti, whose maturity has ever been my anchor; Advay, whom I should have long since appointed as my official decision maker; Chandraanshu, who soaked up innumerable rants with nary a complaint; Avnika and Ishanee, who continue to tolerate me for reasons unknown; Shailesh, Akshat and Tanvi, who play the best game of cards I have seen; Pankaj, whose boundless enthusiasm is an instant pick-me-up; and all the rest, with whom countless memories were made.
 
     Finally, my parents, who believed in me even when I lost all faith and my sister, who has the uncanny ability to cheer me up no matter what.
     \newpage
@@ -895,12 +956,11 @@
     \label{subsec:results}
 
     \begin{table}[!ht]
-        \captionsetup{font=scriptsize,justification=justified,margin=0cm}
-        % \scriptsize
+        \captionsetup{font=footnotesize,justification=justified,margin=0cm}
         \fontsize{9}{11}\selectfont
-        \begin{minipage}{0.48\textwidth}
+        \begin{minipage}{0.49\textwidth}
             \centering
-            \caption{Weighting time, $n = 1000$, varying $k$}
+            \caption{Weighting time with $n = 1000$, varying $k$}
             \label{tab:weightk1}
             \begin{tabular}{c||ccccc}
                 $k$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
@@ -919,7 +979,7 @@
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time, $n = 1000$, varying $k$}
+            \caption{\texttt{Filter\_Clusters} time with $n = 1000$, varying $k$}
             \label{tab:filterk1}
             \begin{tabular}{c||ccccc}
                 $k$ & $n\,log\,n$ & $n\,log^2n$\\
@@ -938,7 +998,7 @@
         \end{minipage}
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{Weighting time, $k = 100$, varying $n$}
+            \caption{Weighting time with $k = 100$, varying $n$}
             \label{tab:weightn1}
             \begin{tabular}{c||ccccc}
                 $n$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
@@ -957,7 +1017,7 @@
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time, $k = 100$, varying $n$}
+            \caption{\texttt{Filter\_Clusters} time with $k = 100$, varying $n$}
             \label{tab:filtern1}
             \begin{tabular}{c||ccccc}
                 $n$ & $n\,log\,n$ & $n\,log^2n$\\
@@ -979,11 +1039,11 @@
     \end{table}
 
     \begin{table}[!ht]
-        \captionsetup{font=scriptsize,justification=justified,margin=0cm}
+        \captionsetup{font=footnotesize,justification=justified,margin=0cm}
         \fontsize{9}{11}\selectfont
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{Weighting time, $n = 1000$, varying $k$}
+            \caption{Weighting time with $n = 1000$, varying $k$}
             \label{tab:weightk2}
             \begin{tabular}{c||ccccc}
                 $k$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
@@ -1002,7 +1062,7 @@
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time, $n = 1000$, varying $k$}
+            \caption{\texttt{Filter\_Clusters} time with $n = 1000$, varying $k$}
             \label{tab:filterk2}
             \begin{tabular}{c||ccccc}
                 $k$ & $n\,log\,n$ & $n\,log^2n$\\
@@ -1021,7 +1081,7 @@
         \end{minipage}
         \begin{minipage}{0.48\textwidth}
             \centering
-            \caption{Weighting time, $k = 100$, varying $n$}
+            \caption{Weighting time with $k = 100$, varying $n$}
             \label{tab:weightn2}
             \begin{tabular}{c||ccccc}
                 $n$ & $kn\,log\,n$ & $kn^2$ & $k^2n$\\
@@ -1038,9 +1098,9 @@
             \end{tabular}
             \includegraphics[scale=0.4]{varyingn2_weighting}
         \end{minipage}\hfill
-        \begin{minipage}{0.48\textwidth}
+        \begin{minipage}{0.49\textwidth}
             \centering
-            \caption{\texttt{Filter\_Clusters} time, $k = 100$, varying $n$}
+            \caption{\texttt{Filter\_Clusters} time with $k = 100$, varying $n$}
             \label{tab:filtern2}
             \begin{tabular}{c||ccccc}
                 $n$ & $n\,log\,n$ & $n\,log^2n$\\
