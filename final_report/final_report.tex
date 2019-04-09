@@ -127,7 +127,7 @@
     An implementation of the FDCT can be found in the free software package TNT \cite{goloboff2008tnt}; however the algorithm used within is unavailable and so its complexity is not known. Jansson et al. \cite{jansson2018algorithms} gave a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the FDCT, implemented in the open source FACT package \cite{jansson2016improved}. Gawrychowski et al. \cite{gawrychowski2017faster} improved upon this to give a deterministic $O(kn\,log^2n)$ algorithm (not yet implemented).
 
     \subsection{Organisation of the Article and New Results}
-    Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later. Sections~\ref{sec:cfd} and~\ref{sec:rmqtree} show how certain efficient data structures can be built on trees; these will be utilised later. Sections~\ref{sec:weighting} and~\ref{sec:filterclusters} present algorithms for solving subproblems of the FDCT construction; these are brought together in Section~\ref{sec:freqdiffconstruction} to give a new deterministic algorithm for constructing the FDCT that runs in $O(kn\,log\,n)$ time.
+    Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later. Sections~\ref{sec:cfd} and~\ref{sec:rmqtree} show how certain efficient data structures can be built on trees; these will be utilised later. Sections~\ref{sec:weighting} and~\ref{sec:filterclusters} present algorithms for solving subproblems of the FDCT construction; these are brought together in Section~\ref{sec:freqdiffconstruction} to give a new deterministic algorithm for constructing the FDCT that runs in $O(kn\,log\,n)$ time. Finally, Section~\ref{sec:implementation} details how the algorithm was implemented and presents some experimental results.
 
     \section{Preliminaries}
     \label{sec:preliminaries}
@@ -447,7 +447,7 @@
 
     The key here is finding, for any node $u \in V(\TA)$, the set $incompatible^{\TB}(\leafset^{\TA}(u))$, so that we can find the maximum weight of the nodes in this set. Then it is easy to figure out whether $u$ should be in $T$ or not.
 
-    Subsection~\ref{subsec:mincover} presents the definition $minCover^{T}(C)$. Subsection~\ref{subsec:redefiningincompatibility} uses this definition to give a stricter definition of incompatibility. We then use these in Subsection~\ref{subsec:filterclusters} to create the algorithm \texttt{Filter\_Clusters}. Finally, Subsections~\ref{subsec:findcoverer} and~\ref{subsec:updateincompatible} prove two claims we make when analysing the runtime of \texttt{Filter\_Clusters}.
+    Subsection~\ref{subsec:mincover} presents the definition $minCover^{T}(C)$. Subsection~\ref{subsec:redefiningincompatibility} uses this definition to give a stricter definition of incompatibility. Subsection~\ref{subsec:restrictedweighted} then presents the concept of restricted weighte trees. We then use all of these in Subsection~\ref{subsec:filterclusters} to create the algorithm \texttt{Filter\_Clusters}. Finally, Subsections~\ref{subsec:findcoverer} and~\ref{subsec:updateincompatible} prove two claims we make when analysing the runtime of \texttt{Filter\_Clusters}.
 
     \subsection{The concept of a \textit{minimum cover}}
     \label{subsec:mincover}
@@ -895,6 +895,7 @@
     \end{freqdiffruntime}
 
     \section{Implementation}
+    \label{sec:implementation}
 
     As noted in Subsection~\ref{subsec:previouswork}, there are two existing implementations that compute FDCTs - TNT \cite{goloboff2008tnt} and the FACT package \cite{jansson2016improved}. However, the results in \cite{jansson2018algorithms} demonstrated that their implementation outperforms TNT under all conditions, so we only make a comparison with this. Our implementation of the algorithm \texttt{Frequency\_Difference} reuses their code, with certain key optimisations, as laid out above. The code is written in C++ and utilises some libraries from the Boost package \cite{BoostLibrary}. The source can be found at \url{https://github.com/varung97/FACT2}. Note that there are some differences between the implementation and the algorithm described above, made for reasons of optimisation and readability. These differences are described in Subsection~\ref{subsec:implementationdetails}.
 
