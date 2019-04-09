@@ -457,22 +457,22 @@
     \begin{figure}[ht]
         \includegraphics[scale=0.48]{mincoverrecursive}
         \centering
-        \caption[Minimum cover and the $findCoverer$ operation]{Illustration of minimum cover and $findCoverer$ operation. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Take the leaf $e$, marked with a square in (a) and let $Ce = C \cup \{e\}$. Then $coverer^{T, Ce}(e) = w$, marked with a square in (b). Then the circled node and $w$ in (b) give $minCover^{T}(Ce)$.}
+        \caption[Minimum cover and coverer]{Illustration of minimum cover and coverer. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Take the leaf $e$, marked with a square in (a) and let $Ce = C \cup \{e\}$. Then $coverer^{T, Ce}(e) = w$, marked with a square in (b). Then the circled node and $w$ in (b) give $minCover^{T}(Ce)$.}
         \label{fig:mincoverrecursive}
     \end{figure}
 
-    Given some tree $T$ leaf-labelled by $L$, cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then it is useful to be able to find $coverer^{T, Cu}(u)$. To this end, we define the operation $findCoverer^{T}(M, u)$ which returns $coverer^{T, Cu}(u)$.
+    Given some tree $T$ leaf-labelled by $L$, cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then it is useful to be able to find $coverer^{T, Cu}(u)$. Thus, we define the operation $findCoverer^{T, Cu}(u)$ which returns $coverer^{T, Cu}(u)$.
 
-    Figure~\ref{fig:mincoverrecursive} demonstrates how this query works. Here, $C = \{a, b, c, f, g, h\}$ and we take the leaf $e$. The circled nodes in Figure~\ref{fig:mincoverrecursive}(a) give $minCover^{T}(C)$. Then we wish to compute $coverer^{T, Ce}(e)$, where $Ce = C \cup \{e\}$. The idea for doing so will be to iterate upwards from $e$ while the leafset of the node we are at is a subset of $Ce$. Thus, since $\leafset^{T}(parent(e)) \subseteq Ce$, we go upwards one level. We can then go a further  level, to the node $w$ since $\leafset^{T}(w) \subseteq Ce$. At this point we cannot go any further up. Hence, we say that we have found $w = coverer^{T, Ce}(e)$. This yields the following definition of $findCoverer^{T}(M, u)$:
+    Figure~\ref{fig:mincoverrecursive} demonstrates how this query works. Here, $C = \{a, b, c, f, g, h\}$ and we take the leaf $e$. The circled nodes in Figure~\ref{fig:mincoverrecursive}(a) give $minCover^{T}(C)$. Then we wish to compute $coverer^{T, Ce}(e)$, where $Ce = C \cup \{e\}$. The idea for doing so will be to iterate upwards from $e$ while the leafset of the node we are at is a subset of $Ce$. Thus, since $\leafset^{T}(parent(e)) \subseteq Ce$, we go upwards one level. We can then go a further  level, to the node $w$ since $\leafset^{T}(w) \subseteq Ce$. At this point we cannot go any further up. Hence, we say that we have found $w = coverer^{T, Ce}(e)$. This yields the following definition of $findCoverer^{T, Cu}(u)$:
     \newline
 
     \begin{findcovererrecursive}
         \label{lem:findcovererrecursive}
 
         Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$ and $v = parent(u)$. Then
-        \[findCoverer^{T}(u) = \begin{cases}
+        \[findCoverer^{T, Cu}(u) = \begin{cases}
             u & \leafset^{T}(v) \not\subseteq Cu\\
-            findCoverer^{T}(v) & otherwise
+            findCoverer^{T, Cu}(v) & otherwise
         \end{cases}\]
 
         \begin{proof}
@@ -506,7 +506,7 @@
     \begin{findcovererruntime}
         \label{lem:findcovererruntime}
 
-        Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$ and $v = coverer^{T, Cu}(u)$. Then the operations $findCoverer(M, u)$ can be performed in $O(|path^{T}(u, v]| + 1)$ time.
+        Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$ and $v = coverer^{T, Cu}(u)$. Then the operations $findCoverer^{T, Cu}(u)$ can be performed in $O(|path^{T}(u, v]| + 1)$ time.
 
         \begin{proof}
             Proved in Subsection~\ref{subsec:findcoverer}.
@@ -760,7 +760,7 @@
         No dummy node is deleted from $incompatible$.
 
         \begin{proof}
-            When a dummy node is added to $incompatible$, it must be a proper descendant of the $lca$ of the respective cluster by Lemma~\ref{lem:incompatibility}. Since we are considering nested clusters, it must also be a proper descendant of the $lca$ of all subsequent cluster. Then by Lemma~\ref{lem:impurenodesincompatible}, the dummy node is incompatible with all such subsequent clusters, so it will not be deleted from $incompatible$.
+            When a dummy node is added to $incompatible$, it must be a proper descendant of the $lca$ of the respective cluster by Lemma~\ref{lem:incompatibility}. Since we are considering nested clusters, it must also be a proper descendant of the $lca$ of all subsequent clusters. Then by Lemma~\ref{lem:impurenodesincompatible}, the dummy node is incompatible with all such subsequent clusters, so it will not be deleted from $incompatible$.
         \end{proof}
     \end{numremovednodesdummy}
 
