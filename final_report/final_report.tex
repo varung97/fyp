@@ -440,7 +440,7 @@
 
     Recall that the approach in \cite{gawrychowski2017faster} costs $O(kn\,log^2n)$ time. We develop a way to achieve $O(kn\,log\,n)$ time.
 
-    This problem can be solved using a divide and conquer strategy. Let \texttt{Label\_Clusters}$(\{T_1, T_2, \dots, T_k\})$ be the procedure to compute the labels for all clusters. We partition $L$ into two equal sized halves, $L'$ and $L''$ such that $L = L' \cup L''$. Then we recursively call \texttt{Label\_Clusters}$(\{T_1|L', T_2|L', \dots, T_k|L'\})$ and \texttt{Label\_Clusters}$(\{T_1|L'', T_2|L'', \dots, T_k|L''\})$. The first call gives us labels for the set of clusters $\{\leafset^{T|L'}(u) : T \in \mathcal{S}, u \in T|L'\}$, which turns out to be equivalent to the set $\{\leafset^{T}(u) \cap L' : T \in \mathcal{S}, u \in T\}$. Similarly, the second call gives labels for the set of clusters $\{\leafset^{T}(u) \cap L'' : T \in \mathcal{S}, u \in T\}$. Then for any tree $T \in \mathcal{S}$, for any node $u \in V(T)$, $\leafset^T(u)$ is uniquely identified by the pair $(id(\leafset^T(u) \cap L'), id(\leafset^T(u) \cap L''))$. To be able to quickly compute this pair, we introduce the definition below.
+    This problem can be solved using a divide and conquer strategy. Let\\ \texttt{Label\_Clusters}$(\{T_1, T_2, \dots, T_k\})$ be the procedure to compute the labels for all clusters. We partition $L$ into two equal sized halves, $L'$ and $L''$ such that $L = L' \cup L''$. Then we recursively call \texttt{Label\_Clusters}$(\{T_1|L', T_2|L', \dots, T_k|L'\})$ and\\ \texttt{Label\_Clusters}$(\{T_1|L'', T_2|L'', \dots, T_k|L''\})$. The first call gives us labels for the set of clusters $\{\leafset^{T|L'}(u) : T \in \mathcal{S}, u \in T|L'\}$, which turns out to be equivalent to the set $\{\leafset^{T}(u) \cap L' : T \in \mathcal{S}, u \in T\}$. Similarly, the second call gives labels for the set of clusters $\{\leafset^{T}(u) \cap L'' : T \in \mathcal{S}, u \in T\}$. Then for any tree $T \in \mathcal{S}$, for any node $u \in V(T)$, $\leafset^T(u)$ is uniquely identified by the pair $(id(\leafset^T(u) \cap L'), id(\leafset^T(u) \cap L''))$. To be able to quickly compute this pair, we introduce the definition below.
 
     Further, for every cluster $C \subseteq L$, and every node $u$ in $T$, define the node $assoc^C(u) = lca^T(C \cap \leafset^T(u))$. Notice that if $C \cap \leafset^T(u) \neq \emptyset$, $assoc^C(u) \in V(T|C)$ since it is the $lca$ of some non-empty subset of $C$. However, if $C \cap \leafset^T(u) = \emptyset$, then for convenience let $assoc^{C}(u) = \Phi$, where $\Phi$ is a special node with $id(\Phi) = 0$ and $\leafset(\Phi) = \emptyset$. We refer to Figure~\ref{fig:labelclusters} to show examples of this concept. Let $u$ and $v$ be the nodes in $T_1$ labelled $(5, 1)$ and $(5, 0)$ respectively. Then $assoc^{\{a, b, c, d\}}(u) = v$, since $v = lca^{T_1}(\{a, b, c, d\} \cap \leafset^{T_1}(u)) = lca^{T_1}(\{a, b\})$. $assoc^{\{e, f, g, h\}}(v) = \Phi$, since $\leafset^{T_1}(v) \cap \{e, f, g, h\} = \emptyset$.
     \newline
@@ -448,7 +448,7 @@
     \begin{labelclusterscorrectness}
         \label{lem:labelclusterscorrectness}
 
-        Given any trees $T_i, T_j \in \mathcal{S}$, for any nodes $u \in V(T_i), v \in V(T_j)$, $(id(assoc^{L'}(u)), id(assoc^{L''}(u))) = (id(assoc^{L'}(v)), id(assoc^{L''}(v)))$ iff $\leafset^{T_i}(u) = \leafset^{T_j}(v)$.
+        Given any trees $T_i, T_j \in \mathcal{S}$, for any nodes $u \in V(T_i), v \in V(T_j)$,\\ $(id(assoc^{L'}(u)), id(assoc^{L''}(u))) = (id(assoc^{L'}(v)), id(assoc^{L''}(v)))$ iff $\leafset^{T_i}(u) = \leafset^{T_j}(v)$.
 
         \begin{proof}
             Inductively, $id(assoc^{L'}(u)) = id(assoc^{L'}(v))$ iff $\leafset^{T_i|L'}(assoc^{L'}(u)) = \leafset^{T_j|L'}(assoc^{L'}(v))$. By definition of the $assoc$ relation, $\leafset^{T_i}(u)\, \cap\, L' = \leafset^{T_j}(v)\, \cap\, L'$. Symmetrically, $id(assoc^{L''}(u)) = id(assoc^{L''}(v))$ iff $\leafset^{T_i}(u)\, \cap\, L'' = \leafset^{T_j}(v)\, \cap\, L''$. Since $L'$ and $L''$ partition $L$, both parts are true iff $\leafset^{T_i}(u) = \leafset^{T_j}(v)$.
@@ -527,7 +527,7 @@
     \section{\texttt{Filter\_Clusters}}
     \label{sec:filterclusters}
 
-    Given the trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ returns a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$. Recall that the previous best known solution, as in \cite{jansson2018algorithms}, costs $O(kn\,log^2n)$ time; we present an $O(kn\,log\,n)$ solution.
+    Given the trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the algorithm\\ \texttt{Filter\_Clusters}$(\TA, \TB)$ returns a tree $T$, where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset(T) = L$. Recall that the previous best known solution, as in \cite{jansson2018algorithms}, costs $O(kn\,log^2n)$ time; we present an $O(kn\,log\,n)$ solution.
 
     The key here is finding, for any node $u \in V(\TA)$, the set $incompatible^{\TB}(\leafset^{\TA}(u))$, so that we can find the maximum weight of the nodes in this set. Then it is easy to figure out whether $u$ should be in $T$ or not.
 
@@ -641,7 +641,8 @@
 
         Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and a node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $I = incompatible^{T}(C)$, $Cu = C \cup \leafset^{T}(u)$, $v = coverer^{T, Cu}(u)$, $l_C = lca^{T}(C)$ and $l_{Cu} = lca^{T}(Cu)$. Then $incompatible^{T}(Cu)$ can be defined as follows
         \begin{align*}
-            incompatible^{T}(Cu) = &(I - path^{T}(u, v]) \cup path^{T}(v, l_{Cu}) \cup path^{T}(l_C, l_{Cu}) \cup
+            incompatible^{T}(Cu) = &(I - path^{T}(u, v]) \cup path^{T}(v, l_{Cu}) \cup path^{T}(l_C, l_{Cu})\\
+            &\cup
             \begin{cases}
                 \{l_C\} & \leafset^{T}(l_C) \neq C \text{ and } l_C \neq l_{Cu}\\
                 \emptyset & otherwise
@@ -667,7 +668,7 @@
         \end{proof}
     \end{incompatibilityrecursive}
 
-    Thus we define the operation $updateIncompatible^{T}(I, u, v, l_C, l_{Cu})$ which returns $incompatible^{T}(Cu)$. The actual implementation of this operation is detailed in Subsection~\ref{subsec:updateincompatible}. We now make a claim about the running time of the $updateIncompatible$ operation, which is proved later.
+    Thus we define the operation $updateIncompatible^{T}(I, u, v, l_C, l_{Cu})$ which returns\\ $incompatible^{T}(Cu)$. The actual implementation of this operation is detailed in Subsection~\ref{subsec:updateincompatible}. We now make a claim about the running time of the $updateIncompatible$ operation, which is proved later.
     \newline
 
     \begin{updateincompatibleruntime}
@@ -852,7 +853,7 @@
     \begin{numremovednodes}
         \label{lem:numremovednodes}
 
-        The total number of nodes deleted from $incompatible$ over all calls to \texttt{Filter\_Clusters} is $\leq |V(\TB)|$.
+        The total number of nodes deleted from $incompatible$ over all calls to\\ \texttt{Filter\_Clusters} is $\leq |V(\TB)|$.
 
         \begin{proof}
             Lemmas~\ref{lem:numremovednodesrecursive},~\ref{lem:numremovednodescentroid} and~\ref{lem:numremovednodesdummy} together show that any node in $\TB$ is only deleted once over all calls to \texttt{Filter\_Clusters}, and that these are the only nodes deleted. Thus total number of deletions $\leq |V(\TB)|$.
