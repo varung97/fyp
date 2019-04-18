@@ -66,16 +66,16 @@
 \newtheorem{mincoverrecursive}[incompatibility]{Lemma}
 \newtheorem{findcovererruntime}[incompatibility]{Lemma}
 \newtheorem{incompatibilitymincover}[incompatibility]{Lemma}
+\newtheorem{incompatibilityrecursive}[incompatibility]{Lemma}
 \newtheorem{updateincompatibleruntime}[incompatibility]{Lemma}
-\newtheorem{impurenodesincompatible}[incompatibility]{Lemma}
-\newtheorem{restrictedrmq}[incompatibility]{Lemma}
+\newtheorem{furtherrestriction}[incompatibility]{Lemma}
 \newtheorem{numremovednodesrecursive}[incompatibility]{Lemma}
-\newtheorem{numremovednodescentroid}[incompatibility]{Lemma}
-\newtheorem{numremovednodesdummy}[incompatibility]{Lemma}
 \newtheorem{numremovednodes}[incompatibility]{Lemma}
 \newtheorem{numaddednodes}[incompatibility]{Lemma}
-\newtheorem{incompatibilityrecursive}[incompatibility]{Lemma}
+\newtheorem{restrictedweightedruntime}[incompatibility]{Lemma}
 \newtheorem{filterclustersruntime}[incompatibility]{Lemma}
+\newtheorem{impurenodesincompatiblenondummy}[incompatibility]{Lemma}
+\newtheorem{impurenodesincompatibledummy}[incompatibility]{Lemma}
 \newtheorem{freqdiffruntime}[incompatibility]{Theorem}
 
 
@@ -449,21 +449,25 @@
 
     Subsection~\ref{subsec:mincover} presents the definition $minCover^{T}(C)$. Subsection~\ref{subsec:redefiningincompatibility} uses this definition to give a stricter definition of incompatibility. Subsection~\ref{subsec:restrictedweighted} presents the concept of weighted restricted trees. We then use all of these in Subsection~\ref{subsec:filterclusters} to create the algorithm \texttt{Filter\_Clusters}. Finally, Subsections~\ref{subsec:findcoverer} and~\ref{subsec:updateincompatible} prove two claims we make when analysing the runtime of \texttt{Filter\_Clusters}.
 
-    \subsection{The concept of a \textit{minimum cover}}
+    \subsection{The concepts of pure nodes and covers}
     \label{subsec:mincover}
 
-    Given a tree $T$ leaf-labelled by $L$ and a cluster $C \subseteq L$, define a set $M \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in M} \leafset^{T}(u) = C$. Then we define the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, to be the smallest set $M$ such that $M$ is a cover of $C$. Note that this set is well defined for each cluster. Further, for any node $u \in V(T)$ such that $\leafset^{T}(u) \subseteq C$, define the node covering $u$, denoted as $coverer^{T, C}(u)$, to be the ancestor of $u$ which belongs to $minCover^{T}(C)$. Observe that this node must exist, since $\leafset^{T}(u)$ must be covered, and covering it with descendants of $u$ certainly yields a larger cover than if we use $u$. Figure~\ref{fig:mincoverrecursive}(a) gives an example of a minimum cover. In the same diagram, let $C = \{a, b, c, f, g, h\}$ and $u$ be as labelled. Then $coverer^{T, C}(u) = v$ and $minCover^{T}(C)$ is given by all the circled nodes.
+    Given a tree $T$ leaf-labelled by $L$ and a cluster $C \subseteq L$, define $pure^{T}(C)$ to be the set of nodes $\{u : u \in V(T) \text{ and } \leafset^{T}(u) \subseteq C\}$. Thus for any node $u \in pure^{T}(C)$, the leafset of $u$ contains only leaves from $C$. For example, in Figure~\ref{fig:mincoverrecursive}(a), the circled nodes all belong to $pure^{T}(\{a, b, c, f, g, h\})$.
+
+    We now introduce the related concept of a cover. Define a set $M \subseteq V(T)$ to be a cover of $C$ in $T$ if $\bigcup_{u \in M} \leafset^{T}(u) = C$. Then the minimum cover of $C$ in $T$, denoted as $minCover^{T}(C)$, is the smallest set $M$ such that $M$ is a cover of $C$. Note that this set is well defined for each cluster. For example, in Figure~\ref{fig:mincoverrecursive}(b), the circled nodes give $minCover^{T}(\{a, b, c, f, g, h\})$. Observe that the subtrees rooted at nodes in the minimum cover give exactly the set of pure nodes, i.e. $\bigcup_{u \in minCover^{T}(C)} V(T[u]) = pure^{T}(C)$.
+
+    Finally, for any node $u \in V(T)$ such that $\leafset^{T}(u) \subseteq C$, define the node covering $u$, denoted as $coverer^{T, C}(u)$, to be the ancestor of $u$ which belongs to $minCover^{T}(C)$. Observe that this node must exist, since $\leafset^{T}(u)$ must be covered, and covering it with descendants of $u$ certainly yields a larger cover than if we use $u$. Again referring to Figure~\ref{fig:mincoverrecursive}(b), let $C = \{a, b, c, f, g, h\}$, then $coverer^{T, C}(u) = v$.
 
     \begin{figure}[ht]
         \includegraphics[scale=0.48]{mincoverrecursive}
         \centering
-        \caption[Minimum cover and coverer]{Illustration of minimum cover and coverer. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $minCover^{T}(C)$. Take the leaf $e$, marked with a square in (a) and let $Ce = C \cup \{e\}$. Then $coverer^{T, Ce}(e) = w$, marked with a square in (b). Then the circled node and $w$ in (b) give $minCover^{T}(Ce)$.}
+        \caption[Pure nodes and covers]{Illustration of the concepts of pure nodes and covers. Let $C = \{a, b, c, f, g, h\}$. Then the circled nodes in (a) give $pure^{T}(C)$. The circled nodes in (b) give $minCover^{T}(C)$. In (b), $coverer^{T, C}(u) = v$. Take the leaf $e$, marked with a square in (b) and let $Ce = C \cup \{e\}$. Then $coverer^{T, Ce}(e) = w$, marked with a square in (c). Then the circled node and $w$ in (c) give $minCover^{T}(Ce)$.}
         \label{fig:mincoverrecursive}
     \end{figure}
 
     Given some tree $T$ leaf-labelled by $L$, cluster $C \subseteq L$ and node $u \in V(T)$ such that $\leafset^{T}(u) \cap C = \emptyset$, let $M = minCover^{T}(C)$ and $Cu = C \cup \leafset^{T}(u)$. Then it is useful to be able to find $coverer^{T, Cu}(u)$. Thus, we define the operation $findCoverer^{T, Cu}(u)$ which returns $coverer^{T, Cu}(u)$.
 
-    Figure~\ref{fig:mincoverrecursive} demonstrates how this query works. Here, $C = \{a, b, c, f, g, h\}$ and we take the leaf $e$. The circled nodes in Figure~\ref{fig:mincoverrecursive}(a) give $minCover^{T}(C)$. Then we wish to compute $coverer^{T, Ce}(e)$, where $Ce = C \cup \{e\}$. The idea for doing so will be to iterate upwards from $e$ while the leafset of the node we are at is a subset of $Ce$. Thus, since $\leafset^{T}(parent(e)) \subseteq Ce$, we go upwards one level. We can then go a further  level, to the node $w$ since $\leafset^{T}(w) \subseteq Ce$. At this point we cannot go any further up. Hence, we say that we have found $w = coverer^{T, Ce}(e)$. This yields the following definition of $findCoverer^{T, Cu}(u)$:
+    Figure~\ref{fig:mincoverrecursive} demonstrates how this query works. Here, $C = \{a, b, c, f, g, h\}$ and we take the leaf $e$. The circled nodes in Figure~\ref{fig:mincoverrecursive}(b) give $minCover^{T}(C)$. Then we wish to compute $coverer^{T, Ce}(e)$, where $Ce = C \cup \{e\}$. The idea for doing so will be to iterate upwards from $e$ while the leafset of the node we are at is a subset of $Ce$. Thus, since $\leafset^{T}(parent(e)) \subseteq Ce$, we go upwards one level. We can then go a further  level, to the node $w$ since $\leafset^{T}(w) \subseteq Ce$. At this point we cannot go any further up. Hence, we say that we have found $w = coverer^{T, Ce}(e)$. This yields the following definition of $findCoverer^{T, Cu}(u)$:
     \newline
 
     \begin{findcovererrecursive}
@@ -603,7 +607,7 @@
 
     Recall the concept of restricted trees introduced in Subsection~\ref{subsec:restrictedtree} - given a tree $T$ leaf-labelled by $L$ and a cluster $C \subseteq L$, $V(T|C) = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T|C}(C')$ for all clusters $C' \subseteq C$. Observe that certain nodes are deleted from $T$ when forming $T|C$; this leads to losing information about the weights of these nodes. Hence, we extend the concept of restricted trees to the case where the tree is weighted, following the definition given in \cite{jansson2018algorithms}.
 
-    Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$, we define the tree $T||C$, read as ``weighted $T$ restricted to $C$''. First, the tree $T|C$ is constructed and let the weight of each node in this tree be the same as its weight in $T$. Now for each non-root node $u \in V(T|C)$, let $v = parent^{T|C}(u)$. Then if $path^{T}(u, v) \neq \emptyset$ we create a dummy node $z$ in $T|C$ and set $parent(u) = z$ and $parent(z) = v$. Also, $\weight(z)$ is set as $max_{w \in path^{T}(u, v)} \weight(w)$. Intuitively, if $path^{T}(u, v) \neq \emptyset$, then the nodes in this path have been deleted from $T$ to form $T|C$. As we wish to retain some information about their weights, we insert the dummy node $z$ into $T||C$ to represent this path and hold the largest weight along it. Figure~\ref{fig:dummynodes} demonstrates this procedure.
+    Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$, we define the tree $T||C$, read as ``weighted $T$ restricted to $C$''. First, the tree $T|C$ is constructed and let the weight of each node in this tree be the same as its weight in $T$. Now for each non-root node $u \in V(T|C)$, let $v = parent^{T|C}(u)$. Then if $path^{T}(u, v) \neq \emptyset$ we create a dummy node $z$ in $T|C$ and set $parent(u) = z$ and $parent(z) = v$. Also, $\weight(z)$ is set as $max_{w \in path^{T}(u, v)} \weight(w)$, which we denote by $rmqTree^{T}(u, v)$. Intuitively, if $path^{T}(u, v) \neq \emptyset$, then the nodes in this path have been deleted from $T$ to form $T|C$. As we wish to retain some information about their weights, we insert the dummy node $z$ into $T||C$ to represent this path and hold the largest weight along it. Figure~\ref{fig:dummynodes} demonstrates this procedure.
 
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{dummynodes}
@@ -612,44 +616,39 @@
         \label{fig:dummynodes}
     \end{figure}
 
-    Now, we observe some properties of $T||C$. First, define the pure nodes in $T$ with respect to $C$, denoted as $pure^{T}(C)$, to be the set $\{\leafset^{T}(u) \subseteq C : u \in V(T)\}$. Observe that $pure^{T}(C) = \bigcup_{c \in minCover^{T}(C)} V(T[c])$, i.e. the set of nodes that belong to the subtrees rooted at the minimum cover of $C$ in $T$. Notice that for any node $u \in pure^{T}(C)$, since $\leafset^{T}(u) \subseteq C$, $u \in V(T|C)$ and so $u \in V(T||C)$. Thus these subtrees are copied over without change to $T||C$. Now define the impure nodes in $T||C$, denoted as $impure^{T}(C)$, to be the set $V(T||C) - pure^{T}(C)$. Observe that all dummy nodes in $T||C$ belong to $impure^{T}(C)$. Now we prove a Lemma about the incompatibility of nodes in $T||C$.
+    Now, we observe some properties of $T||C$. First, we extend the definition $pure$, introduced in Subsection~\ref{subsec:mincover}, to trees with dummy nodes. Let $T||C$ be some tree containing dummy nodes and take any cluster $C' \subseteq C$. Any node $u \in V(T||C)$ belongs to $pure^{T||C}(C')$ iff $\leafset^{T||C}(u) \subseteq C'$ and the subtree rooted at $u$ does not contain any dummy nodes. Intuitively, the presence of dummy nodes indicates that some leaves were removed when creating $T||C$ from $T$. Thus, our definition of $pure^{T||C}(C')$ guarantees that the pure nodes have retained all information from $T$. Observe that $pure^{T||C}(C') = pure^{T}(C')$, since the pure nodes belong to both $T$ and $T||C$.
+
+    As part of our algorithm we further restrict already restricted trees. We now show that the $(T||C)||C' = T||C'$.
     \newline
 
-    \begin{impurenodesincompatible}
-        \label{lem:impurenodesincompatible}
+    \begin{furtherrestriction}
+        \label{lem:furtherrestriction}
 
-        Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$. Further, take any cluster $C' \subseteq C$ and any node $u \in impure^{T}(C)$, such that $u$ is a proper descendant of $lca^{T||C}(C')$. Then for any node $v \in V(T)$ that is represented by $u$, $\leafset^{T}(v) \not\compatible C'$.
-
-        \begin{proof}
-            Take the case where $u$ is a dummy node. Then let the nodes $w, w' \in V(T)$ be such that $u$ represents $path^{T}(w, w')$ and take any node $v \in path^{T}(w, w')$. Since $u$ is a proper descendant of $lca^{T||C}(C')$, $v$ is a proper descendant of $lca^{T}(C')$. Further, since $w$ is also a proper descendant of $lca^{T||C}(C')$ and $w \in V(T|C)$, $\leafset^{T}(w) \cap C' \neq \emptyset$. Also, if $\leafset^{T}(v) \subseteq C'$, then $v \in V(T|C)$, but that contradicts the construction of $T||C$. Thus $\leafset^{T}(v) \not\compatible C'$.
-
-            Take the case where $u$ is not a dummy node. Then $u$ only represents itself. Further, $u \in V(T)$ and $u$ is a proper descendant of $lca^{T}(C')$. Since it is also true that $u \in V(T|C)$, $\leafset^{T}(u) \cap C' \neq \emptyset$. Finally, if $\leafset^{T}(u) \subseteq C'$ then $u \in pure^{T}(C)$, but that contradicts the underlying assumption that $u \in impure^{T}(C)$. Thus $\leafset^{T}(u) \not\compatible C'$.
-        \end{proof}
-    \end{impurenodesincompatible}
-
-    Recall that we need to make queries of the form $max_{w \in path^{T}(u, v)} \weight(w)$, where $u, v \in V(T)$, in order to construct a weighted restricted tree. Notice that we can answer this with a query of the form $rmqTree^{T}[parent(u), cFD(v)]$, which we denote by $rmqTree^{T}(u, v)$. We now show that to further restrict a weighted restricted tree, we can use RMQ and cFD structures constructed on the original tree.
-    \newline
-
-    \begin{restrictedrmq}
-        \label{lem:restrictedrmq}
-
-        Given a tree $T$ leaf-labelled by $L$, clusters $C \subseteq L$ and $C' \subseteq C$, for each node $u \in V(T)$, the value $\weight(u)$ and RMQ and cFD structures on $T$. The tree $(T||C)||C'$ can be constructed from the tree $T||C$ using $rmqTree$ queries on $T$.
+        Given a tree $T$ leaf-labelled by $L$, clusters $C \subseteq L$ and $C' \subseteq C$, $(T||C)||C' = T||C'$.
 
         \begin{proof}
-            The key insight here is that no dummy node in $T||C$ belongs to $(T||C)||C'$. The reason for this is that any dummy node has only one child, and so can never be the $lca$ of any cluster. Thus, we only need to make $rmqTree^{T||C}(u, v)$ queries, where $u, v \in V(T||C)$ and $u, v$ are not dummy nodes. But since these are not dummy nodes, $u, v \in V(T)$. Since the construction of $T||C$ guarantees that $rmqTree^{T||C}(u, v) = rmqTree^{T}(u, v)$, we can use the RMQ and cFD structures on $T$ to answer these queries.
+            We first show that $(T||C)|C' = T|C'$. Recall that $V(T|C') = \{lca^{T}(u, v) : u, v \in C'\}$. Since $C' \subseteq C'$, for any $u, v \in C'$, $u, v \in C$, hence $lca^{T}(u, v) \in V(T||C)$. Further, since dummy nodes only have one child, no dummy node from $T||C$ can be in $(T||C)|C'$. As $T||C$ obeys the same structure as $T$, it must be the case that $(T||C)|C'$ does the same, and hence $(T||C)|C' = T|C'$.
+
+            Now take any $u, v \in V((T||C)|C')$, such that $v = parent^{(T||C)|C'}(u)$ and $path^{T||C}(u, v) \neq \emptyset$. Observe that $u$ and $v$ cannot be dummy nodes, since dummy nodes have only one child and so they cannot be the $lca$ of any cluster. Thus $u, v \in V(T)$. Also, it must be the case that $path^{T}(u, v)$ is non-empty. Further, note that $u, v \in V(T|C')$, since $(T||C)|C' = T|C'$. Thus, we insert a dummy node in both $T||C'$ and $(T||C)||C'$. It is also true that for any $w, w' \in V(T||C)$ where $w$ and $w'$ are not dummy nodes, $rmqTree^{T||C}(w, w') = rmqTree^{T}(w, w')$, since we maintained the maximum weight information in the dummy nodes. Thus the dummy nodes inserted due to $u$ and $v$ in $T||C'$ and $(T||C)||C'$ have the same weights.
         \end{proof}
-    \end{restrictedrmq}
+    \end{furtherrestriction}
+
+    Observe that for a tree $T$ and nodes $u, v \in T$, where $v$ is an ancestor of $u$, $rmqTree^{T}(u, v) = rmqTree^{T}[parent(u), cFD(v)]$. Thus we can answer such queries using RMQ and cFD structures. Additionally, as shown in the proof for Lemma~\ref{lem:furtherrestriction}, when constructing $(T||C)||C'$, we can actually make the $rmqTree$ queries against $T$ instead $T||C$. Thus we can construct the RMQ and cFD structures only once on the original $T$ and use these for all subsequent restrictions.
 
     \subsection{The \texttt{Filter\_Clusters} algorithm}
     \label{subsec:filterclusters}
 
-    With these operations in hand, we now develop the solution for \texttt{Filter\_Clusters}. Recall that this method takes trees $\TA$ and $\TB$ as input. First, for any node $u \in V(\TA)$, define $incompatible^{\TB}(u)$ to be $incompatible^{\TB}(\leafset^{\TA}(u))$. As discussed earlier, the idea is to find $incompatible^{\TB}(u)$ for each node $u \in V(\TA)$.
+    We redefine \texttt{Filter\_Clusters} to take trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB} = L$ and return a representation of the cluster collection $\{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$. This obeys the original definition when $\leafset^{\TA} = \leafset^{\TB}$, since the root of $\TA$ will be compatible with $\TB$ and so we can represent the above cluster collection as a tree $T$. However, if $\leafset^{\TA} \subset \leafset^{\TB}$, then the cluster associated with the root of $\TA$ might not be in the final cluster collection. Thus, in this case, we represent the output with a forest $\mathcal{F}$, such that the overall cluster collection of the trees in the forest, i.e. $\bigcup_{T \in \mathcal{F}} \mathcal{C}(T)$, gives us the set we need.
 
-    We present a procedure similar to the algorithm \texttt{Filter\_Clusters} in \cite{jansson2018algorithms}. This procedure takes trees $\TA$ and $\TB$ as input, where $\leafset^{\TA} = \leafset^{\TB} = L$. It returns a forest $\mathcal{F}$ such that the clusters in this forest are the ones from $\TA$ whose weight is more than the heaviest incompatible cluster in $\TB$; i.e. $\bigcup_{T \in \mathcal{F}} \mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$. Note that since the root of the original $\TA$ is a trivial cluster, it is compatible with all other clusters, so it will never be deleted. Thus, the outermost recursive call will yield only a single tree. Our procedure also returns the set $minCover^{\TB}(\leafset^{\TA})$. Note that we call this also call this modified procedure \texttt{Filter\_Clusters} for ease.
+    We extend the definition of \texttt{Filter\_Clusters} to weighted restricted trees. Given trees $\TA$ and $\TB$ where $\leafset^{\TA} \subseteq \leafset^{\TB}$ and $\TB$ is not a weighted restricted tree, we define \texttt{Filter\_Clusters}$(\TA, \TB||\leafset^{\TA}) =$ \texttt{Filter\_Clusters}$(\TA, \TB)$.
+
+    Finally, for any node $u \in V(\TA)$, define $incompatible^{\TB}(u)$ to be $incompatible^{\TB}(\leafset^{\TA}(u))$. As discussed earlier, the idea is to find the maximum weight of any node in $incompatible^{\TB}(u)$ for each node $u \in V(\TA)$.
+
+    Our version of \texttt{Filter\_Clusters} also returns $minCover^{\TB}(\leafset^{\TA})$ for ease of processing.
 
     Algorithm~\ref{alg:filterclusters} gives the algorithm \texttt{Filter\_Clusters}. Step~\ref{step:centroidpath} decomposes $\TA$ into a \textit{centroid path} $\langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$, where $p_{\gamma}$ is the root of $\TA$, and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\tau} : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root, finding $incompatible^{\TB}(p_i)$ for each $p_i \in \pi(\TA)$.
 
-    More specifically, Step~\ref{step:recursivecall} first recursively calls, for each $\tau \in \sigma(\TA)$, \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$. From these calls, Step~\ref{step:obtainsidecover} obtains the set $\bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$ for each $p_i \in \pi(\TA)$. This set is denoted by $sideCover^{\TB}(p_i)$. Note that building the trees $\TB||\leafset^{\tau}$ requires RMQ and cFD data structures on $\TB$ to allow $rmqTree$ queries. To facilitate this, we contruct these before the outermost call to \texttt{Filter\_Clusters}.
+    More specifically, Step~\ref{step:recursivecall} first recursively calls, for each $\tau \in \sigma(\TA)$, \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$. From these calls, we can obtain the set $\bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$ for each $p_i \in \pi(\TA)$, used in Step~\ref{step:innerfor}. This set is denoted by $sideCover^{\TB}(p_i)$. The calls also enable us to obtain, for each $\tau \in \sigma(\TA)$, the forest returned by the recursive call, denoted by $\mathcal{F}_{\tau}$. This is used in Step~\ref{step:unionforests}. Note that in order to build the trees $\TB||\leafset^{\tau}$, we construct RMQ and cFD data structures on $\TB$ before the outermost call to \texttt{Filter\_Clusters}.
 
     Before iterating over the centroid path, we do some setup for $p_1$ in Steps~\ref{step:p1cover} and~\ref{step:p1incompatible}, where the set of nodes incompatible with the leaf $p_1$ is empty and the minimum cover is just the leaf in $\TB$ labelled by $p_1$. Then for-loop in Step~\ref{step:outerfor} iterates over the remaining nodes in the centroid path from bottom to top. The sets $minCover^{\TB}(\leafset^{\TA}(p_{i-1}))$ and $incompatible^{\TB}(\leafset^{\TA}(p_{i-1}))$ are obtained from the previous iteration of the loop. Then for each node $c \in sideCover^{\TB}(p_i)$, we find its coverer and then iteratively add it to the minimum cover of $p_{i-1}$ in Steps~\ref{step:findcoverer} and~\ref{step:addtocover}. Then we update the set of incompatible nodes in Step~\ref{step:updateincompatible}.
 
@@ -670,15 +669,13 @@
             \State Preprocess $\TB$ for lca queries.
             \label{step:preprocesslca}
 
+            \State Construct $\TB||\tau$ for each $\tau \in \sigma(\TA)$.
+            \label{step:constructrestricted}
+
+            \State Run \texttt{Filter\_Clusters}$(\tau, \TB||\tau)$ for each $\tau \in \sigma(\TA)$.
+
             \State \algorithmicforall\ $p_i \in \pi(\TA)$, $sideCover^{\TB}(p_i) := \emptyset$, $\mathcal{F}_{p_i} := \emptyset$
-
-            \ForAll{$\tau \in \sigma(\TA)$}
-                \State $\mathcal{F}', sideCover' :=$ \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$
-                \label{step:recursivecall}
-
-                \State $sideCover^{\TB}(p_i) := sideCover^{\TB}(p_i) \cup sideCover'$ and $\mathcal{F}_{p_i} := \mathcal{F}_{p_i} \cup \mathcal{F}'$, where $\tau$ is associated with \hspace*{\algorithmicindent}$p_i \in \pi(\TA)$
-                \label{step:obtainsidecover}
-            \EndFor
+            \label{step:recursivecall}
 
             \State $l :=$ leaf in $\TB$ labelled by $p_1$
 
@@ -688,11 +685,11 @@
             \State $incompatible :=$ empty Brodal queue
             \label{step:p1incompatible}
 
-            \State $\mathcal{F} := \emptyset$
+            \State $\mathcal{F} := \{\text{tree consisting of only the leaf } p_1\}$
 
             \For{$i := 2$ \textbf{to} $\gamma$}
                 \label{step:outerfor}
-                \ForAll{$u \in sideCover^{\TB}(p_i)$}
+                \ForAll{$u \in \bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$}
                     \label{step:innerfor}
 
                     \State $v :=$ \texttt{Find\_Coverer}$(cover, u)$
@@ -709,6 +706,9 @@
                     \State $l := l'$
                 \EndFor
 
+                \State $\mathcal{F}_{p_i} = \bigcup_{\tau \in \sigma(p_i)} \mathcal{F}_{\tau}$
+                \label{step:unionforests}
+
                 \If{$\weight(p_i) \leq$ maximum weight of a node in $incompatible$}
                     \label{step:maximumweight}
                     \State $\mathcal{F} = \{\text{A tree where each tree in } \mathcal{F} \cup \mathcal{F}_{p_i} \text{ is attached to a common root}\}$.
@@ -723,55 +723,46 @@
 
     The key to analysing the runtime of \texttt{Filter\_Clusters} is the insight that no node is deleted from $incompatible$ twice. Intuitively, this is because nodes are removed from $incompatible$ when their leafsets become subsets of the cluster under consideration. Then this node, or an ancestor of this node, will become part of the cover, and eventually the side cover when the algorithm returns. Then this node can never be incompatible with any cluster under consideration again. Thus, over \textit{all} calls to \texttt{Filter\_Clusters}, the total number of deletions is $\leq |V(\TB)|$.
 
-    We prove this claim in three parts. First, we show that the set of nodes deleted from $incompatible$ in separate recursive calls are disjoint.
+    First, we show a property of the nodes that are deleted in any call to \texttt{Filter\_Clusters}. For this, we need the definition, for any tree $T$ and any cluster $C \in \leafset^{T}$, $pureDesc^{T}(C) = pure^{T}(C) - minCover^{T}(C)$, i.e. the set of nodes that are proper descendants of the minimum cover of $C$ in $T$. Also, define the set $sideCover^{\TB}(\TA) = \bigcup_{\tau \in \sigma(\TA)} minCover^{\TB}(\leafset^{\tau})$, i.e. the minimum covers of all side trees of $\TA$.
     \newline
 
     \begin{numremovednodesrecursive}
         \label{lem:numremovednodesrecursive}
 
-        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$, and some node $p_i \in \pi(\TA)$. Then for any node $u \in V(\TB)$ such that $u$ is deleted from $incompatible$ when processing $p_i$, $u$ must be a descendant of some node $c_{p} \in minCover^{\TB}(\leafset^{\TA}(p_i))$ and a proper ancestor of some node $c_s \in sideCover^{\TB}(p_i)$.
+        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} \subseteq \leafset^{\TB} = L$ and $\TB$ is not a weighted restricted tree. In the call to \texttt{Filter\_Clusters}$(\TA, \TB||\leafset^{\TA})$, the nodes deleted from $incompatible$ are a subset of $pureDesc^{\TB}(\leafset^{\TA}) - \bigcup_{\tau \in \sigma(\TA)} pureDesc^{\TB}(\leafset^{\tau})$.
 
         \begin{proof}
-            $u$ is deleted from $incompatible$ if it is incompatible with some subset of $\leafset^{\TA}(p_i)$ and compatible with $\leafset^{\TA}(p_i)$. This only happens when $\leafset^{\TB}(u) \subseteq \leafset^{\TA}(p_i)$. But then there must be some ancestor $c_p$ of $u$ such that $c_p \in minCover^{\TB}(\leafset^{\TA}(p_i))$.
+            First, observe that since $pure^{\TB}(\leafset^{\TA}) = pure^{\TB||\leafset^{\TA}}(\leafset^{\TA})$, we can refer to nodes that are pure with respect to subsets of $\leafset^{\TA}$ in $\TB||\leafset^{\TA}$ and $\TB$ interchangeably. Thus, in the following proof, we use $\TB$ rather than $\TB||\leafset^{\tau}$.
 
-            By Lemma~\ref{lem:incompatibilityrecursive}, when we update the set of incompatible nodes with some node $c \in V(\TB)$, we only delete the nodes in $path^{\TB}(c, c']$, where $c'$ is the coverer of $c$. Thus we can only delete nodes that are proper ancestors of $c$. Since Step~\ref{step:updateincompatible} updates the incompatible set with nodes from $sideCover^{\TB}(p_i)$, we can only delete nodes that are proper ancestors of nodes in the side cover.
+            Step~\ref{step:updateincompatible} updates the set $incompatible$ with some node $u \in sideCover^{\TB}(p_i)$, for some $p_i \in \pi(\TA)$. Observe that $u \in minCover^{\TB}(\leafset^{\tau})$, for some $\tau \in \sigma(\TA)$. But then $u$ is not a proper descendant of any node in $sideCover^{\TB}(\TA)$ and so $u \not\in \bigcup_{\tau \in \sigma(\TA)} pureDesc^{\TB}(\leafset^{\tau})$.
+
+            Recall that the deleted nodes are ancestors of $u$ and proper descendants of the coverer of $u$. Thus, the deleted nodes are also not in $\bigcup_{\tau \in \sigma(\TA)} pureDesc^{\TB}(\leafset^{\tau})$. Further, note that the coverer of $u$, or some ancestor of this node must be in $minCover^{\TB}(\TA)$. Thus, the deleted nodes must be in $pureDesc^{\TB}(\leafset^{\TA})$.
         \end{proof}
     \end{numremovednodesrecursive}
 
-    Recalling that the side cover of $p_i$ is composed of the minimum covers of the side trees associated with $p_i$, it is clear that the set of nodes deleted in recursive calls is disjoint. We now show that in any single call to \texttt{Filter\_Clusters}, the sets of nodes deleted from $incompatible$ during an $updateIncompatible$ operation are also disjoint.
+    With this property, we can show that over all recursive calls to \texttt{Filter\_Clusters}, the total number of nodes deleted is $\leq |V(\TB)|$.
     \newline
 
-    \begin{numremovednodescentroid}
-        \label{lem:numremovednodescentroid}
-
-        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$. Then during the call \texttt{Filter\_Clusters}$(\TA, \TB)$, no node is deleted from $incompatible$ twice.
-
-        \begin{proof}
-            Take any node $u \in V(\TB)$ such that $u$ is first deleted from $incompatible$ during the processing of some $p_i \in \pi(\TA)$. By the same argument as in Lemma~\ref{lem:numremovednodesrecursive}, $\leafset^{\TB}(u) \subseteq \leafset^{\TA}(p_i)$. Then $\leafset^{\TB}(u) \compatible p_j$ for all $j \geq i$, as the nodes on the centroid path have nested leafsets. Thus $u$ will not be added to $incompatible$ again and so will not be deleted again.
-        \end{proof}
-    \end{numremovednodescentroid}
-
-    We have shown above that no node is deleted twice from $incompatible$. However, recall that we create some dummy nodes, hence it remains to be shown that these nodes are never deleted from $incompatible$.
-    \newline
-
-    \begin{numremovednodesdummy}
-        \label{lem:numremovednodesdummy}
-
-        No dummy node is deleted from $incompatible$.
-
-        \begin{proof}
-            When a dummy node is added to $incompatible$, it must be a proper descendant of the $lca$ of the respective cluster by Lemma~\ref{lem:incompatibility}. Since we are considering nested clusters, it must also be a proper descendant of the $lca$ of all subsequent clusters. Then by Lemma~\ref{lem:impurenodesincompatible}, the dummy node is incompatible with all such subsequent clusters, so it will not be deleted from $incompatible$.
-        \end{proof}
-    \end{numremovednodesdummy}
-
-    \medskip
     \begin{numremovednodes}
         \label{lem:numremovednodes}
 
-        The total number of nodes deleted from $incompatible$ over all calls to \texttt{Filter\_Clusters} is $\leq |V(\TB)|$.
+        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$ and $\TB$ is not a weighted restricted tree, the total number of nodes deleted from $incompatible$ over all recursive calls to \texttt{Filter\_Clusters} is $\leq |V(\TB)|$.
 
         \begin{proof}
-            Lemmas~\ref{lem:numremovednodesrecursive},~\ref{lem:numremovednodescentroid} and~\ref{lem:numremovednodesdummy} together show that any node in $\TB$ is only deleted once over all calls to \texttt{Filter\_Clusters}, and that these are the only nodes deleted. Thus total number of deletions $\leq |V(\TB)|$.
+            For any call to \texttt{Filter\_Clusters}$(T_{\alpha}', \TB||\leafset^{T_{\alpha}'})$, where $T_{\alpha}'$ is some subtree of $\TA$, let the number of nodes deleted during this call be $numDeleted(T_{\alpha}')$.
+
+            Also, note that in Lemma~\ref{lem:numremovednodesrecursive}, each of the $pureDesc$ sets in the union are disjoint, since they are over different leafsets. Thus when finding the size of this set, we can sum over the sizes of the individual $pureDesc$ sets. Then,
+            \begin{align*}
+                numDeleted(\TA) =& |pureDesc^{\TB}(\leafset^{\TA})| - \sum_{\tau \in \sigma(\TA)} |pureDesc^{\TB}(\leafset^{\tau})| + \sum_{\tau \in \sigma(\TA)} numDeleted(\tau)\\
+                =& |pureDesc^{\TB}(\leafset^{\TA})| + \sum_{\tau \in \sigma(\TA)} - |pureDesc^{\TB}(\leafset^{\tau})| + numDeleted(\tau)
+            \end{align*}
+
+            Now when we expand the $numDeleted(\tau)$ term inside the summation, we get a $|pureDesc^{\TB}(\leafset^{\tau})|$ term, which cancels with the other term inside this summation. Thus, this summation telescopes. Observe that at the lowest level of this summation, we call \texttt{Filter\_Clusters} on a single leaf in $\TA$, which has no side trees. Hence, all the smaller terms cancel out, and we are left with simply
+            \begin{align*}
+                numDeleted(\TA) =& |pureDesc^{\TB}(\leafset^{\TA})|
+            \end{align*}
+
+            Clearly, $minCover^{\TB}(\leafset^{\TA}) = \{root(\TB)\}$, and hence $|pureDesc^{\TB}(\leafset^{\TA})| \leq |V(\TB)|$.
         \end{proof}
     \end{numremovednodes}
 
@@ -781,12 +772,25 @@
     \begin{numaddednodes}
         \label{lem:numaddednodes}
 
-        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$. Then during the call \texttt{Filter\_Clusters}$(\TA, \TB)$, no node is added to $incompatible$ twice.
+        Given trees $\TA$ and $\TB$, where $\leafset^{\TA} = \leafset^{\TB} = L$ and $\TB$ may be a weighted restricted tree. Then during the call \texttt{Filter\_Clusters}$(\TA, \TB)$, no node is added to $incompatible$ twice.
 
         \begin{proof}
-            Follows from the argument in Lemma~\ref{lem:numremovednodescentroid}.
+            Take any node $u \in V(\TB)$ such that $u$ is first deleted from $incompatible$ during the processing of some $p_i \in \pi(\TA)$. But then some proper ancestor of $u$ is in the minimum cover of $p_i$, and so $\leafset^{\TB}(u) \subseteq \leafset^{\TA}(p_i)$. Then $\leafset^{\TB}(u) \compatible p_j$ for all $j \geq i$, as the nodes on the centroid path have nested leafsets. Thus $u$ will not be added to $incompatible$ again.
         \end{proof}
     \end{numaddednodes}
+
+    Before analysing \texttt{Filter\_Clusters}, we show that it is possible to build all the weighted restricted trees in $O(n)$ time.
+    \newline
+
+    \begin{restrictedweightedruntime}
+        \label{lem:restrictedweightedruntime}
+
+        For some trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the trees $\TB||\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time, if RMQ and cFD structures on $\TB$ are given.
+
+        \begin{proof}
+            Since the side trees $\sigma(\TA)$ give a partition of $L$, the trees $\TB|\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time total using Lemma 5.2 of \cite{farach1995fast}. From these, $\TB||\leafset^{\tau}$ can be constructed in further $O(n)$ time since we can carry out $rmqTree$ queries in constant time, as we have RMQ and cFD structures on the original $\TB$ and by Lemma~\ref{lem:rmqquery} and the explanation given in Subsection~\ref{subsec:restrictedweighted}.
+        \end{proof}
+    \end{restrictedweightedruntime}
 
     \medskip
     \begin{filterclustersruntime}
@@ -795,13 +799,15 @@
         For some trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ runs in $O(n\,log\,n)$ time, if RMQ and cFD structures on $\TB$ are given.
 
         \begin{proof}
-            The centroid path can be computed in Step~\ref{step:centroidpath} in $O(n)$ time.  The $lca$ data structure in Step~\ref{step:preprocesslca} can also be constructed in $O(n)$ time, by Lemma~\ref{lem:lca}. For Step~\ref{step:recursivecall}, since the side trees $\sigma(\TA)$ give a partition of $L$, the trees $\TB|\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time total using Lemma 5.2 of \cite{farach1995fast}. From these, $\TB||\leafset^{\tau}$ can be constructed in further $O(n)$ time since we can carry out $rmqTree$ queries in constant time, since we have RMQ and cFD structures on the original $\TB$ and by Lemmas~\ref{lem:rmqquery} and~\ref{lem:restrictedrmq}. Merging the $\mathcal{F}$ and $sideCover$ sets in Step~\ref{step:obtainsidecover} costs $O(1)$ time if we implement them as linked lists.
+            The centroid path can be computed in Step~\ref{step:centroidpath} in $O(n)$ time.  The $lca$ data structure in Step~\ref{step:preprocesslca} can also be constructed in $O(n)$ time, by Lemma~\ref{lem:lca}. Step~\ref{step:recursivecall} takes $O(n)$ time, by Lemma~\ref{lem:restrictedweightedruntime}.
+
+            Note that merging the minimum covers in Steps~\ref{step:innerfor} and the forests in Step~\ref{step:unionforests} costs $O(1)$ time if we implement them as linked lists.
 
             We use the Brodal queue of \cite{brodal1995fast} to store incompatible nodes. This data structure allows $insert$ and $findMax$ operations in $O(1)$ time and $delete$ in $O(log\,m)$ time (where $m$ is the number of elements in the queue). Since the number of nodes in $\TB$ is $O(n)$, the number of elements in the queue is always $O(n)$ and so deletions cost $O(log\,n)$ time (this leads to the $log\,n$ factor seen in Lemma~\ref{lem:updateincompatibleruntime}).
 
             Since the total size of the leafsets of the side trees of $\TA$ is $n - 1$, the total size of the side covers is bounded by $n$. Then, the inner for-loop in Step~\ref{step:innerfor} is entered $\leq n$ times. Thus all constant time operations within this loop cost $O(n)$ time in total.
 
-            In Step~\ref{step:findcoverer}, if the algorithm \texttt{Find\_Coverer} is called on some node $u \in V(\TB)$ and $v$ is its coverer, then the runtime of the algorithm depends on the size of the set $path^{\TB}(u, v]$. Observe that these nodes are then deleted from $incompatible$ in Step~\ref{step:updateincompatible}. By Lemma~\ref{lem:numremovednodescentroid}, the total number of nodes deleted from $incompatible$ during the function is $\leq |V(\TB)|$, so this function costs $O(|V(\TB)|)$ time in total.
+            In Step~\ref{step:findcoverer}, if the algorithm \texttt{Find\_Coverer} is called on some node $u \in V(\TB)$ and $v$ is its coverer, then the runtime of the algorithm depends on the size of the set $path^{\TB}(u, v]$. Observe that these nodes are then deleted from $incompatible$ in Step~\ref{step:updateincompatible}. Since Lemma~\ref{lem:numremovednodes} shows that the number of nodes deleted from $incompatible$ over all calls to \texttt{Filter\_Clusters} is $\leq |V(\TB)|$, the number of nodes deleted in this single call must also be bounded by the same number. Thus, this function costs $O(|V(\TB)|)$ time in total.
 
             The nodes deleted from $cover$ in Step~\ref{step:addtocover} are children of the nodes deleted from $incompatible$. Again, since for any node, its parent is only deleted from $incompatible$ once, the node itself is only deleted from $cover$ once. These deletions are implemented in constant time using a linked list, hence Step~\ref{step:addtocover} costs $O(|V(\TB)|)$ time in total.
 
@@ -837,7 +843,7 @@
         \end{algorithmic}
     \end{algorithm}
 
-    Note that we need to make use of the concept of pure and impure nodes to make a query of the form $\leafset^{T}(v) \subseteq Cu$. This is because we wish to check incompatibility against the original $\TB$, but we instead have weighted restricted trees. Thus, we also check whether $v$ is pure. We now prove the claim in Lemma~\ref{lem:findcovererruntime}.
+    Note that we need to make use of the concept of pure nodes to make a query of the form $\leafset^{T}(v) \subseteq Cu$. This is because we wish to check the leafset against the original $\TB$, but we instead have weighted restricted trees. Thus, we also check whether $v \in pure^{T}(L)$. Observe that if $T = T'||C$ for some tree $T'$ and cluster $C$, the set $pure^{T}(L) = pure^{T}(C)$ consists of all nodes $u \in T$ for which it is true that $\leafset^{T}(u) = \leafset^{T'}(u)$. All such nodes are simply marked as pure when constructing the weighted restricted tree. We now prove the claim in Lemma~\ref{lem:findcovererruntime}.
 
     \begin{proof}[Proof of Lemma~\ref{lem:findcovererruntime}]
         First, we need to give a way to implement the check for $\leafset^{T}(v) \subseteq Cu$. To do so, we give every node $w \in T$ a property $counter(w)$. $counter(w)$ initially stores $|\{\leafset^{T}(c) \subseteq C : c \in children(w)\}|$. We update this to reflect the addition of $\leafset^{T}(u)$ to $C$ by incrementing $counter(v)$, and then check whether $counter(v) = |children(v)|$, which is equivalent to determining if $\leafset^{T}(v) \subseteq Cu$. This allows us to make the check in $O(1)$ time.
@@ -848,7 +854,33 @@
     \subsection{The $updateIncompatible$ operation}
     \label{subsec:updateincompatible}
 
-    We use the definition in Lemma~\ref{lem:incompatibilityrecursive} to construct Algorithm~\ref{alg:updateincompatible}.
+    We first show a property of nodes in a weighted restricted tree that are not marked as pure, i.e. given a weighted restricted tree $T$, nodes in the set $V(T) - pure^{T}(\leafset^{T})$.
+    \newline
+
+    \begin{impurenodesincompatiblenondummy}
+        \label{lem:impurenodesincompatiblenondummy}
+
+        Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$. Further, take any cluster $C' \subseteq C$ and any non-dummy node $u \in V(T||C) - pure^{T||C}(C)$, such that $u$ is a proper descendant of $lca^{T||C}(C')$. Then $u \in V(T)$ and $\leafset^{T}(u) \not\compatible C'$.
+
+        \begin{proof}
+            $u$ has to be a proper descendant of $lca^{T}(C')$. Since it is also true that $u \in V(T|C)$, $\leafset^{T}(u) \cap C' \neq \emptyset$. Finally, if $\leafset^{T}(u) \subseteq C'$ then $u \in pure^{T||C}(C)$, but that contradicts the underlying assumption that $u \in V(T||C) - pure^{T||C}(C)$. Thus $\leafset^{T}(u) \not\compatible C'$.
+        \end{proof}
+    \end{impurenodesincompatiblenondummy}
+
+    \medskip
+    \begin{impurenodesincompatibledummy}
+        \label{lem:impurenodesincompatibledummy}
+
+        Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$. Further, take any cluster $C' \subseteq C$ and any dummy node $u \in V(T||C) - pure^{T||C}(C)$, such that $u$ is a proper descendant of $lca^{T||C}(C')$. Then for all nodes $v \in V(T)$ such that $v$ is represented by the dummy node $u$, $\leafset^{T}(v) \not\compatible C'$.
+
+        \begin{proof}
+                Let the nodes $w, w' \in V(T)$ be such that $u$ represents $path^{T}(w, w')$ and $v \in path^{T}(w, w')$. Since $u$ is a proper descendant of $lca^{T||C}(C')$, $v$ is a proper descendant of $lca^{T}(C')$. Further, since $w$ is also a proper descendant of $lca^{T||C}(C')$ and $w \in V(T|C)$, $\leafset^{T}(w) \cap C' \neq \emptyset$. Also, if $\leafset^{T}(v) \subseteq C'$, then $v \in V(T|C)$, but that contradicts the construction of $T||C$. Thus $\leafset^{T}(v) \not\compatible C'$.
+        \end{proof}
+    \end{impurenodesincompatibledummy}
+
+    Lemmas~\ref{lem:impurenodesincompatiblenondummy} and~\ref{lem:impurenodesincompatibledummy} show that Lemma~\ref{lem:incompatibility} can be extended to weighted restricted trees, since we can use the nodes in these trees as stand-ins for the original nodes. Also observe that, as noted earlier, because we only wish to find the largest weight of incompatible nodes, it is enough to have dummy nodes represent an entire path in the original tree.
+
+    We now use the definition in Lemma~\ref{lem:incompatibilityrecursive} to construct Algorithm~\ref{alg:updateincompatible}.
 
     \begin{algorithm}
         \caption{Update\_Incompatible}
@@ -869,7 +901,7 @@
         \end{algorithmic}
     \end{algorithm}
 
-    Note that we again need to take the concept of pure and impure nodes into account when making the check for $\leafset^{T}(l_C) = C$. We now prove the claim in Lemma~\ref{lem:updateincompatibleruntime}.
+    Note that we again need use the nodes marked as pure when making the check for $\leafset^{T}(l_C) = C$. We now prove the claim in Lemma~\ref{lem:updateincompatibleruntime}.
 
     \begin{proof}[Proof of Lemma~\ref{lem:updateincompatibleruntime}]
         We implement the check for $\leafset^{T}(l_C) = C$ in constant time using the counter technique described in the proof of Lemma~\ref{lem:findcovererruntime}. This gives the constant term in the runtime expression.
