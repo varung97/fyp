@@ -5,7 +5,8 @@
 !*.bib
 !*.png
 !final_report/images/graphs.pptx
-final_report/presentation
+!final_report/presentation
+!final_report/presentation/presentation.pptx
 filter_clusters_improvements/paper.bib
 filter_clusters_improvements/paper.tex
 filter_clusters_improvements/samplepaper.tex
