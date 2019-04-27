@@ -57,6 +57,7 @@
 \newtheorem{cfdquery}[incompatibility]{Lemma}
 \newtheorem{rmqdatastructure}[incompatibility]{Lemma}
 \newtheorem{rmqquery}[incompatibility]{Theorem}
+\newtheorem{rmqtreequery}[incompatibility]{Theorem}
 \newtheorem{assocnode}[incompatibility]{Lemma}
 \newtheorem{labelclusterscorrectness}[incompatibility]{Lemma}
 \newtheorem{labelclustersidbounds}[incompatibility]{Lemma}
@@ -73,6 +74,7 @@
 \newtheorem{numremovednodes}[incompatibility]{Lemma}
 \newtheorem{numaddednodes}[incompatibility]{Lemma}
 \newtheorem{restrictedweightedruntime}[incompatibility]{Lemma}
+\newtheorem{restrictedweightedmincover}[incompatibility]{Lemma}
 \newtheorem{filterclustersruntime}[incompatibility]{Lemma}
 \newtheorem{impurenodesincompatiblenondummy}[incompatibility]{Lemma}
 \newtheorem{impurenodesincompatibledummy}[incompatibility]{Lemma}
@@ -127,7 +129,7 @@
     An implementation of the FDCT can be found in the free software package TNT \cite{goloboff2008tnt}; however the algorithm used within is unavailable and so its complexity is not known. Jansson et al. \cite{jansson2018algorithms} gave a deterministic $min\{O(kn^2), O(kn(k + log^2 n))\}$ algorithm for constructing the FDCT, implemented in the open source FACT package \cite{jansson2016improved}. Gawrychowski et al. \cite{gawrychowski2017faster} improved upon this to give a deterministic $O(kn\,log^2n)$ algorithm (not yet implemented).
 
     \subsection{Organisation of the Article and New Results}
-    Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later. Sections~\ref{sec:cfd} and~\ref{sec:rmqtree} show how certain efficient data structures can be built on trees; these will be utilised later. Sections~\ref{sec:weighting} and~\ref{sec:filterclusters} present algorithms for solving subproblems of the FDCT construction; these are brought together in Section~\ref{sec:freqdiffconstruction} to give a new deterministic algorithm for constructing the FDCT that runs in $O(kn\,log\,n)$ time. Finally, Section~\ref{sec:implementation} details how the algorithm was implemented and presents some experimental results.
+    Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later. Section~\ref{sec:rmqtree} shows how an efficient data structure can be built on trees; this will be utilised later. Sections~\ref{sec:weighting} and~\ref{sec:filterclusters} present algorithms for solving subproblems of the FDCT construction; these are brought together in Section~\ref{sec:freqdiffconstruction} to give a new deterministic algorithm for constructing the FDCT that runs in $O(kn\,log\,n)$ time. Finally, Section~\ref{sec:implementation} details how the algorithm was implemented and presents some experimental results.
 
     \section{Preliminaries}
     \label{sec:preliminaries}
@@ -270,8 +272,13 @@
 
     Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the weighting step and an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}, giving an overall runtime of $min(\{O(kn^2), O(kn(k + log^2n))\})$. Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the weighting step to $O(kn\,log^2n)$, thus reducing the overall runtime to $O(kn\,log^2n)$.
 
-    \section{$childD$ queries}
-    \label{sec:cfd}
+    \section{$rmqTree$ queries}
+    \label{sec:rmqtree}
+
+    Given a tree $T$ and $\weight(u)$ for each $u \in V(T)$, for any nodes $v, w \in V(T)$ such that $w$ is a proper ancestor of $v$, define $rmqTree^{T}(v, w) = max_{u \in path^T(v, w)} \weight(u)$, i.e. the maximum weight of all nodes in the path from $v$ to $w$. Note that the parentheses indicate exclusion of the two endpoints. We construct a data structure, called the $rmqTree$ structure, that allows us to answer this query in constant time, given $O(n\,log\,n)$ preprocessing time, where $n = |V(T)|$. We divide this query into two parts, and construct a data structure for each part.
+
+    \subsection{$childD$ queries}
+    \label{subsec:cfd}
 
     Given a tree $T$ and nodes $v, w \in V(T)$ such that $w$ is a proper ancestor of $v$, define $childD(v, w)$ as the child of $w$ that is an ancestor of $v$. We construct a data structure that allows us to answer this query in constant time, given $O(n\,log\,n)$ preprocessing time, where $n = |V(T)|$.
 
@@ -303,10 +310,10 @@
         \end{proof}
     \end{cfdquery}
 
-    \section{RMQ structure on trees}
-    \label{sec:rmqtree}
+    \subsection{RMQ structure on trees}
+    \label{subsec:rmqtreeinc}
 
-    Here, we generalise the linear RMQ data structure to trees. Given a tree $T$ and $\weight(u)$ for each $u \in V(T)$, for any nodes $v, w \in V(T)$ such that $w$ is an ancestor of $v$, let $rmqTree^T[v, w] = max_{u \in path^T[v, w]}\weight(u)$. Note that the square brackets are again used to indicate inclusion of the two endpoints. We build a data structure for answering $rmqTree^T[v, w]$ queries in constant time, given $O(n\,log\,n)$ preprocessing time, where $n = |V(T)|$.
+    Here, we generalise the linear RMQ data structure to trees. Given a tree $T$ and $\weight(u)$ for each $u \in V(T)$, for any nodes $v, w \in V(T)$ such that $w$ is an ancestor of $v$, let $rmqTree^T[v, w] = max_{u \in path^T[v, w]}\weight(u)$. Note that the square brackets indicate inclusion of the two endpoints. We build a data structure for answering $rmqTree^T[v, w]$ queries in constant time, given $O(n\,log\,n)$ preprocessing time, where $n = |V(T)|$.
 
     The data structure outlined here builds on the one presented in Lemma 8 of \cite{jansson2018algorithms}, while providing some further details of the implementation. We do a complete centroid path decomposition on $T$. Then for each leaf $x \in \leafset^T$, the path from $x$ to the root of $T$ can be seen as a concatenation of subpaths of centroid paths in $\mathcal{P}(T)$. An example of this can be seen in Figure~\ref{fig:rmq}. This figure shows part of a tree. The diagonal lines from right to left are centroid paths in the tree (elements of $\mathcal{P}(T)$). The dashed edges indicate that the child is not the heaviest child of its parent, hence starting a new centroid path. As can be seen, the path from the leaf $x$ to the root consists of subpaths of many centroid paths. The data structure we build consists of two parts. Firstly, for each centroid path $P_i \in \mathcal{P}(T)$, the weights along $P_i$ are stored in a linear RMQ structure (as described in Lemma~\ref{lem:linearrmq}). Secondly, for each $x$, we denote the subpaths of centroid paths on the leaf-root path by $Q_1, Q_2, ..., Q_f$, where $Q_1$ contains $root(T)$ and $Q_f$ contains $x$. Then we build the array $W_x[1 ... f]$, where $W_x[i] = max_{u \in Q_i} \weight(u)$ and store this array in a linear RMQ structure.
     \newline
@@ -332,7 +339,7 @@
     \begin{rmqquery}
         \label{lem:rmqquery}
 
-        Given a tree $T$, an $lca$ data structure on $T$, the $rmqTree$ data structure on $T$, and nodes $v, w \in V(T)$ such that $w$ is an ancestor of $v$, the query $rmqTree[v, w]$ can be answered in constant time.
+        Given a tree $T$, an $lca$ data structure on $T$, the $rmqTree$ data structure on $T$, and nodes $v, w \in V(T)$ such that $w$ is an ancestor of $v$, the query $rmqTree^T[v, w]$ can be answered in constant time.
 
         \begin{proof}
             We use the complete centroid path decomposition done when producing the $rmqTree$ data structure. The path from $v$ to $w$ is partitioned into a concatenation of subpaths of these centroid paths, denoted by $Q_1, Q_2, ..., Q_g$. This is illustrated in Figure~\ref{fig:rmq}. The diagonal lines from right to left are some of the centroid paths the tree has been decomposed into. The dashed edges indicate that the child is not the heaviest child of its parent, such that the child is the root of a new centroid path. The bold lines are the subpaths of centroid paths that lie on the path from $v$ to $w$. $Q_1$ is the bold centroid subpath starting from $v$ and continuing upwards till the root of that path. Similarly, $Q_g$ is the bold centroid subpath starting at $w$ and continuing downwards until the path splits from that centroid path. $Q_2$ to $Q_{g - 1}$ are the bold centroid subpaths between $Q_1$ and $Q_g$. The significance of the leaves $x$ and $y$ is explained below.
@@ -348,6 +355,19 @@
             As of these three values can be obtained in constant time, the query as a whole takes $O(1)$ time.
         \end{proof}
     \end{rmqquery}
+
+    \subsection{Putting it together}
+    \label{subsec:rmqtreeex}
+
+    \begin{rmqtreequery}
+        \label{lem:rmqtreequery}
+
+        Given a tree $T$, the $rmqTree$ data structure on $T$ can be built in $O(n\,log\,n)$ time, allowing answering the query $rmqTree(v, w)$, for any nodes $v, w \in V(T)$ such that $w$ is an ancestor of $v$, in constant time.
+
+        \begin{proof}
+            Observe that $rmqTree^{T}(v, w) = rmqTree^{T}[parent(v), childD(v, w)]$. Thus it is clear that using the $childD$ structure and an RMQ structure, we can answer these queries in constant time. Building both these structures costs $O(n\,log\,n)$ time.
+        \end{proof}
+    \end{rmqtreequery}
 
     \section{Weighting}
     \label{sec:weighting}
@@ -607,12 +627,12 @@
 
     Recall the concept of restricted trees introduced in Subsection~\ref{subsec:restrictedtree} - given a tree $T$ leaf-labelled by $L$ and a cluster $C \subseteq L$, $V(T|C) = \{lca^T(u, v) : u, v \in C\}$ which obeys $lca^T(C') = lca^{T|C}(C')$ for all clusters $C' \subseteq C$. Observe that certain nodes are deleted from $T$ when forming $T|C$; this leads to losing information about the weights of these nodes. Hence, we extend the concept of restricted trees to the case where the tree is weighted, following the definition given in \cite{jansson2018algorithms}.
 
-    Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$, we define the tree $T||C$, read as ``weighted $T$ restricted to $C$''. First, the tree $T|C$ is constructed and let the weight of each node in this tree be the same as its weight in $T$. Now for each non-root node $u \in V(T|C)$, let $v = parent^{T|C}(u)$. Then if $path^{T}(u, v) \neq \emptyset$ we create a dummy node $z$ in $T|C$ and set $parent(u) = z$ and $parent(z) = v$. Also, $\weight(z)$ is set as $max_{w \in path^{T}(u, v)} \weight(w)$, which we denote by $rmqTree^{T}(u, v)$. Intuitively, if $path^{T}(u, v) \neq \emptyset$, then the nodes in this path have been deleted from $T$ to form $T|C$. As we wish to retain some information about their weights, we insert the dummy node $z$ into $T||C$ to represent this path and hold the largest weight along it. Figure~\ref{fig:dummynodes} demonstrates this procedure.
+    Given a tree $T$ leaf-labelled by $L$, a cluster $C \subseteq L$ and for each node $u \in V(T)$, the value $\weight(u)$, we define the tree $T||C$, read as ``weighted $T$ restricted to $C$''. First, the tree $T|C$ is constructed and let the weight of each node in this tree be the same as its weight in $T$. Now for each non-root node $u \in V(T|C)$, let $v = parent^{T|C}(u)$. Then if $path^{T}(u, v) \neq \emptyset$ we create a dummy node $z$ in $T|C$ and set $parent(u) = z$ and $parent(z) = v$. Also, $\weight(z)$ is set as $rmqTree^{T}(u, v)$. Intuitively, if $path^{T}(u, v) \neq \emptyset$, then the nodes in this path have been deleted from $T$ to form $T|C$. As we wish to retain some information about their weights, we insert the dummy node $z$ into $T||C$ to represent this path and hold the largest weight along it. Figure~\ref{fig:dummynodes} demonstrates this procedure.
 
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{dummynodes}
         \centering
-        \caption[Constructing the tree $T||C$]{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||C$, where $C = \{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are dummy nodes. Observe that the dummy node that is a parent of the leaf $j$ has weight $7$ since the nodes on the path from $j$ to the root of $T$ had weights $4, 7$ and $2$. The only pure nodes in this tree are the leaves.}
+        \caption[Constructing the tree $T||C$]{Part (a) shows a tree $T$ where all internal nodes are labelled with their weights. Part (b) shows the tree $T||C$, where $C = \{a, c, j\}$. Again, internal nodes are labelled with their weights. Nodes represented by diamonds in this figure are dummy nodes. Observe that the dummy node that is two levels above the leaf $c$ has weight $6$ since the nodes on the path from the parent of $c$ to the root of $T$ had weights $6$ and $5$.}
         \label{fig:dummynodes}
     \end{figure}
 
@@ -633,7 +653,7 @@
         \end{proof}
     \end{furtherrestriction}
 
-    Observe that for a tree $T$ and nodes $u, v \in T$, where $v$ is an ancestor of $u$, $rmqTree^{T}(u, v) = rmqTree^{T}[parent(u), cFD(v)]$. Thus we can answer such queries using RMQ and cFD structures. Additionally, as shown in the proof for Lemma~\ref{lem:furtherrestriction}, when constructing $(T||C)||C'$, we can actually make the $rmqTree$ queries against $T$ instead $T||C$. Thus we can construct the RMQ and cFD structures only once on the original $T$ and use these for all subsequent restrictions.
+    Observe that, as shown in the proof for Lemma~\ref{lem:furtherrestriction}, when constructing $(T||C)||C'$, we can actually make the $rmqTree$ queries against $T$ instead $T||C$. Thus we use an $rmqTree$ structure constructed on the original $T$ for all subsequent restrictions.
 
     \subsection{The \texttt{Filter\_Clusters} algorithm}
     \label{subsec:filterclusters}
@@ -644,11 +664,9 @@
 
     Finally, for any node $u \in V(\TA)$, define $incompatible^{\TB}(u)$ to be $incompatible^{\TB}(\leafset^{\TA}(u))$. As discussed earlier, the idea is to find the maximum weight of any node in $incompatible^{\TB}(u)$ for each node $u \in V(\TA)$.
 
-    Our version of \texttt{Filter\_Clusters} also returns $minCover^{\TB}(\leafset^{\TA})$ for ease of processing.
-
     Algorithm~\ref{alg:filterclusters} gives the algorithm \texttt{Filter\_Clusters}. Step~\ref{step:centroidpath} decomposes $\TA$ into a \textit{centroid path} $\langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$, where $p_{\gamma}$ is the root of $\TA$, and a set of \textit{side trees} (similarly to \cite{jansson2018algorithms}). Observe that for any side tree $\tau \in \sigma(\TA)$, $|\leafset^\tau| \leq n/2$ and that $\{\leafset^{\tau} : \tau \in \sigma(\TA)\}$ forms a partition of $L\, \backslash\, {p_1}$. We further note that for any internal node $p_i \in \pi(\TA)$, $\leafset^{\TA}(p_{i - 1}) \subset \leafset^{\TA}(p_i)$, i.e. the cluster associated with $p_{i-1}$ is a proper subset of $p_i$. This then leads to the intuition behind the procedure \texttt{Filter\_Clusters} - recursively run the algorithm on the side trees, and then iterate over the centroid path from leaf to root, finding $incompatible^{\TB}(p_i)$ for each $p_i \in \pi(\TA)$.
 
-    More specifically, Step~\ref{step:recursivecall} first recursively calls, for each $\tau \in \sigma(\TA)$, \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$. From these calls, we can obtain the set $\bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$ for each $p_i \in \pi(\TA)$, used in Step~\ref{step:innerfor}. This set is denoted by $sideCover^{\TB}(p_i)$. The calls also enable us to obtain, for each $\tau \in \sigma(\TA)$, the forest returned by the recursive call, denoted by $\mathcal{F}_{\tau}$. This is used in Step~\ref{step:unionforests}. Note that in order to build the trees $\TB||\leafset^{\tau}$, we construct RMQ and cFD data structures on $\TB$ before the outermost call to \texttt{Filter\_Clusters}.
+    More specifically, Step~\ref{step:constructrestrictedweighted} first constructs the trees $\TB||\leafset^{\tau}$ and obtains the sets $minCover^{\TB}(\leafset^{\tau})$ for each $\tau \in \sigma(\TA)$. The former is used in Step~\ref{step:recursivecall} when making the recursive calls. These give us a forest for each $\tau$, used in Step~\ref{step:unionforests}. The minimum covers are used to obtain the set $\bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$ for each $p_i \in \pi(\TA)$, utilised in Step~\ref{step:innerfor}. This set is denoted by $sideCover^{\TB}(p_i)$. Note that building the trees $\TB||\leafset^{\tau}$ requires an $rmqTree$ data structure. We contruct this before the outermost call to \texttt{Filter\_Clusters}.
 
     Before iterating over the centroid path, we do some setup for $p_1$ in Steps~\ref{step:p1cover} and~\ref{step:p1incompatible}, where the set of nodes incompatible with the leaf $p_1$ is empty and the minimum cover is just the leaf in $\TB$ labelled by $p_1$. Then for-loop in Step~\ref{step:outerfor} iterates over the remaining nodes in the centroid path from bottom to top. The sets $minCover^{\TB}(\leafset^{\TA}(p_{i-1}))$ and $incompatible^{\TB}(\leafset^{\TA}(p_{i-1}))$ are obtained from the previous iteration of the loop. Then for each node $c \in sideCover^{\TB}(p_i)$, we find its coverer and then iteratively add it to the minimum cover of $p_{i-1}$ in Steps~\ref{step:findcoverer} and~\ref{step:addtocover}. Then we update the set of incompatible nodes in Step~\ref{step:updateincompatible}.
 
@@ -661,7 +679,7 @@
         \begin{algorithmic}[1]
             \Input Trees $\TA$ and $\TB$ with $\leafset^{\TA} = \leafset^{\TB} = L$ where every cluster has a known $weight$.
 
-            \Output The forest $\mathcal{F}$ such that $\bigcup_{T' \in \mathcal{F}} \mathcal{C}(T') = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and the set of nodes $minCover^{\TB}(\leafset^{\TA})$.
+            \Output The forest $\mathcal{F}$ such that $\bigcup_{T' \in \mathcal{F}} \mathcal{C}(T') = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$.
 
             \State Compute a centroid path $\pi = \langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$ of $\TA$, where $p_{\gamma}$ is the root of $\TA$ and $p_1$ is a leaf.
             \label{step:centroidpath}
@@ -669,12 +687,10 @@
             \State Preprocess $\TB$ for lca queries.
             \label{step:preprocesslca}
 
-            \State Construct $\TB||\tau$ for each $\tau \in \sigma(\TA)$.
-            \label{step:constructrestricted}
+            \State Construct the sets $\{\TB||\leafset^{\tau} : \tau \in \sigma(\TA)\}$ and $\{minCover^{\TB}(\leafset^{\tau}) : \tau \in \sigma(\TA)\}$.
+            \label{step:constructrestrictedweighted}
 
-            \State Run \texttt{Filter\_Clusters}$(\tau, \TB||\tau)$ for each $\tau \in \sigma(\TA)$.
-
-            \State \algorithmicforall\ $p_i \in \pi(\TA)$, $sideCover^{\TB}(p_i) := \emptyset$, $\mathcal{F}_{p_i} := \emptyset$
+            \State \algorithmicforall\ $\tau \in \sigma(\TA)$, $\mathcal{F}_{\tau} :=$ \texttt{Filter\_Clusters}$(\tau, \TB||\leafset^{\tau})$
             \label{step:recursivecall}
 
             \State $l :=$ leaf in $\TB$ labelled by $p_1$
@@ -689,7 +705,7 @@
 
             \For{$i := 2$ \textbf{to} $\gamma$}
                 \label{step:outerfor}
-                \ForAll{$u \in \bigcup_{\tau \in \sigma(p_i)} minCover^{\TB}(\leafset^{\tau})$}
+                \ForAll{$u \in sideCover^{\TB}(p_i)$}
                     \label{step:innerfor}
 
                     \State $v :=$ \texttt{Find\_Coverer}$(cover, u)$
@@ -779,18 +795,29 @@
         \end{proof}
     \end{numaddednodes}
 
-    Before analysing \texttt{Filter\_Clusters}, we show that it is possible to build all the weighted restricted trees in $O(n)$ time.
+    We now show that we can construct all the weighted restricted trees and obtain minimum covers of the side trees in $O(n)$ time.
     \newline
 
     \begin{restrictedweightedruntime}
         \label{lem:restrictedweightedruntime}
 
-        For some trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the trees $\TB||\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time, if RMQ and cFD structures on $\TB$ are given.
+        Given a tree $T$ leaf-labelled by $L$ and a partition of $L$, $\{L_1, L_2, \dots, L_i\}$, the trees $T||L_1, T||L_2, \dots, T||L_i$ can be constructed in $O(n)$ time total, where $n = |L|$.
 
         \begin{proof}
-            Since the side trees $\sigma(\TA)$ give a partition of $L$, the trees $\TB|\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time total using Lemma 5.2 of \cite{farach1995fast}. From these, $\TB||\leafset^{\tau}$ can be constructed in further $O(n)$ time since we can carry out $rmqTree$ queries in constant time, as we have RMQ and cFD structures on the original $\TB$ and by Lemma~\ref{lem:rmqquery} and the explanation given in Subsection~\ref{subsec:restrictedweighted}.
+            The trees $T|L_j$ for $1 \leq j \leq i$ can be constructed in $O(n)$ time total using Lemma 5.2 of \cite{farach1995fast}. From $T|L_j$, $T||L_j$ can be constructed in $O(|L_j|)$ time, since we need to make $O(|L_j|)$ $rmqTree$ queries and by Lemma~\ref{lem:rmqtreequery}. Thus this process takes $O(n)$ time total.
         \end{proof}
     \end{restrictedweightedruntime}
+
+    \medskip
+    \begin{restrictedweightedmincover}
+        \label{lem:restrictedweightedmincover}
+
+        Given, for some tree $T$ leaf-labelled by $L$ and a cluster $L' \subseteq L$, the tree $T||L'$, the set $minCover^{T}(L')$ can be obtained in $O(|L'|)$ time.
+
+        \begin{proof}
+            As per the discussion in Subsection~\ref{subsec:restrictedweighted}, $pure^{T}(L') = pure^{T||L'}(L')$. But then $minCover^{T}(L') \subseteq V(T||L')$ and in particular is the set of the roots of the subtrees formed by $pure^{T||L'}(L')$. It is easy to find the set $pure^{T||L'}(L')$ in $O(|L'|)$ time using a bottom-up pass through $T||L'$, and hence we can find $minCover^{T}(L')$ in $O(|L'|)$ time.
+        \end{proof}
+    \end{restrictedweightedmincover}
 
     \medskip
     \begin{filterclustersruntime}
@@ -799,7 +826,7 @@
         For some trees $\TA$ and $\TB$ where $\leafset^{\TA} = \leafset^{\TB} = L$ and $n = |L|$, the algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ runs in $O(n\,log\,n)$ time, if RMQ and cFD structures on $\TB$ are given.
 
         \begin{proof}
-            The centroid path can be computed in Step~\ref{step:centroidpath} in $O(n)$ time.  The $lca$ data structure in Step~\ref{step:preprocesslca} can also be constructed in $O(n)$ time, by Lemma~\ref{lem:lca}. Step~\ref{step:recursivecall} takes $O(n)$ time, by Lemma~\ref{lem:restrictedweightedruntime}.
+            The centroid path can be computed in Step~\ref{step:centroidpath} in $O(n)$ time.  The $lca$ data structure in Step~\ref{step:preprocesslca} can also be constructed in $O(n)$ time, by Lemma~\ref{lem:lca}. For Step~\ref{step:constructrestrictedweighted}, since the side trees $\sigma(\TA)$ give a partition of $L$, the trees $\TB|\leafset^{\tau}$ for each $\tau \in \sigma(\TA)$ can be constructed in $O(n)$ time by Lemma~\ref{lem:restrictedweightedruntime} and because the $rmqTree$ structure on the original $\TB$ is sufficient for this $\TB$ as per the discussion in Subsection~\ref{subsec:restrictedweighted}. Further, the minimum covers can be obtained in $O(n)$ time by Lemma~\ref{lem:restrictedweightedmincover}.
 
             Note that merging the minimum covers in Steps~\ref{step:innerfor} and the forests in Step~\ref{step:unionforests} costs $O(1)$ time if we implement them as linked lists.
 
