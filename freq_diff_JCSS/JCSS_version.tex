@@ -167,10 +167,10 @@
 
     {\bf KEN: It is important to state that the time improvement is challenging. Can you high-light the techniques that lead to the improvement here?}
 
-    Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later. 
+    Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later.
     Section~\ref{sec_freq_diff_algo} gives the framework of the FDCT construction algorithm that runs in $O(kn\,log\,n)$ time.
     Sections~\ref{sec:weighting} and~\ref{sec:filterclusters} present algorithms for solving subproblems of the FDCT construction.
-    Section~\ref{sec:rmqtree} shows how an efficient data structure can be built on trees; this will be utilised later. 
+    Section~\ref{sec:rmqtree} shows how an efficient data structure can be built on trees; this will be utilised later.
     Finally, Section~\ref{sec:implementation} details how the algorithm was implemented and presents some experimental results.
 
     \section{Preliminaries}
@@ -267,11 +267,11 @@
     \label{sec_freq_diff_algo}
 
     Given a set of trees $\mathcal{S} = \{ T_1, \ldots, T_k \}$ where $\Lambda(T_1) = \ldots = \Lambda(T_k) = L$, this section describes the overall framework to compute the FDCT of $\mathcal{S}$, which is proposed by \cite{jansson2018algorithms}.
-    The algorithm \texttt{Frequency\_Difference} runs in three phases. 
-    
+    The algorithm \texttt{Frequency\_Difference} runs in three phases.
+
     The first phase is the \textit{weighting} step. It computes, for any tree $T_i \in \mathcal{S}$ and any node $u \in V(T_i)$, $\weight(u) = | \{ T_j \in {\cal S} \mid \Lambda(T_i[u]) \in \mathcal{C}(T_j) \} |$. Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the weighting step.
     Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the weighting step to $O(kn\,log^2n)$. In Section~\ref{sec:weighting}, we give the proof of the following lemma which shows that the weighting step can be solved in $O(k n \log n)$ time.
-    
+
     \begin{lemma}
 	    \label{lem-weighting-time}
 	   The weighting step takes $O(kn \log n)$ time.
@@ -280,11 +280,11 @@
     Now, we assume every cluster (or every node) in the trees in $\mathcal{S}$ is associated with a weight. The second phase computes the forward frequency difference consensus tree (FFDCT) of a list of trees $(T_1, T_2, \ldots, T_k)$.
     The FFDCT of $(T_1, T_2, \ldots, T_k)$ is defined as the tree that includes, for every $1 \leq i \leq k$, every cluster $C \in \mathcal{C}(T_i)$ that satisfies $\weight(C) > \weight(X)$ for all $X \in \bigcup_{j=i}^k \mathcal{C}(T_j)$ with $C \not\compatible X$. Below lemma states a recursive formula to compute $FFDCT(T_1, \ldots, T_k)$. Note that the output of $FFDCT()$ depends on the ordering of the trees.
 
-    \begin{lemma} \label{lem-FFDCT} 
+    \begin{lemma} \label{lem-FFDCT}
 	    Let $T = FFDCT(T_1, \ldots, T_{k-1})$. Then, $FFDCT(T_1, \ldots, T_k) = FFDCT(T, T_k)$.
     \end{lemma}
 
-    
+
     $FFDCT(T_1, T_2)$ can be computed by utilising \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} (defined below).
 
     Given two trees $T_1$ and $T_2$ where $\leafset^{T_1} = \leafset^{T_2} = L$ and $T_1 \compatible T_2$, \texttt{Merge\_Trees}$(T_1, T_2)$ returns a tree $T$ such that $\leafset^T = L$ and $\mathcal{C}(T) = \mathcal{C}(T_1) \cup \mathcal{C}(T_2)$. Figure~\ref{fig:mergetrees} gives an example for the \texttt{Merge\_Trees} algorithm.
@@ -301,7 +301,7 @@
 
     \cite{jansson2018algorithms} gave an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}. In Section~\ref{sec:filterclusters}, we give the following lemma.
     In Section~\ref{sec:filterclusters}, we give the proof of the following lemma which shows that $Filter\_Cluster$ of two trees can be computed in $O(n \log n)$ time.
-    \begin{lemma} 
+    \begin{lemma}
 	    \label{lem-filter-cluster-time}
 	    Given two weighted trees $T_1$ and $T_2$ of size $n$,
 	    $Filter\_Cluster(T_1, T_2)$ can be computed in $O(n \log n)$ time.
@@ -317,7 +317,7 @@
     Given the FFDCT of $(T_1, \ldots, T_k)$, the third phase computes the FDCT of $\{ T_1, \ldots, T_k \}$. Below lemma states how can we compute FDCT utilizing $Filter\_Clusters$.
     \begin{lemma}
 	    \label{lem-FDCT}
-	    Let $T$ be the FFDCT of $(T_1, \ldots, T_k)$. 
+	    Let $T$ be the FFDCT of $(T_1, \ldots, T_k)$.
 
     \end{lemma}
 
@@ -391,12 +391,12 @@
     Recall that the approach in \cite{gawrychowski2017faster} costs $O(kn\,log^2n)$ time. Below, we develop a way to achieve $O(kn\,log\,n)$ time.
 
     We first define a mapping $assoc$. Let $L'$ and $L''$ be a partition of $L$ such that $L = L' \cup L''$ and $|L'|=|L''|$.
-    For any tree $T_i \in \mathcal{S}$, for any node $u \in V(T_i)$, $assoc^{L'}(u)$ aims to map $u$ to the corresponding node in $T_i|L'$. Formally, if $\Lambda^{T_i}(u) \cap L' \neq \emptyset$, 
+    For any tree $T_i \in \mathcal{S}$, for any node $u \in V(T_i)$, $assoc^{L'}(u)$ aims to map $u$ to the corresponding node in $T_i|L'$. Formally, if $\Lambda^{T_i}(u) \cap L' \neq \emptyset$,
     define $assoc^{L'}(u)$ be the node $v \in V(T|L')$ such that $\Lambda^T(u) \cap L' = \Lambda^{T|L'}(v)$; otherwise, define $assoc^{L'}(u)$ be $\Phi$, where $\Phi$ is a special node with $id(\Phi) = 0$.
     $assoc^{L''}$ can be defined analogically.  We refer to Figure~\ref{fig:labelclusters} to show examples of this concept. Let $u$ and $v$ be the nodes in $T_1$ labelled $(5, 1)$ and $(5, 0)$ respectively. Then $assoc^{\{a, b, c, d\}}(u) = v$, since $v = lca^{T_1}(\{a, b, c, d\} \cap \leafset^{T_1}(u)) = lca^{T_1}(\{a, b\})$. $assoc^{\{e, f, g, h\}}(v) = \Phi$, since $\leafset^{T_1}(v) \cap \{e, f, g, h\} = \emptyset$.
 
     {\bf KEN: I think the above example for $assoc$ is not correct!}
-    
+
     \begin{lemma}
         \label{lem:labelclusterscorrectness}
         Given any trees $T_i, T_j \in \mathcal{S}$, for any nodes $u \in V(T_i), v \in V(T_j)$, $(id(assoc^{L'}(u)), id(assoc^{L''}(u))) = (id(assoc^{L'}(v)), id(assoc^{L''}(v)))$ iff $\leafset^{T_i}(u) = \leafset^{T_j}(v)$.
@@ -409,10 +409,10 @@
         \end{proof}
 
 
-    Using the above observation, the labeling problem can be solved using a divide and conquer strategy. Let \texttt{Label\_Trees}$(\{T_1, T_2, \dots, T_k\})$ be the procedure to compute the labels for all nodes in the trees. 
-    %We partition $L$ into two equal sized halves, $L'$ and $L''$ such that $L = L' \cup L''$. 
+    Using the above observation, the labeling problem can be solved using a divide and conquer strategy. Let \texttt{Label\_Trees}$(\{T_1, T_2, \dots, T_k\})$ be the procedure to compute the labels for all nodes in the trees.
+    %We partition $L$ into two equal sized halves, $L'$ and $L''$ such that $L = L' \cup L''$.
     We recursively call \texttt{Label\_Trees}$(\{T_1|L', T_2|L', \dots, T_k|L'\})$ and \texttt{Label\_Trees}$(\{T_1|L'', T_2|L'', \dots, T_k|L''\})$ and obtain labels for all nodes in $T_i|L'$ and $T_i|L''$ for $i=1, \ldots, k$.
-    %The first call gives us labels for the set of clusters $\{\leafset^{T|L'}(u) : T \in \mathcal{S}, u \in V(T|L')\}$, which turns out to be equivalent to the set $\{\leafset^{T}(u) \cap L' : T \in \mathcal{S}, u \in V(T)\}$. Similarly, the second call gives labels for the set of clusters $\{\leafset^{T}(u) \cap L'' : T \in \mathcal{S}, u \in V(T)\}$. 
+    %The first call gives us labels for the set of clusters $\{\leafset^{T|L'}(u) : T \in \mathcal{S}, u \in V(T|L')\}$, which turns out to be equivalent to the set $\{\leafset^{T}(u) \cap L' : T \in \mathcal{S}, u \in V(T)\}$. Similarly, the second call gives labels for the set of clusters $\{\leafset^{T}(u) \cap L'' : T \in \mathcal{S}, u \in V(T)\}$.
     Then for any tree $T_i \in \mathcal{S}$, for any node $u \in V(T_i)$, Lemma~\ref{lem:labelclusterscorrectness} implies that $\leafset^{T_i}(u)$ is uniquely identified by the pair $(id(assoc^{L'}(u)), id(assoc^{L''}(u))$.
     We sort all pairs and assign a rank to each unique pair; $id(u)$ is then the rank of the pair $(id(assoc^{L'}(u)), id(assoc^{L''}(u)))$. Algorithm~\ref{alg:labelclusters} details the pseudocode for \texttt{Label\_Trees}.
 
@@ -498,7 +498,7 @@
     \begin{lemma}
 	    \label{lem-simple-recurrence-FFDCT}
 	    \[
-	    FFDCT(\TA, \TB) = 
+	    FFDCT(\TA, \TB) =
 		 \left\{ \Lambda(\TA[p_i]) : \weight(\Lambda(\TA[p_i])) > \max_{C' \in Conflict^{\TB}(\Lambda(\TA[p_i]))} \weight(C'), i=1,\ldots, \gamma \right\} \cup
 	    	\left( \bigcup_{\tau \in sideTrees(\pi)} FFDCT(\tau, \TB) \right)
 	    \]
@@ -540,8 +540,8 @@
 	    Let $Time(\TA)$ be the time for running Filter\_Clusters$(\TA)$
 
 	    Steps~\ref{step:centroidpath} and \ref{step:restriction} takes $O(n)$ time.
-	    By Lemma~\ref{lem-time-Conflict}, 
-	    $\max \{ C \in Conflict^{\TB}(\Lambda(\TA[p_i]) \}$ for all $i \in \{1, \ldots, \gamma\}$ 
+	    By Lemma~\ref{lem-time-Conflict},
+	    $\max \{ C \in Conflict^{\TB}(\Lambda(\TA[p_i]) \}$ for all $i \in \{1, \ldots, \gamma\}$
 	    using $O\left(n + |uniqCovered^{\TB}(\TA)| \log n \right)$ time.
 	    Hence, we have
 	    \[ Time(\TA) = n + |uniqCovered^{\TB}(\TA)| \log n + \sum_{\tau \in sideTrees(\pi)} Time(\tau) \]
@@ -626,14 +626,14 @@
 	    $Conflict^{\TB}(\Lambda(\TA[u]))$ can be computed from $E$ by deleting $O(|Covered(\TA[u])| - \sum_{\tau \in subtree(u)} |Covered(\tau)|)$ nodes and inserting $O(|Overlap^{\TB}(\TA[u])| - |Overlap^{\TB}(\TA[v])|)$ nodes from $E$.
     \end{lemma}
 
-    In our algorithm, the clusters in $Conflict^{\TB}(C)$ are maintained using the Brodal queue according to their weights. 
+    In our algorithm, the clusters in $Conflict^{\TB}(C)$ are maintained using the Brodal queue according to their weights.
     The Brodal queue data structure allows insertion and findMax operations in $O(1)$ time and delete operation in $O(\log n)$ time.
 
     Let $\pi = \langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$ be the centroid path of $\TA$, where $p_{\gamma}$ is the root of $\TA$ and $p_1$ is a leaf.
     We have $Conflict_{p_1}$ consists of exactly one cluster $\{y\}$ where $y$ is the leaf in $T_{\beta}$ such that $label(y) = label(p_1)$.
     Below lemma state the running time to construct $Conflict^{\TB}(\Lambda(\TA[p_i])$ from $Conflict^{\TB}(\Lambda(\TA[p_{i-1}]))$ for $i = 2, \ldots, \gamma$.
     \begin{lemma}
-	    We can compute $\max \{ C \in Conflict^{\TB}(\Lambda(\TA[p_i]) \}$ for all $i \in \{1, \ldots, \gamma\}$ 
+	    We can compute $\max \{ C \in Conflict^{\TB}(\Lambda(\TA[p_i]) \}$ for all $i \in \{1, \ldots, \gamma\}$
 	    using $O\left(n + \left( |Covered^{\TB}(\TA)| - \sum_{\tau \in sideTree(\pi)} |Covered^{\TB}(\tau)| \right) \log n \right)$ time.
     \end{lemma}
     \begin{proof}
@@ -641,7 +641,7 @@
 	    First, we need to construct $X'_{p_i} = MinCover^{\TB}(\Lambda(\TA[p_i]) - \Lambda(\TA[p_{i-1}])$ for $i = 2, \ldots, \gamma$.
 	    This can be done in $O( \sum_{i=2}^{\gamma} (|\Lambda(\TA[p_i])| - |\Lambda(\TA[p_{i-1}])|) ) = O(n)$ time.
 
-	    By Lemma~\ref{lem-time-build-Conflict2}, 
+	    By Lemma~\ref{lem-time-build-Conflict2},
 
 
     \end{proof}
@@ -707,7 +707,7 @@
 
     \newpage
 
-   
+
 
 
 
@@ -748,7 +748,7 @@
 
     The basic idea of our solution is to collect all clusters $C \in \mathcal{C}(\TA)$ such that $\weight(C) > \max_{C' \in Confict^{\TB}(C)} \weight(C')$.
     Precisely, the algorithm scans all clusters $C \in \mathcal{C}(T_{\alpha})$ and computes $Conflict^{\TB}_{C}$; then, it inserts $C$ in $\mathcal{F}$ if $\weight(C) > \max_{C' \in Confict^{\TB}(C)} \weight(C')$.
-    Let $Build(T_{\alpha}, T_{\beta})$ be the function to build 
+    Let $Build(T_{\alpha}, T_{\beta})$ be the function to build
 
 
     Below, we assume the lca data structure and the path rmq data structure for $T_{\beta}$ is provided.
@@ -1296,8 +1296,8 @@ For any array $A[1 \ldots n]$ of length $n$ and any indices $i, j$, $1 \leq i \l
 	    Given an array $A[1 \ldots n]$, the \textit{linear RMQ data structure} can be constructed in $O(n)$ preprocessing time. Then for any indices $i, j$, $1 \leq i \leq j \leq n$, the query $rmq^A[i, j]$ can be answered in constant time.
     \end{lemma}
 
-This section generalizes the linear RMQ data stucture to the RMQ data structure for weighted tree. 
-Consider a weighted tree $T$ of size $n$ where every node $u \in V(T)$ is associated with a weight $\weight(u)$. 
+This section generalizes the linear RMQ data stucture to the RMQ data structure for weighted tree.
+Consider a weighted tree $T$ of size $n$ where every node $u \in V(T)$ is associated with a weight $\weight(u)$.
 First, Section~\ref{subsec:rmqtreeinc} describes a data structure that can be constructed in $O(n \log n)$ time so that the maximum weight among nodes on any closed path in $T$ can be answer in constant time.
 Then, Section~\ref{subsec:cfd} extends the data structure to answer the maximum weight amogn nodes on an open path in $T$.
 %    For any nodes $v, w \in V(T)$ such that $w$ is a proper ancestor of $v$, define $rmqTree^{T}(v, w) = max_{u \in path^T(v, w)} \weight(u)$, i.e. the maximum weight of all nodes in the path from $v$ to $w$. Note that the parentheses indicate exclusion of the two endpoints. We construct a data structure, called the $rmqTree$ structure, that allows us to answer this query in constant time, given $O(n\,log\,n)$ preprocessing time, where $n = |V(T)|$. We divide this query into two parts, and construct a data structure for each part.
@@ -1608,7 +1608,7 @@ Putting together Lemmas~\ref{lem:rmqquery} and \ref{lem:cfdquery}, we have the f
 %    \newpage
 %\bibliographystyle{elsarticle-num}
 %\bibliography{final_report}
-    
+
     \bibliographystyle{plain}
     \bibliography{final_report}
 \end{document}
