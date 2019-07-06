@@ -103,11 +103,11 @@
     \begin{abstract}
 	    Given $k$ phylogenetic trees leaf-labeled by the same set of $n$ taxa, one fundamental computational biology problem is to compute the consensus tree of these $k$ trees. This problem finds applications in contructing species tree from a set of gene trees and in constructing the bootstrapping tree.
 
-	    A number of consensus tree definitions have been proposed in the past. The most popular definition is the majority-rule consensus tree since it is unique and it can be computed efficiently (in $O(kn)$ time). However, majority-rule consensus tree discards many branching information.
+	    A number of consensus tree definitions have been proposed in the past. The most popular definition is the majority-rule consensus tree since it is unique and can be computed efficiently (in $O(kn)$ time). However, the majority-rule consensus tree discards a considerable amount of branching information.
 
-	    Recently, frequency difference consensus tree is proposed. It is not only unique, but also generalises the majority-rule consensus tree and captures more branching information. Hence, it is a potentially good replacement of majority-rule cosnesus tree in the biological applications.
+	    Recently, the frequency difference consensus tree has been proposed. It is not only unique, but also generalises the majority-rule consensus tree and captures more branching information. Hence, it is potentially a good replacement for the majority-rule cosnesus tree in biological applications.
 
-	    However, the available implementation of frequency difference consensus tree is not efficient, which runs in $O(\min \{ kn(k + \log^2 n), k n^2 \} )$ time. A theoretically faster solution exists which takes $O(k n \log^2 n)$ time; However, it is impractical to implement.
+	    However, the available implementation of frequency difference consensus tree, which runs in $O(\min \{ kn(k + \log^2 n), k n^2 \} )$ time, is not efficient. A theoretically faster solution exists which takes $O(k n \log^2 n)$ time; but, it is impractical to implement.
 
 	    This paper presents a new deterministic algorithm for constructing a frequency difference consensus tree. Our algorithm constructs the frequency difference tree in $O(kn\,log\,n)$ time, bettering the previously best known solution. We also implemented our solution and experimentally showed that our method is a few fold faster than existing solutions.
     \end{abstract}
@@ -126,7 +126,8 @@
 
     A variety of types of consensus trees have been developed over the last half century, starting with the Adams consensus tree \cite{adams1972consensus} in 1972. The development of different types of consensus trees is motivated by the fact that different methods have different benefits and drawbacks. Some of these consensus trees are summarised in \S 6.2 of \cite{bryant1997hunting} and a comparative analysis can be found in \cite{bryant2003classification}. We illustrate strict consensus tree and majority-rule consensus tree here. The \textit{strict consensus tree} \cite{sokal1981taxonomic} only keeps those clades that occur in all input trees. While easily reconstructed and interpreted, potentially important clades will be discarded even if only one tree does not support them. The \textit{majority-rule consensus tree} \cite{margush1981consensusn} is a generalisation of the previous, which keeps all clades that occur in more than half of the trees. Holder et al. \cite{holder2008justification} showed that these trees are optimal given a certain context.
 
-    {\bf KEN: Don't understand what do you mean by OPTIMAL?}
+    {\bf KEN: Don't understand what do you mean by OPTIMAL?}\\
+	{\bf Varun: The paper says: "The majority-rule consensus tree can be shown to be the optimal tree to report if we view the cost of reporting an estimate of the phylogeny to be a linear function of the number of incorrect clades in the estimate and the number of true clades that are missing from the estimate and we view the reporting of an incorrect grouping as a more serious error than missing a clade.". I didn't know if I should put the whole quote in, so I just shortened it to optimal given a certain context}
 
     This article studies a specific type of consensus tree, known as the \textit{frequency difference consensus tree} \cite{goloboff2003improvements}. The \textit{frequency difference consensus tree} (abbreviated henceforth as FDCT) further generalises the \textit{majority-rule consensus tree}, keeping every clade that occurs in more trees than the most frequent clade that contradicts it (the concept of contradiction is formalized in Section~\ref{subsec:def}). The FDCT is motivated by a desire to design an effective criterion for determining which clades are strongly supported within a set of trees. As set out in \cite{goloboff2003improvements}, although the \textit{majority-rule consensus tree} includes a clade that is supported by 60\% of a set of trees and contradicted by 40\% of them, it does not include a clade supported by 40\% of the trees but not contradicted by any of them. A possible resolution to this is to define strongly supported clades as those with greater frequency than all clades incompatible with them. These are called frequency difference clades and all of these are included in the FDCT.
 
@@ -135,7 +136,8 @@
     \subsection{Definitions and Notation}
     \label{subsec:def}
 
-    {\bf KEN: Can we generalize the method to build unrooted phylogenetic tree? It seems that $depth$ is only used in one proof. May be we can remove it.}
+    {\bf KEN: Can we generalize the method to build unrooted phylogenetic tree? It seems that $depth$ is only used in one proof. May be we can remove it.}\\
+	{\bf Varun: I took a quick look at the previous papers and it looks like they all use rooted trees. Is the FDCT defined on unrooted trees?}
 
     We define a rooted phylogenetic tree to be a rooted, leaf-labelled tree where every internal node has 2 or more children and every leaf has a different label.  Henceforth, we will simply refer to these as trees.  Figure~\ref{fig:freqdiff} gives some example trees leaf-labeled by $\{a, b, c, d, e\}$.  Let $T$ be some tree. The set of nodes of $T$ is denoted by $V(T)$. For any node $u \in V(T)$, the \textit{parent} of $u$ (if it exists) is represented by $parent^T(u)$ and the set of its \textit{children} is represented by $children^T(u)$. The \textit{depth} of $u$, denoted by $depth^T(u)$ is the number of nodes that are its proper ancestors. A node that is \textit{shallower} than another has a smaller depth value. We also define, for any nodes $u, v \in V(T)$ where $v$ is an ancestor of $u$, the sets $path^T(u, v), path^T(u, v], path^T[u, v)$ and $path^T[u, v]$. Here, the parentheses and square brackets obey the accepted notation for open and closed intervals, such that $path^T(u, v)$ is the set of nodes on the path from $u$ to $v$, excluding both these nodes, $path^T[u, v]$ includes both $u$ and $v$ and so on.
 
@@ -143,7 +145,8 @@
 
     Any two clusters $C_1, C_2 \subseteq \leafset(T)$ are said to be \textit{compatible}, denoted as $C_1 \compatible C_2$, iff $C_1 \subseteq C_2$ or $C_2 \subseteq C_1$ or $C_1 \cap C_2 = \emptyset$. If $C_1$ and $C_2$ satisfy none of the preceding properties, then they are said to be \textit{incompatible} (referred to as \textit{contradiction} in Section~\ref{sec:introduction}), denoted as $C_1 \not\compatible C_2$. Similarly, given trees $T_1$ and $T_2$ with identical leaf sets, and nodes $u \in V(T_1)$, $v \in V(T_2)$, we say $u$ is compatible with $v$, denoted as $u \compatible v$, if the clusters associated with $u$ and $v$ are compatible. For example (referring to Figure~\ref{fig:freqdiff}), let $u$ be the node in $T_1$ associated with the cluster $\{a, b\}$, $v$ the node in $T_2$ associated with $\{a, b, c\}$ and $w$ the node in $T_2$ associated with $\{b, c\}$. Then $u$ and $v$ are compatible since $\leafset^{T_1}(u) \subseteq \leafset^{T_2}(v)$. However, $u$ is incompatible with $w$ since they share $b$ but neither leafset is a subset of the other. We now extend the notion of compatibility to trees. A cluster $C \subseteq \leafset(T)$ is \textit{compatible} with $T$ (denoted as $C \compatible T$) iff for every $C_1 \in \mathcal{C}(T)$, $C \compatible C_1$. Further, two trees $T_1$ and $T_2$ with identical leafsets are \textit{compatible} (denoted as $T_1 \compatible T_2$) iff for every $C \in \mathcal{C}(T_1)$, $C \compatible T_2$, i.e. if every cluster in $T_1$ is compatible with $T_2$. Observe that this also means that every cluster in $T_2$ is compatible with $T_1$. Thus in Figure~\ref{fig:freqdiff}, $T_1$ is incompatible with $T_2$ since the former contains the cluster $\{a, b\}$ which is incompatible with $\{b, c\}$, contained in the latter tree (in fact, it can be checked that all the trees in this figure are incompatible).
 
-    {\bf KEN: $\leafset^T(u) = \leafset^{T[u]} = \leafset(T[u])$. It is ambiguous. Shall we standardize everyone as $\leafset(T[u])$.}
+    {\bf KEN: $\leafset^T(u) = \leafset^{T[u]} = \leafset(T[u])$. It is ambiguous. Shall we standardize everyone as $\leafset(T[u])$.}\\
+	{\bf Varun: Yeah I think it looks better that way.}
 
     \begin{figure}[ht]
         \includegraphics[scale=0.5]{freqdiff}
@@ -165,7 +168,7 @@
 
     \subsection{Organisation of the Article and New Results}
 
-    {\bf KEN: It is important to state that the time improvement is challenging. Can you high-light the techniques that lead to the improvement here?}
+    {\bf KEN: It is important to state that the time improvement is challenging. Can you highlight the techniques that lead to the improvement here?}
 
     Section~\ref{sec:preliminaries} contains some results from previous works that are utilised later.
     Section~\ref{sec_freq_diff_algo} gives the framework of the FDCT construction algorithm that runs in $O(kn\,log\,n)$ time.
@@ -195,9 +198,10 @@
 
     \subsection{Centroid Path Decomposition}
 
-    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. For any $u \in V(T)$, we define the \textit{heaviest child} of $u$, denoted by $heavyChild(u)$, to be the one with the largest leafset, with ties broken arbitrarily. The remaining children are called the \textit{side children} of $u$, denoted by $sideChildren(u)$. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the heaviest child. The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, \ldots, p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $u \in V(T)$, let $\sigma(u)$ be the set of trees rooted at $sideChildren(u)$, called the side trees \textit{associated} with $u$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just a single leaf, while the other is a larger tree. {\bf KEN: I don't understand "In particular, ... larger tree." May be can remove it.}
+    The \textit{centroid path decomposition technique} of \cite{cole2000n} is used to decompose a tree $T$ into a path from the root to some leaf and a set of disjoint subtrees. For any $u \in V(T)$, we define the \textit{heaviest child} of $u$, denoted by $heavyChild(u)$, to be the one with the largest leafset, with ties broken arbitrarily. The remaining children are called the \textit{side children} of $u$, denoted by $sideChildren(u)$. A \textit{centroid path} in $T$ is the path formed by starting at the root and at each point following the heaviest child. The centroid path is denoted by $\pi(T) = \langle p_{\gamma}, p_{\gamma - 1}, \ldots, p_1 \rangle$, where $p_{\gamma}$ is the root of $T$ and $p_1$ is a leaf. Removing the path $\pi(T)$ from $T$ results in a set of disjoint subtrees of $T$, where the root of each such subtree is a child of some node in $\pi(T)$. These trees are called the \textit{side trees} of $\pi(T)$, denoted by $\sigma(T)$. Also, for any node $u \in V(T)$, let $\sigma(u)$ be the set of trees rooted at $sideChildren(u)$, called the side trees \textit{associated} with $u$. Figure~\ref{fig:centroid}(a) demonstrates this decomposition. Here, the bold path from the root to leaf is the centroid path. When the dashed edges and the nodes contained in the centroid path are removed from the tree, the side trees remain. In particular, it can be seen that there are two side trees associated with the root, one containing just the middle child of the root and the other rooted at the rightmost child of the root.
 
-    {\bf KEN: Can we avoid complete centroid path decomposition? If yes, we can remove Figure 2(b) and the following paragraph.}
+    {\bf KEN: Can we avoid complete centroid path decomposition? If yes, we can remove Figure 2(b) and the following paragraph.}\\
+	{\bf Varun: I think we still need it to build the rmq structure?}
 
     We further define a \textit{complete centroid path decomposition} for any tree $T$. Here, the normal centroid path decomposition is applied on $T$, and then each side tree is recursively decomposed. This results in a set of disjoint paths in $T$, denoted by $\mathcal{P}(T)$. We also assign each path $P_i \in \mathcal{P}(T)$ a depth, denoted as $depth^{T}(P_i)$, defined to be $1\, +$ depth of centroid path containing the parent of the root of $P_i$. Intuitively, if we build a tree from only the roots of the centroid paths while maintaining the same relative structure, then the depth of a centroid path would simply be the depth of its root in this new tree. Figure~\ref{fig:centroid}(b) applies complete centroid path decomposition on the same tree as before. The bold paths, along with the isolated leaves, are centroid paths. As can be seen, the large side tree that remained intact in Figure~\ref{fig:centroid}(a) has now been recursively decomposed. The depth of each centroid path is shown next to its root.
 
@@ -207,13 +211,6 @@
         \caption[Centroid path decomposition]{Demonstration of centroid path decomposition. Both (a) and (b) use the same tree. In (a), the tree has undergone a centroid path decomposition such that after the dashed edges are removed, leaving a centroid path and a set of side trees. In (b), the tree has undergone a complete centroid path decomposition, with the dashed edges being removed to leave only a set of paths. The depth of each centroid path is shown next to its root.}
         \label{fig:centroid}
     \end{figure}
-
-    \subsection{The \textit{delete} operation}
-    \label{subsec:delete}
-
-    {\bf KEN: Do we still need the delete operation? If not, we can remove this section.}
-
-    As described in \cite{jansson2018algorithms}, the \textit{delete} operation deletes a cluster from a tree. To do so, we specify some internal node $u$ in a tree $T$, such that we wish to delete the cluster $\leafset^{T}(u)$. Then the \textit{delete} operation makes $parent(u)$ the parent of all nodes in $children(u)$ and removes $u$, along with any associated edges from $T$. This has the effect of removing only $\leafset(u)$ from $T$, without affecting any other cluster. For example, in Figure~\ref{fig:freqdiff}, if we perform a delete operation on $T_2$, on the node associated with the cluster $\{b, c\}$, the resulting tree is identical to $T_{FD}$.
 
     \subsection{Restricted Trees}
     \label{subsec:restrictedtree}
@@ -270,7 +267,7 @@
     The algorithm \texttt{Frequency\_Difference} runs in three phases.
 
     The first phase is the \textit{weighting} step. It computes, for any tree $T_i \in \mathcal{S}$ and any node $u \in V(T_i)$, $\weight(u) = | \{ T_j \in {\cal S} \mid \Lambda(T_i[u]) \in \mathcal{C}(T_j) \} |$. Jansson et al. \cite{jansson2018algorithms} gave a $min(\{O(kn^2), O(k^2n)\})$ solution to the weighting step.
-    Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the weighting step to $O(kn\,log^2n)$. In Section~\ref{sec:weighting}, we give the proof of the following lemma which shows that the weighting step can be solved in $O(k n \log n)$ time.
+    Gawrychowski et al. \cite{gawrychowski2017faster} improved the runtime of the weighting step to $O(kn \log^2n)$. In Section~\ref{sec:weighting}, we give the proof of the following lemma which states that the weighting step can be solved in $O(k n \log n)$ time.
 
     \begin{lemma}
 	    \label{lem-weighting-time}
@@ -278,14 +275,16 @@
     \end{lemma}
 
     Now, we assume every cluster (or every node) in the trees in $\mathcal{S}$ is associated with a weight. The second phase computes the forward frequency difference consensus tree (FFDCT) of a list of trees $(T_1, T_2, \ldots, T_k)$.
-    The FFDCT of $(T_1, T_2, \ldots, T_k)$ is defined as the tree that includes, for every $1 \leq i \leq k$, every cluster $C \in \mathcal{C}(T_i)$ that satisfies $\weight(C) > \weight(X)$ for all $X \in \bigcup_{j=i}^k \mathcal{C}(T_j)$ with $C \not\compatible X$. Below lemma states a recursive formula to compute $FFDCT(T_1, \ldots, T_k)$. Note that the output of $FFDCT()$ depends on the ordering of the trees.
+    The FFDCT of $(T_1, T_2, \ldots, T_k)$ is defined as the tree that includes, for every $1 \leq i \leq k$, every cluster $C \in \mathcal{C}(T_i)$ that satisfies $\weight(C) > \weight(X)$ for all $X \in \bigcup_{j=i}^k \mathcal{C}(T_j)$ with $C \not\compatible X$. The following lemma states a recursive formula to compute $FFDCT(T_1, \ldots, T_k)$. Note that the output of $FFDCT()$ depends on the ordering of the trees.
+
+	{\bf Varun: Do we need to prove this lemma, or state that it follows from the other paper?}\\
+	{\bf Varun: Do we need to explicitly define FFDCT on two trees, or is it alright to allow it to be inferred from the notation?}
 
     \begin{lemma} \label{lem-FFDCT}
 	    Let $T = FFDCT(T_1, \ldots, T_{k-1})$. Then, $FFDCT(T_1, \ldots, T_k) = FFDCT(T, T_k)$.
     \end{lemma}
 
-
-    $FFDCT(T_1, T_2)$ can be computed by utilising \texttt{Filter\_Clusters} and \texttt{Merge\_Trees} (defined below).
+    $FFDCT(T_1, T_2)$ can be computed by utilising the procedures \texttt{Filter\_Clusters} and \texttt{Merge\_Trees}, which are defined below.
 
     Given two trees $T_1$ and $T_2$ where $\leafset^{T_1} = \leafset^{T_2} = L$ and $T_1 \compatible T_2$, \texttt{Merge\_Trees}$(T_1, T_2)$ returns a tree $T$ such that $\leafset^T = L$ and $\mathcal{C}(T) = \mathcal{C}(T_1) \cup \mathcal{C}(T_2)$. Figure~\ref{fig:mergetrees} gives an example for the \texttt{Merge\_Trees} algorithm.
 
@@ -299,15 +298,14 @@
 
     The subprocedure \texttt{Filter\_Clusters} is defined to take as input trees $\TA$ and $\TB$, with $\leafset^{\TA} = \leafset^{\TB} = L$ and the values of $\weight(u)$ for all $u \in V(\TA) \cup V(\TB)$. It returns a tree $T$ which contains all clusters $C$ in $\TA$ for which $\weight(C) > $ weights of all clusters in $\TB$ that are incompatible with $C$. Formally, \texttt{Filter\_Clusters}$(\TA, \TB) = T$ where $\mathcal{C}(T) = \{C : C \in \mathcal{C}(\TA) \text{ and } \weight(C) > max(\{\weight(C_1) : C_1 \in \mathcal{C}(\TB) \text{ and } C_1 \not\compatible C\})\}$ and $\leafset^T = L$. For example, referring to Figure~\ref{fig:freqdiff}, \texttt{Filter\_Clusters}$(T_2, T_1) = T_{FD}$. Notice that there are three non-trivial clusters in $T_2$: $\{a, b, c\}, \{b, c\}$ and $\{d, e\}$. All of these have weight $2$. Now the only cluster in $T_1$ incompatible with $\{a, b, c\}$ is $\{c, d, e\}$, but this only has weight $1$ and so $\{a, b, c\}$ is kept. The cluster $\{d, e\}$ is compatible with $T_1$ so it is also kept. However, $\{b, c\}$ is incompatible with $\{a, b\}$ and they both have weight $2$, hence $\{b, c\} \not\in \mathcal{C}($\texttt{Filter\_Clusters}$(T_2, T_1))$.
 
-    \cite{jansson2018algorithms} gave an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}. In Section~\ref{sec:filterclusters}, we give the following lemma.
-    In Section~\ref{sec:filterclusters}, we give the proof of the following lemma which shows that $Filter\_Cluster$ of two trees can be computed in $O(n \log n)$ time.
+    \cite{jansson2018algorithms} gave an $O(n\,log^2n)$ solution to \texttt{Filter\_Clusters}. In Section~\ref{sec:filterclusters}, we prove the following lemma which states that $Filter\_Cluster$ of two trees can be computed in $O(n \log n)$ time.
     \begin{lemma}
 	    \label{lem-filter-cluster-time}
 	    Given two weighted trees $T_1$ and $T_2$ of size $n$,
 	    $Filter\_Cluster(T_1, T_2)$ can be computed in $O(n \log n)$ time.
     \end{lemma}
 
-    Below lemma states the relationship between $FFDCT$, $Filter\_Clusters$ and $Merge\_Trees$.
+    Below lemma gives the relationship between $FFDCT$, $Filter\_Clusters$ and $Merge\_Trees$.
     \begin{lemma}
 	    \label{lem-FFDCT-merge-filter}
 	    $FFDCT(T_1, T_2) = Merge\_Trees( Filter\_Clusters(T_1, T_2), Filter\_Clusters(T_2, T_1) )$.
@@ -317,7 +315,7 @@
     Given the FFDCT of $(T_1, \ldots, T_k)$, the third phase computes the FDCT of $\{ T_1, \ldots, T_k \}$. Below lemma states how can we compute FDCT utilizing $Filter\_Clusters$.
     \begin{lemma}
 	    \label{lem-FDCT}
-	    Let $T$ be the FFDCT of $(T_1, \ldots, T_k)$.
+	    Let $T'_0$ be the FFDCT of $(T_1, \ldots, T_k)$. Define $T'_i = Filter\_Clusters(T'_{i-1}, T_i)$. Then the FDCT of $(T_1, \ldots, T_k)$ is given by $T'_k$.
 
     \end{lemma}
 
@@ -338,7 +336,7 @@
 	    The lemma follows.
     \end{proof}
 
-    To complete the proof of the above theorem, Sections~\ref{sec:weighting} and \ref{sec:filterclusters} shows the correctness of Lemmas~\ref{lem-weighting-time} and \ref{lem-filter-cluster-time}.
+    To complete the proof of the above theorem, Sections~\ref{sec:weighting} and \ref{sec:filterclusters} show the correctness of Lemmas~\ref{lem-weighting-time} and \ref{lem-filter-cluster-time}.
 
 %    \cite{jansson2018algorithms} shows that Algorithm~\ref{alg:frequencydifference} correctly reconstructs the FDCT of ${\cal S} = \{T_1, \ldots, T_k\}$.
     %The \texttt{Frequency\_Difference} algorithm is given in Algorithm~\ref{alg:frequencydifference}.
@@ -393,9 +391,10 @@
     We first define a mapping $assoc$. Let $L'$ and $L''$ be a partition of $L$ such that $L = L' \cup L''$ and $|L'|=|L''|$.
     For any tree $T_i \in \mathcal{S}$, for any node $u \in V(T_i)$, $assoc^{L'}(u)$ aims to map $u$ to the corresponding node in $T_i|L'$. Formally, if $\Lambda^{T_i}(u) \cap L' \neq \emptyset$,
     define $assoc^{L'}(u)$ be the node $v \in V(T|L')$ such that $\Lambda^T(u) \cap L' = \Lambda^{T|L'}(v)$; otherwise, define $assoc^{L'}(u)$ be $\Phi$, where $\Phi$ is a special node with $id(\Phi) = 0$.
-    $assoc^{L''}$ can be defined analogically.  We refer to Figure~\ref{fig:labelclusters} to show examples of this concept. Let $u$ and $v$ be the nodes in $T_1$ labelled $(5, 1)$ and $(5, 0)$ respectively. Then $assoc^{\{a, b, c, d\}}(u) = v$, since $v = lca^{T_1}(\{a, b, c, d\} \cap \leafset^{T_1}(u)) = lca^{T_1}(\{a, b\})$. $assoc^{\{e, f, g, h\}}(v) = \Phi$, since $\leafset^{T_1}(v) \cap \{e, f, g, h\} = \emptyset$.
+    $assoc^{L''}$ can be defined analogously.  We refer to Figure~\ref{fig:labelclusters} to show examples of this concept. Let $u$ and $v$ be the nodes in $T_1$ labelled $(5, 1)$ and $(5, 0)$ respectively and $w$ be the node in $T_1|L'$ labelled $5$. Then $assoc^{\{a, b, c, d\}}(u) = w$, since $w = lca^{T_1|L'}(\{a, b, c, d\} \cap \leafset^{T_1}(u)) = lca^{T_1|L'}(\{a, b\})$. $assoc^{\{e, f, g, h\}}(v) = \Phi$, since $\leafset^{T_1}(v) \cap \{e, f, g, h\} = \emptyset$.
 
-    {\bf KEN: I think the above example for $assoc$ is not correct!}
+    {\bf KEN: I think the above example for $assoc$ is not correct!}\\
+	{\bf Varun: Should be fixed now.}\\
 
     \begin{lemma}
         \label{lem:labelclusterscorrectness}
@@ -490,7 +489,9 @@
     For every $C \in \mathcal(\TA)$, define $Conflict^{\TB}(C) =  \{C' \in \mathcal(\TB) : C \not\compatible C' \}$.
     %The algorithm \texttt{Filter\_Clusters}$(\TA, \TB)$ returns the FFDCT of $\TA$ and $\TB$.
     Recall that the FFDCT of $\TA$ and $\TB$ is a refinement tree of $\TA$ keeping only clusters $C \in \mathcal(\TA)$ such that $\weight(C) > \max_{C' \in Conflict^{\TB}(C)} \weight(C')$.
-    Previous best known solution for computing $FFDCT(\TA, \TB)$ costs $O(n\,log^2 n)$ time \cite{jansson2018algorithms}; we present an $O(n\,log\,n)$ solution.
+    The previous best known solution for computing $FFDCT(\TA, \TB)$ costs $O(n\,log^2 n)$ time \cite{jansson2018algorithms}; we present an $O(n\,log\,n)$ solution.
+
+	{\bf Varun: Should FFDCT here be Filter\_Clusters? I think FFDCT also includes clusters from $\TB$.}
 
     Let $\pi = \langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$ be the centroid path of $\TA$, where $p_{\gamma}$ is the root of $\TA$ and $p_1$ is a leaf.
     Let $sideTrees(\pi)$ be the set of subtrees of $\TA$ that are attached to $\pi$.
@@ -504,18 +505,22 @@
 	    \]
     \end{lemma}
 
-    There are two issues if we use the recurrence in Lemma~\ref{lem-simple-recurrence-FFDCT} to compute $FFDCT(\TA, \TB)$. First, to compute $FFDCT(\tau, \TB)$, the size of $\tau$ may be much smaller than $\TB$. This will slow down the computation. Luckly, we can reduce the size of $\TB$ by converting it to $\TB||\Lambda(\tau)$. Below lemma states the properties of $\TB||\Lambda(\tau)$, which will be shown in Section~\ref{subsec:restrictedweighted}.
+	{\bf Varun: Should this be $\mathcal{C}(FFDCT(\TA, \TB))$?.}
+
+    There are two issues if we use the recurrence in Lemma~\ref{lem-simple-recurrence-FFDCT} to compute $FFDCT(\TA, \TB)$. First, to compute $FFDCT(\tau, \TB)$, the size of $\tau$ may be much smaller than $\TB$. This will slow down the computation. Luckily, we can reduce the size of $\TB$ by converting it to $\TB||\Lambda(\tau)$. Below lemma states the properties of $\TB||\Lambda(\tau)$, which will be shown in Section~\ref{subsec:restrictedweighted}.
 
     \begin{lemma}
 	    For any node $u \in V(\TA)$, let $\tau = \TA[u]$. The size of $\TB||\Lambda(\tau)$ is $O(|\Lambda(\tau)|)$. Given the lca and tree rmq data structure for $\TB$, $\TB||\Lambda(\tau)$ can be constructed in $O(|\Lambda(\tau)|)$ time.  Also, we have
 	    $FFDCT(\tau, \TB) = FFDCT(\tau, \TB||\Lambda(\tau))$.
     \end{lemma}
 
+	{\bf Varun: I think this is not strictly correct. The trees $\TB|\Lambda(\tau)$ all need to constructed together for the total time taken to be $O(n)$, according to the lemma cited in the proof.}
+
     Another issue is how to compute $\left\{ \Lambda(\TA[p_i]) : \weight(\Lambda(\TA[p_i])) > \max_{C' \in Conflict^{\TB}(\Lambda(\TA[p_i]))} \weight(C'), i=1,\ldots, \gamma \right\}$.
     Naively, this set can be computed in $O(\gamma n)$ time.
     We observe that $Conflict^{\TB}(\Lambda(\TA[p_i]))$ can be incrementally computed from $Conflict^{\TB}(\Lambda(\TA[p_{i-1}]))$ for $i = 2, \ldots, \gamma$.
     Based on this observation, we have the following lemma.
-    Let $Covered^{\TB}(\TA) = \{ v \in V(T_{\beta}) : \Lambda(T_{\beta}[v] \subseteq \Lambda(\TA) \}$.
+    Let $Covered^{\TB}(\TA) = \{ v \in V(T_{\beta}) : \Lambda(T_{\beta}[v]) \subseteq \Lambda(\TA) \}$.
     Let $uniqCovered^{\TB}(\TA) = Covered^{\TB}(\TA) - \bigcup_{\tau \in sideTrees(\pi)} Covered^{\TB}(\tau)$.
     \begin{lemma}
 	    \label{lem-time-Conflict}
@@ -525,7 +530,7 @@
 
 	    Assuming the lca and the tree rmq data structure for $\TB$ are provided.
     Algorithm~\ref{alg:FFDCT} gives the pseudocode of our proposed algorithm Filter\_Cluster$(\TA)$. First, Step~\ref{step:centroidpath} generates the centroid path $\pi$ of $\TA$.
-    Then, step \ref{step:sideTrees} recurrsively find $FFDCT(\tau, \TB)$ for $\tau \in sideTrees(\pi)$.
+    Then, Step~\ref{step:sideTrees} recursively finds $FFDCT(\tau, \TB)$ for $\tau \in sideTrees(\pi)$.
 	    Step~\ref{step:restriction} generates the restricted subtree $\TB||\Lambda(\TA)$.
     Steps~\ref{step:conflict_start}-\ref{step:conflict_end} computes
 		 $\left\{ \Lambda(\TA[p_i]) : \weight(\Lambda(\TA[p_i])) > \max_{C' \in Conflict^{\TB}(\Lambda(\TA[p_i]))} \weight(C'), i=1,\ldots, \gamma \right\}$.
@@ -539,7 +544,7 @@
     \begin{proof}
 	    Let $Time(\TA)$ be the time for running Filter\_Clusters$(\TA)$
 
-	    Steps~\ref{step:centroidpath} and \ref{step:restriction} takes $O(n)$ time.
+	    Steps~\ref{step:centroidpath} and \ref{step:restriction} take $O(n)$ time.
 	    By Lemma~\ref{lem-time-Conflict},
 	    $\max \{ C \in Conflict^{\TB}(\Lambda(\TA[p_i]) \}$ for all $i \in \{1, \ldots, \gamma\}$
 	    using $O\left(n + |uniqCovered^{\TB}(\TA)| \log n \right)$ time.
@@ -550,6 +555,7 @@
 	    Since $|Covered^{\TB}(\TA)| = O(n)$, the lemma follows.
     \end{proof}
 
+	{\bf Varun: I think $Time(\TA) = O(n \log n + |Covered^{\TB}(\TA)| \log n)$ instead. The $n$ term in each of the side trees would also add up to an $n \log n$ factor.}
 
     \begin{algorithm}[!ht]
 		\caption{Filter\_Cluster$(\TA)$}
@@ -577,9 +583,11 @@
         \end{algorithmic}
     \end{algorithm}
 
+	{\bf Varun: Should we define FFDCT as a cluster collection rather than a tree? Then the output of the algorithm would make sense. Alternatively, we could also just say that a tree and a cluster collection are interchangeable.}
+
     \subsection{Constructing $Conflict^{\TB}(C)$}
     Given a subtree $\tau$ in $T_{\alpha}$, let $Overlap^{\TB}(\tau) = \{ v \in V(T_{\beta}) : \Lambda(T_{\beta}[v]) \cap \Lambda(\tau) \neq \emptyset \}$.
-    Let $Covered^{\TB}(\tau) = \{ v \in V(T_{\beta}) : \Lambda(T_{\beta}[v] \subseteq \Lambda(\tau) \}$.
+    Let $Covered^{\TB}(\tau) = \{ v \in V(T_{\beta}) : \Lambda(T_{\beta}[v]) \subseteq \Lambda(\tau) \}$.
     Note that $Conflict^{\TB}(\tau) = Overlap^{\TB}(\tau) - Covered^{\TB}(\tau)$.
     \begin{lemma}
 	$Covered^{\TB}(\TA) = uniqCovered^{\TB}(\TA) \cup \left( \bigcup_{\tau \in sideTrees(\pi)} Covered^{\TB}(\tau) \right)$
@@ -588,11 +596,11 @@
 
     \begin{lemma}
 	    \label{lem-build-Conflict1}
-	    Consider a node $u \in V(\TA)$. Let $v \in V(\TA)$ be one of the child of $u$. Let $X=\Lambda(\TA[u])-\Lambda(\TA[v])$. Let $E=Conflict^{\TB}(\Lambda(\TA[v]))$.
+	    Consider a node $u \in V(\TA)$. Let $v \in V(\TA)$ be one of the children of $u$. Let $X=\Lambda(\TA[u])-\Lambda(\TA[v])$. Let $E=Conflict^{\TB}(\Lambda(\TA[v]))$.
 	    $Conflict^{\TB}(\Lambda(\TA[u]) = Conflict^{\TB}(\Lambda(\TA[v])) \cup A \cup B - D$ consists of:
 	\begin{itemize}
-		\item $A = path^{T_{\beta}}(\Lambda(\TA[v]), \Lambda(\TA[u]))$
-		\item $B$ is the set of ancestors of nodes of $X$ which are descendant of $lca^{T_{\beta}}(\Lambda(\TA[u])))$ and not in $E$
+		\item $A = path^{T_{\beta}}(lca^{\TB}(\Lambda(\TA[v])), lca^{\TB}(\Lambda(\TA[u])))$
+		\item $B$ is the set of proper ancestors of nodes of $X$ which are proper descendants of $lca^{T_{\beta}}(\Lambda(\TA[u])))$ and not in $E$ or $Covered^{\TB}(\Lambda(\TA[v]))$
 		\item $D = Covered^{\TB}(\TA[u]) - Covered^{\TB}(\TA[v])$
 	\end{itemize}
     \end{lemma}
@@ -600,7 +608,7 @@
     For any node $u \in V(\TA)$, below lemma gives the running time to compute $Conflict^{\TB}(\TA[u])$ using Lemma~\ref{lem-build-Conflict1}.
     \begin{lemma}
 	    \label{lem-time-build-Conflict1}
-	    Consider a node $u \in V(\TA)$. Let $v \in V(\TA)$ be one of the child of $u$. Let $X=\Lambda(\TA[u])-\Lambda(\TA[v])$ and $E = Conflict^{\TB}(\Lambda(\TA[v])$.
+	    Consider a node $u \in V(\TA)$. Let $v \in V(\TA)$ be one of the children of $u$. Let $X=\Lambda(\TA[u])-\Lambda(\TA[v])$ and $E = Conflict^{\TB}(\Lambda(\TA[v])$.
 	    $Conflict^{\TB}(\Lambda(\TA[u]))$ can be computed from $E$ by deleting $O(|Covered(\TA[u])| - |Covered(\TA[v])|)$ nodes and inserting $O(|Overlap^{\TB}(\TA[u])| - |Overlap^{\TB}(\TA[v])|)$ nodes from $E$.
     \end{lemma}
 
@@ -612,26 +620,30 @@
 	    Consider a node $u \in V(\TA)$. Let $v \in V(\TA)$ be one of the child of $u$. Let $X'_u=MinCover^{T_{\beta}}(\Lambda(\TA[u])-\Lambda(\TA[v]))$. Let $E=Conflict^{\TB}(\Lambda(\TA[v]))$.
 	    $Conflict^{\TB}(\Lambda(\TA[u]) = Conflict^{\TB}(\Lambda(\TA[v])) \cup A \cup B - D$ consists of:
 	\begin{itemize}
-		\item $A = path^{T_{\beta}}(\Lambda(\TA[v]), \Lambda(\TA[u]))$
-		\item $B$ is the set of ancestors of nodes of $X'_u$ which are descendant of $lca^{T_{\beta}}(\Lambda(\TA[u])))$ and not in $E$
+		\item $A = path^{T_{\beta}}(lca^{\TB}(\Lambda(\TA[v])), lca^{\TB}(\Lambda(\TA[u])))$
+		\item $B$ is the set of proper ancestors of nodes of $X'_u$ which are proper descendants of $lca^{T_{\beta}}(\Lambda(\TA[u])))$ and not in $E$
 		\item $D = Covered^{\TB}(\TA[u]) - \bigcup_{x \in Children(u)} Covered^{\TB}(\TA[x])$
 	\end{itemize}
     \end{lemma}
+
+	{\bf Varun: We might need to account for whether $lca^{\TB}(\leafset(\TA[v]))$ belongs to $Conflict^{\TB}(\leafset(\TA[u]))$ separately in the case where no node in $MinCover^{T_{\beta}}(\Lambda(\TA[u])-\Lambda(\TA[v]))$ is a descendant of $lca^{\TB}(\leafset(\TA[v]))$.}
 
     For any node $u \in V(\TA)$, below lemma gives the running time to compute $Conflict^{\TB}(\TA[u])$ using Lemma~\ref{lem-build-Conflict2}.
     Let $r(T_{\alpha})$ be the root of $T_{\alpha}$. Let $subTree(T_{\alpha})$ be the set of all subtrees attached to $r(T_{\alpha})$.
     \begin{lemma}
 	    \label{lem-time-build-Conflict2}
-	    Consider a node $u \in V(\TA)$. Let $v \in V(\TA)$ be one of the child of $u$. Let $X'=MinCover^{T_{\beta}}(\Lambda(\TA[u])-\Lambda(\TA[v]))$ and $E_v = Conflict^{\TB}(\Lambda(\TA[v])$.
-	    $Conflict^{\TB}(\Lambda(\TA[u]))$ can be computed from $E$ by deleting $O(|Covered(\TA[u])| - \sum_{\tau \in subtree(u)} |Covered(\tau)|)$ nodes and inserting $O(|Overlap^{\TB}(\TA[u])| - |Overlap^{\TB}(\TA[v])|)$ nodes from $E$.
+	    Consider a node $u \in V(\TA)$. Let $v \in V(\TA)$ be one of the children of $u$. Let $X'=MinCover^{T_{\beta}}(\Lambda(\TA[u])-\Lambda(\TA[v]))$ and $E = Conflict^{\TB}(\Lambda(\TA[v])$.
+	    $Conflict^{\TB}(\Lambda(\TA[u]))$ can be computed from $E$ by deleting $O(|Covered(\TA[u])| - \sum_{\tau \in subtree(u)} |Covered(\tau)|)$ nodes from and inserting $O(|Overlap^{\TB}(\TA[u])| - |Overlap^{\TB}(\TA[v])|)$ nodes into $E$.
     \end{lemma}
+
+	{\bf Varun: When we take $subtree(u)$, should we remove the tree rooted at $v$ from this?}
 
     In our algorithm, the clusters in $Conflict^{\TB}(C)$ are maintained using the Brodal queue according to their weights.
     The Brodal queue data structure allows insertion and findMax operations in $O(1)$ time and delete operation in $O(\log n)$ time.
 
     Let $\pi = \langle p_{\gamma}, p_{\gamma - 1}, \dots, p_1 \rangle$ be the centroid path of $\TA$, where $p_{\gamma}$ is the root of $\TA$ and $p_1$ is a leaf.
-    We have $Conflict_{p_1}$ consists of exactly one cluster $\{y\}$ where $y$ is the leaf in $T_{\beta}$ such that $label(y) = label(p_1)$.
-    Below lemma state the running time to construct $Conflict^{\TB}(\Lambda(\TA[p_i])$ from $Conflict^{\TB}(\Lambda(\TA[p_{i-1}]))$ for $i = 2, \ldots, \gamma$.
+    $Conflict_{p_1}$ is empty since no node in incompatible with a single leaf.
+    The below lemma gives the running time to construct $Conflict^{\TB}(\Lambda(\TA[p_i])$ from $Conflict^{\TB}(\Lambda(\TA[p_{i-1}]))$ for $i = 2, \ldots, \gamma$.
     \begin{lemma}
 	    We can compute $\max \{ C \in Conflict^{\TB}(\Lambda(\TA[p_i]) \}$ for all $i \in \{1, \ldots, \gamma\}$
 	    using $O\left(n + \left( |Covered^{\TB}(\TA)| - \sum_{\tau \in sideTree(\pi)} |Covered^{\TB}(\tau)| \right) \log n \right)$ time.
@@ -692,6 +704,8 @@
 		First, using lca data structure, we can obtain the tree structure $T_{\beta}|C$ in $O(|C|)$ time. Then, for every node $u$ in $T|C$, we obtain the corresponding weight $\weight(u)$. For every edge $(u, v)$ in $T|C$, we insert a dummy node in between. Its weight is $\max \{ \weight(w) :  w \in path^{T_{\beta}}(u,v) \}$. Using the tree rmq data structure, these weights can be computed in $O(|C|)$ time.
 	\end{proof}
 
+	{\bf Varun: I think this lemma may be incorrect - to my knowledge, a single $\TB|C$ can't be built in $O(|C|)$ time.}
+
 %    As part of our algorithm we further restrict already restricted trees. We now show that the $(T||C)||C' = T||C'$.
 %    \newline
 
@@ -733,7 +747,7 @@
 		\label{step:start-Conflict}
 		\State Insert ancestors of $addNodes$ which are descendants of $\ell$ to $Conflict$
 		\State Insert $path^{T_{\beta}}(\ell_{T_{\alpha,hvy}}, \ell)$ into $Conflict$
-		\State Remove nodes $u \in addNodes$ and recurrsively remove the descendants of $u$ in $Conflict$
+		\State Remove nodes $u \in addNodes$ and recursively remove the descendants of $u$ in $Conflict$
 		\label{step:end-Conflict}
 		\State $\mathcal{F} = \bigcup_{\tau \in subTree(\TA)} \mathcal{F}_{\tau}$
 		\label{step:start-F}
@@ -745,6 +759,8 @@
 		\State \Return $(\mathcal{F}, Conflict, minCover, \ell)$
         \end{algorithmic}
     \end{algorithm}
+
+	{\bf Varun: This algorithm might become harder to analyse because we need to construct all the restricted subtrees together - if we work one node at a time, then this analysis becomes harder since we're only constructing the restricted subtrees for a subset of all the side trees of $\TA$.}
 
     The basic idea of our solution is to collect all clusters $C \in \mathcal{C}(\TA)$ such that $\weight(C) > \max_{C' \in Confict^{\TB}(C)} \weight(C')$.
     Precisely, the algorithm scans all clusters $C \in \mathcal{C}(T_{\alpha})$ and computes $Conflict^{\TB}_{C}$; then, it inserts $C$ in $\mathcal{F}$ if $\weight(C) > \max_{C' \in Confict^{\TB}(C)} \weight(C')$.
@@ -766,7 +782,7 @@
     Below lemma gives the time to compute the restricted subtree.
     \begin{lemma}
 	    Given the lca data structure and the path rmq data structure for $T_{\beta}$,
-	    for any cluster $C$, teh restricted subtree $T_{\beta}||C$ can be computed in $O(|C|)$ time.
+	    for any cluster $C$, the restricted subtree $T_{\beta}||C$ can be computed in $O(|C|)$ time.
     \end{lemma}
 
     Below lemma give the running time to compute the minimum cover of $T_{\alpha}$.
